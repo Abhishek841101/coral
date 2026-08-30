@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  --coral-dark: #073F32;
+  --coral-green: #18C66A;
+  --coral-light: #E9F8F0;
+  --coral-bg: #F8F9F7;
+  --coral-text: #10254A;
+  --coral-muted: #667085;
+  --coral-border: #E5E7EB;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--coral-bg);
+  color: var(--coral-text);
+  font-family: "Manrope", sans-serif;
+}
