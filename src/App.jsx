@@ -13,7 +13,7 @@ import PropertyDetails from "./pages/PropertyDetails";
 import Properties from "./pages/Properties";
 import PropertyEnquiry from "./pages/PropertyEnquiry";
 
-import Login from "./pages/Login";
+import Login from "./pages/login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
