@@ -2137,75 +2137,263 @@
 // export default adminSlice.reducer;
 
 
-
-
 import {
   createAsyncThunk,
   createSlice,
 } from "@reduxjs/toolkit";
 
 /* =====================================================
+   DEBUG START
+===================================================== */
+
+console.log(
+  "=================================================="
+);
+
+console.log(
+  "[ADMIN SLICE] adminSlice.js LOADED"
+);
+
+console.log(
+  "[ADMIN SLICE] Current time:",
+  new Date().toISOString()
+);
+
+console.log(
+  "=================================================="
+);
+
+/* =====================================================
    API
 ===================================================== */
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL =
+  import.meta.env.VITE_API_URL;
 
-const ADMIN_TOKEN_KEY = "coral_admin_token";
+const ADMIN_TOKEN_KEY =
+  "coral_admin_token";
+
+console.log(
+  "[ADMIN SLICE] API_URL:",
+  API_URL
+);
+
+console.log(
+  "[ADMIN SLICE] TOKEN KEY:",
+  ADMIN_TOKEN_KEY
+);
 
 /* =====================================================
    TOKEN HELPERS
 ===================================================== */
 
 const getAdminToken = () => {
-  return localStorage.getItem(ADMIN_TOKEN_KEY);
+  const token =
+    localStorage.getItem(
+      ADMIN_TOKEN_KEY
+    );
+
+  console.log(
+    "[ADMIN TOKEN] getAdminToken()"
+  );
+
+  console.log(
+    "[ADMIN TOKEN] Token exists:",
+    Boolean(token)
+  );
+
+  if (token) {
+    console.log(
+      "[ADMIN TOKEN] Token length:",
+      token.length
+    );
+
+    console.log(
+      "[ADMIN TOKEN] Token preview:",
+      `${token.substring(0, 20)}...`
+    );
+  } else {
+    console.warn(
+      "[ADMIN TOKEN] NO TOKEN FOUND"
+    );
+  }
+
+  return token;
 };
 
 const saveAdminToken = (token) => {
+  console.log(
+    "[ADMIN TOKEN] saveAdminToken() called"
+  );
+
+  console.log(
+    "[ADMIN TOKEN] Token received:",
+    Boolean(token)
+  );
+
   if (token) {
-    localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    localStorage.setItem(
+      ADMIN_TOKEN_KEY,
+      token
+    );
+
+    console.log(
+      "[ADMIN TOKEN] Token SAVED"
+    );
+
+    console.log(
+      "[ADMIN TOKEN] Saved successfully:",
+      Boolean(
+        localStorage.getItem(
+          ADMIN_TOKEN_KEY
+        )
+      )
+    );
+  } else {
+    console.error(
+      "[ADMIN TOKEN] Cannot save empty token"
+    );
   }
 };
 
 const removeAdminToken = () => {
-  localStorage.removeItem(ADMIN_TOKEN_KEY);
+  console.log(
+    "[ADMIN TOKEN] removeAdminToken()"
+  );
+
+  localStorage.removeItem(
+    ADMIN_TOKEN_KEY
+  );
+
+  console.log(
+    "[ADMIN TOKEN] Token after remove:",
+    Boolean(
+      localStorage.getItem(
+        ADMIN_TOKEN_KEY
+      )
+    )
+  );
 };
 
 /* =====================================================
    AUTH HEADERS
 ===================================================== */
 
-const getAuthHeaders = (extraHeaders = {}) => {
-  const token = getAdminToken();
+const getAuthHeaders = (
+  extraHeaders = {}
+) => {
+  console.log(
+    "[ADMIN HEADERS] Creating auth headers"
+  );
 
-  return {
+  console.log(
+    "[ADMIN HEADERS] Extra headers:",
+    extraHeaders
+  );
+
+  const token =
+    getAdminToken();
+
+  const headers = {
     ...extraHeaders,
-    ...(token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : {}),
   };
+
+  if (token) {
+    headers.Authorization =
+      `Bearer ${token}`;
+
+    console.log(
+      "[ADMIN HEADERS] Authorization header ADDED"
+    );
+
+    console.log(
+      "[ADMIN HEADERS] Authorization:",
+      "Bearer TOKEN_PRESENT"
+    );
+  } else {
+    console.error(
+      "[ADMIN HEADERS] Authorization header NOT added"
+    );
+  }
+
+  console.log(
+    "[ADMIN HEADERS] Final headers:",
+    {
+      ...headers,
+      Authorization: token
+        ? "Bearer TOKEN_PRESENT"
+        : "MISSING",
+    }
+  );
+
+  return headers;
 };
 
 /* =====================================================
    RESPONSE HELPER
 ===================================================== */
 
-const parseResponse = async (response, fallback) => {
+const parseResponse = async (
+  response,
+  fallback
+) => {
+  console.log(
+    "[ADMIN RESPONSE] parseResponse()"
+  );
+
+  console.log(
+    "[ADMIN RESPONSE] Status:",
+    response.status
+  );
+
+  console.log(
+    "[ADMIN RESPONSE] OK:",
+    response.ok
+  );
+
   try {
-    const data = await response.json();
+    const data =
+      await response.json();
+
+    console.log(
+      "[ADMIN RESPONSE] Parsed data:",
+      data
+    );
 
     if (!response.ok) {
-      throw new Error(data?.message || fallback);
+      console.error(
+        "[ADMIN RESPONSE] Request failed:",
+        data?.message
+      );
+
+      throw new Error(
+        data?.message ||
+          fallback
+      );
     }
 
+    console.log(
+      "[ADMIN RESPONSE] Request successful"
+    );
+
     return data;
+
   } catch (error) {
-    if (error instanceof Error) {
+
+    console.error(
+      "[ADMIN RESPONSE] Parse error:",
+      error
+    );
+
+    if (
+      error instanceof Error
+    ) {
       throw error;
     }
 
-    throw new Error(fallback);
+    throw new Error(
+      fallback
+    );
   }
 };
 
@@ -2214,155 +2402,504 @@ const parseResponse = async (response, fallback) => {
    POST /api/admin/login
 ===================================================== */
 
-export const adminLogin = createAsyncThunk(
-  "admin/adminLogin",
-  async (
-    { email, password },
-    { rejectWithValue }
-  ) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/admin/login`,
-        {
-          method: "POST",
+export const adminLogin =
+  createAsyncThunk(
+    "admin/adminLogin",
+    async (
+      {
+        email,
+        password,
+      },
+      { rejectWithValue }
+    ) => {
 
-          headers: {
-            "Content-Type": "application/json",
-          },
+      console.log(
+        "=================================================="
+      );
 
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-            password,
-          }),
+      console.log(
+        "[ADMIN LOGIN] START"
+      );
+
+      console.log(
+        "[ADMIN LOGIN] Email:",
+        email
+      );
+
+      console.log(
+        "[ADMIN LOGIN] Password present:",
+        Boolean(password)
+      );
+
+      console.log(
+        "[ADMIN LOGIN] API URL:",
+        `${API_URL}/admin/login`
+      );
+
+      console.log(
+        "[ADMIN LOGIN] Existing admin token:",
+        Boolean(
+          localStorage.getItem(
+            ADMIN_TOKEN_KEY
+          )
+        )
+      );
+
+      try {
+
+        const requestBody = {
+          email:
+            email
+              .trim()
+              .toLowerCase(),
+          password,
+        };
+
+        console.log(
+          "[ADMIN LOGIN] Request body:",
+          {
+            email:
+              requestBody.email,
+            password:
+              "[HIDDEN]",
+          }
+        );
+
+        console.log(
+          "[ADMIN LOGIN] Sending POST request..."
+        );
+
+        const response =
+          await fetch(
+            `${API_URL}/admin/login`,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  requestBody
+                ),
+            }
+          );
+
+        console.log(
+          "[ADMIN LOGIN] Response received"
+        );
+
+        console.log(
+          "[ADMIN LOGIN] Status:",
+          response.status
+        );
+
+        console.log(
+          "[ADMIN LOGIN] Status text:",
+          response.statusText
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "[ADMIN LOGIN] Response data:",
+          {
+            success:
+              data?.success,
+            message:
+              data?.message,
+            hasToken:
+              Boolean(data?.token),
+            admin:
+              data?.admin,
+          }
+        );
+
+        if (!response.ok) {
+
+          console.error(
+            "[ADMIN LOGIN] FAILED"
+          );
+
+          console.error(
+            "[ADMIN LOGIN] Status:",
+            response.status
+          );
+
+          console.error(
+            "[ADMIN LOGIN] Message:",
+            data?.message
+          );
+
+          return rejectWithValue(
+            data?.message ||
+              "Admin login failed."
+          );
         }
-      );
 
-      const data = await response.json();
+        console.log(
+          "[ADMIN LOGIN] HTTP 200 SUCCESS"
+        );
 
-      if (!response.ok) {
+        /* =================================================
+           SAVE BEARER TOKEN
+        ================================================= */
+
+        if (data?.token) {
+
+          console.log(
+            "[ADMIN LOGIN] Token received from backend"
+          );
+
+          console.log(
+            "[ADMIN LOGIN] Token length:",
+            data.token.length
+          );
+
+          saveAdminToken(
+            data.token
+          );
+
+          console.log(
+            "[ADMIN LOGIN] Token stored in localStorage"
+          );
+
+        } else {
+
+          console.error(
+            "[ADMIN LOGIN] TOKEN MISSING FROM BACKEND RESPONSE"
+          );
+
+          return rejectWithValue(
+            "Admin token was not received from server."
+          );
+        }
+
+        console.log(
+          "[ADMIN LOGIN] Final localStorage token:",
+          Boolean(
+            localStorage.getItem(
+              ADMIN_TOKEN_KEY
+            )
+          )
+        );
+
+        console.log(
+          "[ADMIN LOGIN] ADMIN:",
+          data?.admin
+        );
+
+        console.log(
+          "[ADMIN LOGIN] SUCCESS"
+        );
+
+        console.log(
+          "=================================================="
+        );
+
+        return data;
+
+      } catch (error) {
+
+        console.error(
+          "[ADMIN LOGIN] EXCEPTION:",
+          error
+        );
+
+        console.error(
+          "[ADMIN LOGIN] Error message:",
+          error?.message
+        );
+
+        console.log(
+          "=================================================="
+        );
+
         return rejectWithValue(
-          data?.message || "Admin login failed."
+          error?.message ||
+            "Unable to connect to server."
         );
       }
-
-      /* Save Bearer token */
-
-      if (data?.token) {
-        saveAdminToken(data.token);
-      } else {
-        return rejectWithValue(
-          "Admin token was not received from server."
-        );
-      }
-
-      return data;
-    } catch (error) {
-      return rejectWithValue(
-        error?.message ||
-          "Unable to connect to server."
-      );
     }
-  }
-);
+  );
 
 /* =====================================================
    GET ADMIN ME
    GET /api/admin/me
 ===================================================== */
 
-export const getAdminMe = createAsyncThunk(
-  "admin/getAdminMe",
-  async (_, { rejectWithValue }) => {
-    try {
-      const token = getAdminToken();
+export const getAdminMe =
+  createAsyncThunk(
+    "admin/getAdminMe",
+    async (
+      _,
+      { rejectWithValue }
+    ) => {
 
-      if (!token) {
-        return rejectWithValue(
-          "Admin authentication required."
-        );
-      }
-
-      const response = await fetch(
-        `${API_URL}/admin/me`,
-        {
-          method: "GET",
-
-          headers: getAuthHeaders(),
-        }
+      console.log(
+        "=================================================="
       );
 
-      const data = await response.json();
+      console.log(
+        "[ADMIN ME] START"
+      );
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          removeAdminToken();
+      try {
+
+        const token =
+          getAdminToken();
+
+        console.log(
+          "[ADMIN ME] Token present:",
+          Boolean(token)
+        );
+
+        if (!token) {
+
+          console.error(
+            "[ADMIN ME] NO TOKEN"
+          );
+
+          return rejectWithValue(
+            "Admin authentication required."
+          );
         }
 
+        console.log(
+          "[ADMIN ME] Calling:",
+          `${API_URL}/admin/me`
+        );
+
+        const headers =
+          getAuthHeaders();
+
+        console.log(
+          "[ADMIN ME] Headers:",
+          {
+            ...headers,
+            Authorization:
+              "Bearer TOKEN_PRESENT",
+          }
+        );
+
+        const response =
+          await fetch(
+            `${API_URL}/admin/me`,
+            {
+              method: "GET",
+              headers,
+            }
+          );
+
+        console.log(
+          "[ADMIN ME] Response status:",
+          response.status
+        );
+
+        console.log(
+          "[ADMIN ME] Response status text:",
+          response.statusText
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "[ADMIN ME] Response data:",
+          data
+        );
+
+        if (!response.ok) {
+
+          console.error(
+            "[ADMIN ME] FAILED"
+          );
+
+          console.error(
+            "[ADMIN ME] Status:",
+            response.status
+          );
+
+          console.error(
+            "[ADMIN ME] Message:",
+            data?.message
+          );
+
+          if (
+            response.status === 401
+          ) {
+
+            console.warn(
+              "[ADMIN ME] 401 received -> removing token"
+            );
+
+            removeAdminToken();
+          }
+
+          return rejectWithValue(
+            data?.message ||
+              "Unable to fetch admin."
+          );
+        }
+
+        console.log(
+          "[ADMIN ME] SUCCESS"
+        );
+
+        console.log(
+          "[ADMIN ME] Admin:",
+          data?.admin
+        );
+
+        console.log(
+          "=================================================="
+        );
+
+        return data;
+
+      } catch (error) {
+
+        console.error(
+          "[ADMIN ME] EXCEPTION:",
+          error
+        );
+
+        console.error(
+          "[ADMIN ME] Error message:",
+          error?.message
+        );
+
+        console.log(
+          "=================================================="
+        );
+
         return rejectWithValue(
-          data?.message ||
-            "Unable to fetch admin."
+          error?.message ||
+            "Unable to connect to server."
         );
       }
-
-      return data;
-    } catch (error) {
-      return rejectWithValue(
-        error?.message ||
-          "Unable to connect to server."
-      );
     }
-  }
-);
+  );
 
 /* =====================================================
    ADMIN LOGOUT
    POST /api/admin/logout
 ===================================================== */
 
-export const adminLogout = createAsyncThunk(
-  "admin/adminLogout",
-  async (_, { rejectWithValue }) => {
-    try {
-      const token = getAdminToken();
+export const adminLogout =
+  createAsyncThunk(
+    "admin/adminLogout",
+    async (
+      _,
+      { rejectWithValue }
+    ) => {
 
-      /*
-        Server logout request.
-        Bearer token is sent if available.
-      */
-
-      const response = await fetch(
-        `${API_URL}/admin/logout`,
-        {
-          method: "POST",
-
-          headers: getAuthHeaders(),
-        }
+      console.log(
+        "=================================================="
       );
 
-      const data = await response.json();
+      console.log(
+        "[ADMIN LOGOUT] START"
+      );
 
-      /* Always remove local token */
+      try {
 
-      removeAdminToken();
+        const token =
+          getAdminToken();
 
-      if (!response.ok) {
+        console.log(
+          "[ADMIN LOGOUT] Token present:",
+          Boolean(token)
+        );
+
+        console.log(
+          "[ADMIN LOGOUT] Calling:",
+          `${API_URL}/admin/logout`
+        );
+
+        const headers =
+          getAuthHeaders();
+
+        console.log(
+          "[ADMIN LOGOUT] Headers prepared"
+        );
+
+        const response =
+          await fetch(
+            `${API_URL}/admin/logout`,
+            {
+              method: "POST",
+              headers,
+            }
+          );
+
+        console.log(
+          "[ADMIN LOGOUT] Status:",
+          response.status
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "[ADMIN LOGOUT] Response:",
+          data
+        );
+
+        /* Always remove local token */
+
+        console.log(
+          "[ADMIN LOGOUT] Removing local token"
+        );
+
+        removeAdminToken();
+
+        if (!response.ok) {
+
+          console.error(
+            "[ADMIN LOGOUT] Server logout failed:",
+            data?.message
+          );
+
+          return rejectWithValue(
+            data?.message ||
+              "Unable to logout admin."
+          );
+        }
+
+        console.log(
+          "[ADMIN LOGOUT] SUCCESS"
+        );
+
+        console.log(
+          "=================================================="
+        );
+
+        return data;
+
+      } catch (error) {
+
+        console.error(
+          "[ADMIN LOGOUT] EXCEPTION:",
+          error
+        );
+
+        console.log(
+          "[ADMIN LOGOUT] Removing token anyway"
+        );
+
+        removeAdminToken();
+
         return rejectWithValue(
-          data?.message ||
-            "Unable to logout admin."
+          error?.message ||
+            "Unable to connect to server."
         );
       }
-
-      return data;
-    } catch (error) {
-      removeAdminToken();
-
-      return rejectWithValue(
-        error?.message ||
-          "Unable to connect to server."
-      );
     }
-  }
-);
+  );
 
 /* =====================================================
    GET ADMIN PROPERTIES
@@ -2376,46 +2913,134 @@ export const getAdminProperties =
       params = {},
       { rejectWithValue }
     ) => {
-      try {
-        const query = new URLSearchParams();
 
-        Object.entries(params).forEach(
+      console.log(
+        "=================================================="
+      );
+
+      console.log(
+        "[ADMIN PROPERTIES] START"
+      );
+
+      console.log(
+        "[ADMIN PROPERTIES] Params:",
+        params
+      );
+
+      try {
+
+        const query =
+          new URLSearchParams();
+
+        Object.entries(
+          params
+        ).forEach(
           ([key, value]) => {
+
+            console.log(
+              "[ADMIN PROPERTIES] Param:",
+              key,
+              value
+            );
+
             if (
               value !== undefined &&
               value !== null &&
               value !== ""
             ) {
-              query.append(key, value);
+
+              query.append(
+                key,
+                value
+              );
             }
           }
         );
 
-        const queryString = query.toString();
+        const queryString =
+          query.toString();
 
-        const response = await fetch(
+        const url =
           `${API_URL}/admin/properties${
             queryString
               ? `?${queryString}`
               : ""
-          }`,
-          {
-            method: "GET",
-            headers: getAuthHeaders(),
-          }
+          }`;
+
+        console.log(
+          "[ADMIN PROPERTIES] URL:",
+          url
         );
 
-        const data = await response.json();
+        const token =
+          getAdminToken();
+
+        if (!token) {
+
+          console.error(
+            "[ADMIN PROPERTIES] TOKEN MISSING"
+          );
+
+          return rejectWithValue(
+            "Admin authentication required."
+          );
+        }
+
+        const headers =
+          getAuthHeaders();
+
+        console.log(
+          "[ADMIN PROPERTIES] Sending request"
+        );
+
+        const response =
+          await fetch(
+            url,
+            {
+              method: "GET",
+              headers,
+            }
+          );
+
+        console.log(
+          "[ADMIN PROPERTIES] Status:",
+          response.status
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "[ADMIN PROPERTIES] Response:",
+          data
+        );
 
         if (!response.ok) {
+
+          console.error(
+            "[ADMIN PROPERTIES] FAILED:",
+            data?.message
+          );
+
           return rejectWithValue(
             data?.message ||
               "Unable to fetch properties."
           );
         }
 
+        console.log(
+          "[ADMIN PROPERTIES] SUCCESS"
+        );
+
         return data;
+
       } catch (error) {
+
+        console.error(
+          "[ADMIN PROPERTIES] EXCEPTION:",
+          error
+        );
+
         return rejectWithValue(
           error?.message ||
             "Unable to connect to server."
@@ -2432,27 +3057,97 @@ export const getAdminProperties =
 export const getPendingProperties =
   createAsyncThunk(
     "admin/getPendingProperties",
-    async (_, { rejectWithValue }) => {
+    async (
+      _,
+      { rejectWithValue }
+    ) => {
+
+      console.log(
+        "=================================================="
+      );
+
+      console.log(
+        "[PENDING PROPERTIES] START"
+      );
+
       try {
-        const response = await fetch(
-          `${API_URL}/admin/properties/pending`,
-          {
-            method: "GET",
-            headers: getAuthHeaders(),
-          }
+
+        const token =
+          getAdminToken();
+
+        console.log(
+          "[PENDING PROPERTIES] Token:",
+          Boolean(token)
         );
 
-        const data = await response.json();
+        if (!token) {
+
+          console.error(
+            "[PENDING PROPERTIES] TOKEN MISSING"
+          );
+
+          return rejectWithValue(
+            "Admin authentication required."
+          );
+        }
+
+        const url =
+          `${API_URL}/admin/properties/pending`;
+
+        console.log(
+          "[PENDING PROPERTIES] URL:",
+          url
+        );
+
+        const response =
+          await fetch(
+            url,
+            {
+              method: "GET",
+              headers:
+                getAuthHeaders(),
+            }
+          );
+
+        console.log(
+          "[PENDING PROPERTIES] Status:",
+          response.status
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "[PENDING PROPERTIES] Response:",
+          data
+        );
 
         if (!response.ok) {
+
+          console.error(
+            "[PENDING PROPERTIES] FAILED:",
+            data?.message
+          );
+
           return rejectWithValue(
             data?.message ||
               "Unable to fetch pending properties."
           );
         }
 
+        console.log(
+          "[PENDING PROPERTIES] SUCCESS"
+        );
+
         return data;
+
       } catch (error) {
+
+        console.error(
+          "[PENDING PROPERTIES] EXCEPTION:",
+          error
+        );
+
         return rejectWithValue(
           error?.message ||
             "Unable to connect to server."
@@ -2469,27 +3164,102 @@ export const getPendingProperties =
 export const getPropertyStats =
   createAsyncThunk(
     "admin/getPropertyStats",
-    async (_, { rejectWithValue }) => {
+    async (
+      _,
+      { rejectWithValue }
+    ) => {
+
+      console.log(
+        "=================================================="
+      );
+
+      console.log(
+        "[PROPERTY STATS] START"
+      );
+
       try {
-        const response = await fetch(
-          `${API_URL}/admin/properties/stats`,
-          {
-            method: "GET",
-            headers: getAuthHeaders(),
-          }
+
+        const token =
+          getAdminToken();
+
+        console.log(
+          "[PROPERTY STATS] Token present:",
+          Boolean(token)
         );
 
-        const data = await response.json();
+        if (!token) {
+
+          console.error(
+            "[PROPERTY STATS] TOKEN MISSING"
+          );
+
+          return rejectWithValue(
+            "Admin authentication required."
+          );
+        }
+
+        const url =
+          `${API_URL}/admin/properties/stats`;
+
+        console.log(
+          "[PROPERTY STATS] URL:",
+          url
+        );
+
+        const response =
+          await fetch(
+            url,
+            {
+              method: "GET",
+              headers:
+                getAuthHeaders(),
+            }
+          );
+
+        console.log(
+          "[PROPERTY STATS] Status:",
+          response.status
+        );
+
+        console.log(
+          "[PROPERTY STATS] Status text:",
+          response.statusText
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "[PROPERTY STATS] Response:",
+          data
+        );
 
         if (!response.ok) {
+
+          console.error(
+            "[PROPERTY STATS] FAILED:",
+            data?.message
+          );
+
           return rejectWithValue(
             data?.message ||
               "Unable to fetch property stats."
           );
         }
 
+        console.log(
+          "[PROPERTY STATS] SUCCESS"
+        );
+
         return data;
+
       } catch (error) {
+
+        console.error(
+          "[PROPERTY STATS] EXCEPTION:",
+          error
+        );
+
         return rejectWithValue(
           error?.message ||
             "Unable to connect to server."
@@ -2509,26 +3279,109 @@ export const approveProperty =
       id,
       { rejectWithValue }
     ) => {
+
+      console.log(
+        "=================================================="
+      );
+
+      console.log(
+        "[APPROVE PROPERTY] START"
+      );
+
+      console.log(
+        "[APPROVE PROPERTY] ID:",
+        id
+      );
+
       try {
-        const response = await fetch(
-          `${API_URL}/admin/properties/${id}/approve`,
-          {
-            method: "PATCH",
-            headers: getAuthHeaders(),
-          }
+
+        if (!id) {
+
+          console.error(
+            "[APPROVE PROPERTY] ID MISSING"
+          );
+
+          return rejectWithValue(
+            "Property ID is required."
+          );
+        }
+
+        const url =
+          `${API_URL}/admin/properties/${id}/approve`;
+
+        console.log(
+          "[APPROVE PROPERTY] URL:",
+          url
         );
 
-        const data = await response.json();
+        const token =
+          getAdminToken();
+
+        console.log(
+          "[APPROVE PROPERTY] Token:",
+          Boolean(token)
+        );
+
+        if (!token) {
+
+          console.error(
+            "[APPROVE PROPERTY] TOKEN MISSING"
+          );
+
+          return rejectWithValue(
+            "Admin authentication required."
+          );
+        }
+
+        const response =
+          await fetch(
+            url,
+            {
+              method: "PATCH",
+              headers:
+                getAuthHeaders(),
+            }
+          );
+
+        console.log(
+          "[APPROVE PROPERTY] Status:",
+          response.status
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "[APPROVE PROPERTY] Response:",
+          data
+        );
 
         if (!response.ok) {
+
+          console.error(
+            "[APPROVE PROPERTY] FAILED:",
+            data?.message
+          );
+
           return rejectWithValue(
             data?.message ||
               "Unable to approve property."
           );
         }
 
+        console.log(
+          "[APPROVE PROPERTY] SUCCESS"
+        );
+
         return data;
+
       } catch (error) {
+
+        console.error(
+          "[APPROVE PROPERTY] EXCEPTION:",
+          error
+        );
+
         return rejectWithValue(
           error?.message ||
             "Unable to connect to server."
@@ -2551,34 +3404,153 @@ export const rejectProperty =
       },
       { rejectWithValue }
     ) => {
+
+      console.log(
+        "=================================================="
+      );
+
+      console.log(
+        "[REJECT PROPERTY] START"
+      );
+
+      console.log(
+        "[REJECT PROPERTY] ID:",
+        id
+      );
+
+      console.log(
+        "[REJECT PROPERTY] Reason:",
+        reason
+      );
+
       try {
-        const response = await fetch(
-          `${API_URL}/admin/properties/${id}/reject`,
+
+        if (!id) {
+
+          console.error(
+            "[REJECT PROPERTY] ID MISSING"
+          );
+
+          return rejectWithValue(
+            "Property ID is required."
+          );
+        }
+
+        const url =
+          `${API_URL}/admin/properties/${id}/reject`;
+
+        console.log(
+          "[REJECT PROPERTY] URL:",
+          url
+        );
+
+        const token =
+          getAdminToken();
+
+        console.log(
+          "[REJECT PROPERTY] Token:",
+          Boolean(token)
+        );
+
+        if (!token) {
+
+          console.error(
+            "[REJECT PROPERTY] TOKEN MISSING"
+          );
+
+          return rejectWithValue(
+            "Admin authentication required."
+          );
+        }
+
+        const headers =
+          getAuthHeaders({
+            "Content-Type":
+              "application/json",
+          });
+
+        console.log(
+          "[REJECT PROPERTY] Headers:",
           {
-            method: "PATCH",
-
-            headers: getAuthHeaders({
-              "Content-Type":
-                "application/json",
-            }),
-
-            body: JSON.stringify({
-              reason,
-            }),
+            ...headers,
+            Authorization:
+              "Bearer TOKEN_PRESENT",
           }
         );
 
-        const data = await response.json();
+        const body = {
+          reason,
+        };
+
+        console.log(
+          "[REJECT PROPERTY] Body:",
+          body
+        );
+
+        const response =
+          await fetch(
+            url,
+            {
+              method: "PATCH",
+
+              headers,
+
+              body:
+                JSON.stringify(
+                  body
+                ),
+            }
+          );
+
+        console.log(
+          "[REJECT PROPERTY] Status:",
+          response.status
+        );
+
+        console.log(
+          "[REJECT PROPERTY] Status text:",
+          response.statusText
+        );
+
+        const data =
+          await response.json();
+
+        console.log(
+          "[REJECT PROPERTY] Response:",
+          data
+        );
 
         if (!response.ok) {
+
+          console.error(
+            "[REJECT PROPERTY] FAILED:",
+            data?.message
+          );
+
           return rejectWithValue(
             data?.message ||
               "Unable to reject property."
           );
         }
 
+        console.log(
+          "[REJECT PROPERTY] SUCCESS"
+        );
+
         return data;
+
       } catch (error) {
+
+        console.error(
+          "[REJECT PROPERTY] EXCEPTION:",
+          error
+        );
+
+        console.error(
+          "[REJECT PROPERTY] Error message:",
+          error?.message
+        );
+
         return rejectWithValue(
           error?.message ||
             "Unable to connect to server."
