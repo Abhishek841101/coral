@@ -1,11 +1,15 @@
+
 import { useEffect, useState } from "react";
 import {
   Link,
-  useLocation,
   useNavigate,
 } from "react-router-dom";
 
 import { useDispatch, useSelector } from "react-redux";
+
+/* =====================================================
+   USER AUTH
+===================================================== */
 
 import {
   loginUser,
@@ -16,62 +20,113 @@ import {
   selectUser,
 } from "../features/auth/authSlice";
 
+/* =====================================================
+   ADMIN AUTH
+===================================================== */
+
+import {
+  adminLogin,
+  selectAdminAuthenticated,
+  selectAdminLoginLoading,
+  selectAdminLoginError,
+} from "../features/admin/adminSlice";
+
+
 export default function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useDispatch();
 
-  const isAuthenticated = useSelector(
+  /* =====================================================
+     USER STATE
+  ===================================================== */
+
+  const isUserAuthenticated = useSelector(
     selectIsAuthenticated
   );
 
   const user = useSelector(selectUser);
 
-  const loading = useSelector(
+  const userLoading = useSelector(
     selectLoginLoading
   );
 
-  const error = useSelector(
+  const userError = useSelector(
     selectLoginError
   );
+
+
+  /* =====================================================
+     ADMIN STATE
+  ===================================================== */
+
+  const isAdminAuthenticated = useSelector(
+    selectAdminAuthenticated
+  );
+
+  const adminLoading = useSelector(
+    selectAdminLoginLoading
+  );
+
+  const adminError = useSelector(
+    selectAdminLoginError
+  );
+
+
+  /* =====================================================
+     COMBINED STATE
+  ===================================================== */
+
+  const loading =
+    userLoading || adminLoading;
+
+  const error =
+    userError || adminError;
+
+
+  /* =====================================================
+     FORM
+  ===================================================== */
 
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
 
+
   /* =====================================================
      REDIRECT AFTER LOGIN
-     
-     USER + ADMIN BOTH GO TO HOME
-     
-     Navbar will decide what to show
-     according to user.role.
+
+     USER  -> HOME
+     ADMIN -> HOME
+
+     Navbar / app logic can decide what to show
+     according to role.
   ===================================================== */
 
   useEffect(() => {
-    if (!isAuthenticated || !user) {
+    if (
+      isUserAuthenticated &&
+      user
+    ) {
+      navigate("/", {
+        replace: true,
+      });
+
       return;
     }
 
-    /*
-      Login ke baad sabko Home par bhejna hai.
-
-      user.role:
-        "user"  -> Home
-        "admin" -> Home
-
-      Home ka Navbar role check karega.
-    */
-
-    navigate("/", {
-      replace: true,
-    });
+    if (isAdminAuthenticated) {
+      navigate("/", {
+        replace: true,
+      });
+    }
   }, [
-    isAuthenticated,
+    isUserAuthenticated,
+    isAdminAuthenticated,
     user,
     navigate,
   ]);
+
 
   /* =====================================================
      INPUT CHANGE
@@ -88,13 +143,25 @@ export default function Login() {
       [name]: value,
     }));
 
-    if (error) {
+    if (userError) {
       dispatch(clearLoginError());
     }
   };
 
+
   /* =====================================================
-     SUBMIT
+     LOGIN
+
+     SAME LOGIN PAGE
+
+     1. Try USER login
+     2. If user login fails, try ADMIN login
+
+     Admin login sets:
+       coral_admin_token
+
+     User login sets:
+       coral_token
   ===================================================== */
 
   const handleSubmit = async (e) => {
@@ -110,6 +177,15 @@ export default function Login() {
       return;
     }
 
+    /* Prevent duplicate request */
+    if (loading) {
+      return;
+    }
+
+    /* =================================================
+       FIRST: USER LOGIN
+    ================================================= */
+
     try {
       await dispatch(
         loginUser({
@@ -119,16 +195,62 @@ export default function Login() {
       ).unwrap();
 
       /*
-        Redirect useEffect karega.
-        Admin aur user dono Home par jayenge.
+        User login successful.
+
+        authSlice will update:
+          isAuthenticated
+          user
+
+        useEffect will redirect to "/".
       */
-    } catch (loginError) {
+
+      return;
+
+    } catch (userLoginError) {
+
+      console.log(
+        "Normal user login failed. Trying admin login..."
+      );
+    }
+
+
+    /* =================================================
+       SECOND: ADMIN LOGIN
+    ================================================= */
+
+    try {
+      await dispatch(
+        adminLogin({
+          email,
+          password,
+        })
+      ).unwrap();
+
+      /*
+        Admin login successful.
+
+        adminSlice will update:
+          isAuthenticated
+
+        Backend sets:
+          coral_admin_token
+
+        useEffect will redirect to "/".
+      */
+
+    } catch (adminLoginError) {
+
       console.error(
-        "Login failed:",
-        loginError
+        "User/Admin login failed:",
+        adminLoginError
       );
     }
   };
+
+
+  /* =====================================================
+     RENDER
+  ===================================================== */
 
   return (
     <main className="min-h-screen bg-[#F8F9F7]">
@@ -309,7 +431,9 @@ export default function Login() {
                 </div>
 
 
-                {/* LOGIN BUTTON */}
+                {/* =================================================
+                    LOGIN BUTTON
+                ================================================= */}
 
                 <button
                   type="submit"
@@ -358,3 +482,4 @@ export default function Login() {
     </main>
   );
 }
+
