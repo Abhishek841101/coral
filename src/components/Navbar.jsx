@@ -9,6 +9,11 @@ import {
   selectLogoutLoading,
 } from "../features/auth/authSlice";
 
+import {
+  adminLogout,
+  selectAdminAuthenticated,
+} from "../features/admin/adminSlice";
+
 const navItems = [
   {
     label: "Properties",
@@ -24,18 +29,63 @@ export default function Navbar() {
   const dispatch = useDispatch();
 
   /* =====================================================
-     AUTH STATE
+     NORMAL USER AUTH STATE
   ===================================================== */
 
-  const isAuthenticated = useSelector(
+  const userAuthenticated = useSelector(
     selectIsAuthenticated
   );
 
   const user = useSelector(selectUser);
 
-  const logoutLoading = useSelector(
+  const userLogoutLoading = useSelector(
     selectLogoutLoading
   );
+
+  /* =====================================================
+     ADMIN AUTH STATE
+  ===================================================== */
+
+  const adminAuthenticated = useSelector(
+    selectAdminAuthenticated
+  );
+
+  /*
+    Direct selector use kar rahe hain taaki
+    selectAdmin export na hone par bhi error na aaye.
+  */
+  const admin = useSelector(
+    (state) => state.admin?.admin
+  );
+
+  /*
+    Admin logout loading bhi direct state se.
+    Agar slice me ye field nahi hai to false rahega.
+  */
+  const adminLogoutLoading = useSelector(
+    (state) => state.admin?.logoutLoading || false
+  );
+
+  /* =====================================================
+     COMBINED AUTH STATE
+  ===================================================== */
+
+  const isAuthenticated =
+    userAuthenticated || adminAuthenticated;
+
+  /*
+    Admin authenticated hai to admin ka data show hoga,
+    warna normal user ka data.
+  */
+  const currentUser = adminAuthenticated
+    ? admin
+    : user;
+
+  /*
+    Logout loading dono me se kisi ka bhi ho sakta hai.
+  */
+  const logoutLoading =
+    userLogoutLoading || adminLogoutLoading;
 
   /* =====================================================
      MENU
@@ -89,7 +139,7 @@ export default function Navbar() {
     setProfileOpen(false);
     closeMenu();
 
-    if (user?.role === "admin") {
+    if (currentUser?.role === "admin") {
       navigate("/admin");
       return;
     }
@@ -102,19 +152,43 @@ export default function Navbar() {
   ===================================================== */
 
   const handleLogout = async () => {
-    const result = await dispatch(
-      logoutUser()
-    );
+    try {
+      let result;
 
-    if (
-      logoutUser.fulfilled.match(result)
-    ) {
-      setProfileOpen(false);
-      closeMenu();
+      /*
+        Admin logged in hai to adminLogout chalega.
+        Normal user logged in hai to logoutUser chalega.
+      */
+      if (adminAuthenticated) {
+        result = await dispatch(adminLogout());
 
-      navigate("/", {
-        replace: true,
-      });
+        if (adminLogout.fulfilled.match(result)) {
+          setProfileOpen(false);
+          closeMenu();
+
+          navigate("/", {
+            replace: true,
+          });
+        }
+
+        return;
+      }
+
+      /*
+        NORMAL USER LOGOUT
+      */
+      result = await dispatch(logoutUser());
+
+      if (logoutUser.fulfilled.match(result)) {
+        setProfileOpen(false);
+        closeMenu();
+
+        navigate("/", {
+          replace: true,
+        });
+      }
+    } catch (error) {
+      console.error("[NAVBAR LOGOUT ERROR]", error);
     }
   };
 
@@ -215,43 +289,42 @@ export default function Navbar() {
                   type="button"
                   onClick={() =>
                     setProfileOpen(
-                      (previous) =>
-                        !previous
+                      (previous) => !previous
                     )
                   }
                   className="flex items-center gap-3 rounded-full border border-[#E5E7EB] bg-white py-1.5 pl-2 pr-4 transition hover:bg-[#E9F8F0]"
                 >
 
-                  {/* AVATAR */}
+                  {/* ================= AVATAR ================= */}
 
                   <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-[#18C66A] text-sm font-black text-[#073F32]">
 
-                    {user?.avatar ? (
+                    {currentUser?.avatar ? (
                       <img
-                        src={user.avatar}
-                        alt={user.name || "User"}
+                        src={currentUser.avatar}
+                        alt={
+                          currentUser.name || "User"
+                        }
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      user?.name
+                      currentUser?.name
                         ?.charAt(0)
                         ?.toUpperCase() || "U"
                     )}
 
                   </div>
 
-                  {/* NAME */}
+                  {/* ================= NAME ================= */}
 
                   <div className="max-w-[130px] text-left">
 
                     <p className="truncate text-sm font-extrabold text-[#073F32]">
-                      {user?.name ||
-                        "User"}
+                      {currentUser?.name || "User"}
                     </p>
 
                     <p className="text-[10px] font-semibold capitalize text-gray-400">
-                      {user?.role ||
-                        "user"}
+                      {currentUser?.role || "user"}
                     </p>
 
                   </div>
@@ -267,6 +340,8 @@ export default function Navbar() {
                 {profileOpen && (
                   <div className="absolute right-0 top-[52px] w-56 overflow-hidden rounded-[22px] border border-[#E5E7EB] bg-white p-2 shadow-xl">
 
+                    {/* PROFILE */}
+
                     <button
                       type="button"
                       onClick={handleProfile}
@@ -275,17 +350,21 @@ export default function Navbar() {
                       My Profile
                     </button>
 
+                    {/* DASHBOARD */}
+
                     <button
                       type="button"
                       onClick={handleDashboard}
                       className="w-full rounded-xl px-4 py-3 text-left text-sm font-bold text-[#073F32] transition hover:bg-[#E9F8F0]"
                     >
-                      {user?.role === "admin"
+                      {currentUser?.role === "admin"
                         ? "Admin Dashboard"
                         : "My Dashboard"}
                     </button>
 
                     <div className="my-1 border-t border-[#E5E7EB]" />
+
+                    {/* LOGOUT */}
 
                     <button
                       type="button"
@@ -314,8 +393,7 @@ export default function Navbar() {
             type="button"
             onClick={() =>
               setMenuOpen(
-                (previous) =>
-                  !previous
+                (previous) => !previous
               )
             }
             aria-label={
@@ -396,20 +474,22 @@ export default function Navbar() {
             {isAuthenticated && (
               <div className="mt-3 rounded-[22px] bg-[#F8F9F7] p-3">
 
-                {/* USER */}
+                {/* ================= USER ================= */}
 
                 <div className="flex items-center gap-3 px-2 py-2">
 
                   <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#18C66A] font-black text-[#073F32]">
 
-                    {user?.avatar ? (
+                    {currentUser?.avatar ? (
                       <img
-                        src={user.avatar}
-                        alt={user.name || "User"}
+                        src={currentUser.avatar}
+                        alt={
+                          currentUser.name || "User"
+                        }
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      user?.name
+                      currentUser?.name
                         ?.charAt(0)
                         ?.toUpperCase() || "U"
                     )}
@@ -419,19 +499,18 @@ export default function Navbar() {
                   <div className="min-w-0">
 
                     <p className="truncate text-sm font-extrabold text-[#073F32]">
-                      {user?.name ||
-                        "User"}
+                      {currentUser?.name || "User"}
                     </p>
 
                     <p className="truncate text-xs text-gray-400">
-                      {user?.email}
+                      {currentUser?.email || ""}
                     </p>
 
                   </div>
 
                 </div>
 
-                {/* PROFILE */}
+                {/* ================= PROFILE ================= */}
 
                 <button
                   type="button"
@@ -441,19 +520,19 @@ export default function Navbar() {
                   My Profile
                 </button>
 
-                {/* DASHBOARD */}
+                {/* ================= DASHBOARD ================= */}
 
                 <button
                   type="button"
                   onClick={handleDashboard}
                   className="w-full rounded-xl px-4 py-3 text-left text-sm font-bold text-[#073F32] hover:bg-white"
                 >
-                  {user?.role === "admin"
+                  {currentUser?.role === "admin"
                     ? "Admin Dashboard"
                     : "My Dashboard"}
                 </button>
 
-                {/* LOGOUT */}
+                {/* ================= LOGOUT ================= */}
 
                 <button
                   type="button"
@@ -469,7 +548,7 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* CURRENCY */}
+            {/* ================= CURRENCY ================= */}
 
             <button
               type="button"
