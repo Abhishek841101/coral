@@ -1,498 +1,19 @@
-
-// import { useEffect, useState } from "react";
-// import {
-//   Link,
-//   useNavigate,
-// } from "react-router-dom";
-
-// import { useDispatch, useSelector } from "react-redux";
-
-// /* =====================================================
-//    USER AUTH
-// ===================================================== */
-
-// import {
-//   loginUser,
-//   clearLoginError,
-//   selectIsAuthenticated,
-//   selectLoginLoading,
-//   selectLoginError,
-//   selectUser,
-// } from "../features/auth/authSlice";
-
-// /* =====================================================
-//    ADMIN AUTH
-// ===================================================== */
-
-// import {
-//   adminLogin,
-//   selectAdminAuthenticated,
-//   selectAdminLoginLoading,
-//   selectAdminLoginError,
-// } from "../features/admin/adminSlice";
-
-
-// export default function Login() {
-//   const navigate = useNavigate();
-//   const dispatch = useDispatch();
-
-//   /* =====================================================
-//      USER STATE
-//   ===================================================== */
-
-//   const isUserAuthenticated = useSelector(
-//     selectIsAuthenticated
-//   );
-
-//   const user = useSelector(selectUser);
-
-//   const userLoading = useSelector(
-//     selectLoginLoading
-//   );
-
-//   const userError = useSelector(
-//     selectLoginError
-//   );
-
-
-//   /* =====================================================
-//      ADMIN STATE
-//   ===================================================== */
-
-//   const isAdminAuthenticated = useSelector(
-//     selectAdminAuthenticated
-//   );
-
-//   const adminLoading = useSelector(
-//     selectAdminLoginLoading
-//   );
-
-//   const adminError = useSelector(
-//     selectAdminLoginError
-//   );
-
-
-//   /* =====================================================
-//      COMBINED STATE
-//   ===================================================== */
-
-//   const loading =
-//     userLoading || adminLoading;
-
-//   const error =
-//     userError || adminError;
-
-
-//   /* =====================================================
-//      FORM
-//   ===================================================== */
-
-//   const [form, setForm] = useState({
-//     email: "",
-//     password: "",
-//   });
-
-
-//   /* =====================================================
-//      REDIRECT AFTER LOGIN
-
-//      USER  -> HOME
-//      ADMIN -> HOME
-
-//      Navbar / app logic can decide what to show
-//      according to role.
-//   ===================================================== */
-
-//   useEffect(() => {
-//     if (
-//       isUserAuthenticated &&
-//       user
-//     ) {
-//       navigate("/", {
-//         replace: true,
-//       });
-
-//       return;
-//     }
-
-//     if (isAdminAuthenticated) {
-//       navigate("/", {
-//         replace: true,
-//       });
-//     }
-//   }, [
-//     isUserAuthenticated,
-//     isAdminAuthenticated,
-//     user,
-//     navigate,
-//   ]);
-
-
-//   /* =====================================================
-//      INPUT CHANGE
-//   ===================================================== */
-
-//   const handleChange = (e) => {
-//     const {
-//       name,
-//       value,
-//     } = e.target;
-
-//     setForm((previous) => ({
-//       ...previous,
-//       [name]: value,
-//     }));
-
-//     if (userError) {
-//       dispatch(clearLoginError());
-//     }
-//   };
-
-
-//   /* =====================================================
-//      LOGIN
-
-//      SAME LOGIN PAGE
-
-//      1. Try USER login
-//      2. If user login fails, try ADMIN login
-
-//      Admin login sets:
-//        coral_admin_token
-
-//      User login sets:
-//        coral_token
-//   ===================================================== */
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     const email =
-//       form.email.trim().toLowerCase();
-
-//     const password =
-//       form.password;
-
-//     if (!email || !password) {
-//       return;
-//     }
-
-//     /* Prevent duplicate request */
-//     if (loading) {
-//       return;
-//     }
-
-//     /* =================================================
-//        FIRST: USER LOGIN
-//     ================================================= */
-
-//     try {
-//       await dispatch(
-//         loginUser({
-//           email,
-//           password,
-//         })
-//       ).unwrap();
-
-//       /*
-//         User login successful.
-
-//         authSlice will update:
-//           isAuthenticated
-//           user
-
-//         useEffect will redirect to "/".
-//       */
-
-//       return;
-
-//     } catch (userLoginError) {
-
-//       console.log(
-//         "Normal user login failed. Trying admin login..."
-//       );
-//     }
-
-
-//     /* =================================================
-//        SECOND: ADMIN LOGIN
-//     ================================================= */
-
-//     try {
-//       await dispatch(
-//         adminLogin({
-//           email,
-//           password,
-//         })
-//       ).unwrap();
-
-//       /*
-//         Admin login successful.
-
-//         adminSlice will update:
-//           isAuthenticated
-
-//         Backend sets:
-//           coral_admin_token
-
-//         useEffect will redirect to "/".
-//       */
-
-//     } catch (adminLoginError) {
-
-//       console.error(
-//         "User/Admin login failed:",
-//         adminLoginError
-//       );
-//     }
-//   };
-
-
-//   /* =====================================================
-//      RENDER
-//   ===================================================== */
-
-//   return (
-//     <main className="min-h-screen bg-[#F8F9F7]">
-
-//       {/* =================================================
-//           HEADER
-//       ================================================= */}
-
-//       <header className="border-b border-[#E5E7EB] bg-white">
-
-//         <div className="mx-auto max-w-7xl px-5 py-4 sm:px-8">
-
-//           <Link
-//             to="/"
-//             className="flex w-fit items-center gap-2.5"
-//           >
-
-//             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#18C66A] font-black text-[#073F32]">
-//               C
-//             </div>
-
-//             <span className="text-xl font-black text-[#073F32]">
-//               Coral
-//             </span>
-
-//           </Link>
-
-//         </div>
-
-//       </header>
-
-
-//       {/* =================================================
-//           LOGIN
-//       ================================================= */}
-
-//       <section className="flex min-h-[calc(100vh-73px)] items-center justify-center px-5 py-12">
-
-//         <div className="grid w-full max-w-5xl overflow-hidden rounded-[32px] bg-white shadow-xl lg:grid-cols-2">
-
-//           {/* =================================================
-//               LEFT SIDE
-//           ================================================= */}
-
-//           <div className="hidden bg-[#073F32] p-10 text-white lg:flex lg:flex-col lg:justify-between">
-
-//             <div>
-
-//               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#18C66A] font-black text-[#073F32]">
-//                 C
-//               </div>
-
-//               <h1 className="mt-10 max-w-sm text-4xl font-black leading-tight">
-//                 Your next stay starts here.
-//               </h1>
-
-//               <p className="mt-5 max-w-sm text-sm leading-7 text-white/65">
-//                 Find rooms, flats and homes across
-//                 Nagpur with Coral.
-//               </p>
-
-//             </div>
-
-
-//             <div className="rounded-[24px] border border-white/10 bg-white/5 p-5">
-
-//               <p className="text-sm font-bold">
-//                 Coral stays
-//               </p>
-
-//               <p className="mt-1 text-xs leading-5 text-white/55">
-//                 Search, explore and book your
-//                 preferred property from one place.
-//               </p>
-
-//             </div>
-
-//           </div>
-
-
-//           {/* =================================================
-//               RIGHT SIDE
-//           ================================================= */}
-
-//           <div className="p-7 sm:p-10">
-
-//             <div className="mx-auto max-w-md">
-
-//               <p className="text-sm font-extrabold uppercase tracking-[0.15em] text-[#18A85B]">
-//                 Welcome back
-//               </p>
-
-//               <h2 className="mt-3 text-3xl font-black text-[#073F32]">
-//                 Login to Coral
-//               </h2>
-
-//               <p className="mt-2 text-sm leading-6 text-gray-500">
-//                 Access your bookings, profile and
-//                 property activity.
-//               </p>
-
-
-//               {/* =================================================
-//                   ERROR
-//               ================================================= */}
-
-//               {error && (
-//                 <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
-
-//                   <p className="text-sm font-semibold text-red-600">
-//                     {error}
-//                   </p>
-
-//                 </div>
-//               )}
-
-
-//               {/* =================================================
-//                   FORM
-//               ================================================= */}
-
-//               <form
-//                 onSubmit={handleSubmit}
-//                 className="mt-8"
-//               >
-
-//                 {/* EMAIL */}
-
-//                 <div>
-
-//                   <label
-//                     htmlFor="email"
-//                     className="text-xs font-extrabold text-gray-500"
-//                   >
-//                     EMAIL ADDRESS
-//                   </label>
-
-//                   <input
-//                     id="email"
-//                     type="email"
-//                     name="email"
-//                     value={form.email}
-//                     onChange={handleChange}
-//                     placeholder="you@example.com"
-//                     autoComplete="email"
-//                     required
-//                     disabled={loading}
-//                     className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-semibold text-[#073F32] outline-none transition focus:border-[#18C66A] focus:ring-2 focus:ring-[#18C66A]/10 disabled:bg-gray-100"
-//                   />
-
-//                 </div>
-
-
-//                 {/* PASSWORD */}
-
-//                 <div className="mt-5">
-
-//                   <label
-//                     htmlFor="password"
-//                     className="text-xs font-extrabold text-gray-500"
-//                   >
-//                     PASSWORD
-//                   </label>
-
-//                   <input
-//                     id="password"
-//                     type="password"
-//                     name="password"
-//                     value={form.password}
-//                     onChange={handleChange}
-//                     placeholder="Enter your password"
-//                     autoComplete="current-password"
-//                     required
-//                     disabled={loading}
-//                     className="mt-2 w-full rounded-2xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-semibold text-[#073F32] outline-none transition focus:border-[#18C66A] focus:ring-2 focus:ring-[#18C66A]/10 disabled:bg-gray-100"
-//                   />
-
-//                 </div>
-
-
-//                 {/* =================================================
-//                     LOGIN BUTTON
-//                 ================================================= */}
-
-//                 <button
-//                   type="submit"
-//                   disabled={loading}
-//                   className="mt-7 w-full rounded-full bg-[#18C66A] px-6 py-4 text-sm font-black text-[#073F32] transition hover:bg-[#073F32] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-//                 >
-
-//                   {loading
-//                     ? "Signing in..."
-//                     : "Login to Coral"}
-
-//                 </button>
-
-//               </form>
-
-
-//               {/* =================================================
-//                   REGISTER
-//               ================================================= */}
-
-//               <div className="mt-7 text-center">
-
-//                 <p className="text-sm text-gray-500">
-
-//                   Don't have an account?{" "}
-
-//                   <Link
-//                     to="/register"
-//                     className="font-extrabold text-[#073F32] hover:text-[#18A85B]"
-//                   >
-//                     Create account
-//                   </Link>
-
-//                 </p>
-
-//               </div>
-
-//             </div>
-
-//           </div>
-
-//         </div>
-
-//       </section>
-
-//     </main>
-//   );
-// }
-
-
-
-
 import { useEffect, useState } from "react";
+
 import {
   Link,
   useLocation,
   useNavigate,
 } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+
+import {
+  useDispatch,
+  useSelector,
+} from "react-redux";
+
+/* =====================================================
+   USER AUTH
+===================================================== */
 
 import {
   loginUser,
@@ -503,6 +24,10 @@ import {
   selectUser,
 } from "../features/auth/authSlice";
 
+/* =====================================================
+   ADMIN AUTH
+===================================================== */
+
 import {
   adminLogin,
   selectAdminAuthenticated,
@@ -510,16 +35,26 @@ import {
   selectAdminLoginError,
 } from "../features/admin/adminSlice";
 
+/* =====================================================
+   LOGIN PAGE
+===================================================== */
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
 
+  /* =====================================================
+     USER STATE
+  ===================================================== */
+
   const isUserAuthenticated = useSelector(
     selectIsAuthenticated
   );
 
-  const user = useSelector(selectUser);
+  const user = useSelector(
+    selectUser
+  );
 
   const userLoading = useSelector(
     selectLoginLoading
@@ -528,6 +63,10 @@ export default function Login() {
   const userError = useSelector(
     selectLoginError
   );
+
+  /* =====================================================
+     ADMIN STATE
+  ===================================================== */
 
   const isAdminAuthenticated = useSelector(
     selectAdminAuthenticated
@@ -541,24 +80,60 @@ export default function Login() {
     selectAdminLoginError
   );
 
+  /* =====================================================
+     FORM
+  ===================================================== */
+
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
 
+  /* =====================================================
+     LOCAL ERROR
+
+     IMPORTANT:
+     Admin login failure is NOT shown immediately.
+
+     Because every normal user first goes through
+     admin login attempt.
+
+     Only if BOTH admin + user login fail,
+     we show error.
+  ===================================================== */
+
   const [loginError, setLoginError] =
     useState("");
 
+  /* =====================================================
+     LOADING
+  ===================================================== */
+
   const loading =
-    userLoading || adminLoading;
+    userLoading ||
+    adminLoading;
 
   /* =====================================================
-     LOGIN MOUNT
+     DEBUG - COMPONENT MOUNT
   ===================================================== */
 
   useEffect(() => {
     console.log(
+      "=================================================="
+    );
+
+    console.log(
       "[LOGIN] Login page mounted"
+    );
+
+    console.log(
+      "[LOGIN] Current URL:",
+      window.location.href
+    );
+
+    console.log(
+      "[LOGIN] Current path:",
+      window.location.pathname
     );
 
     console.log(
@@ -566,6 +141,15 @@ export default function Login() {
       Boolean(
         localStorage.getItem(
           "coral_admin_token"
+        )
+      )
+    );
+
+    console.log(
+      "[LOGIN] User token exists:",
+      Boolean(
+        localStorage.getItem(
+          "coral_token"
         )
       )
     );
@@ -580,6 +164,10 @@ export default function Login() {
       isAdminAuthenticated
     );
 
+    console.log(
+      "=================================================="
+    );
+
     return () => {
       console.log(
         "[LOGIN] Login page unmounted"
@@ -589,118 +177,181 @@ export default function Login() {
 
   /* =====================================================
      REDIRECT AFTER AUTH
+
+     ADMIN -> HOME
+     USER  -> HOME
   ===================================================== */
 
   useEffect(() => {
     console.log(
-      "[LOGIN REDIRECT CHECK]",
-      {
-        isUserAuthenticated,
-        isAdminAuthenticated,
-        user,
-      }
+      "=================================================="
     );
 
-    if (isAdminAuthenticated) {
+    console.log(
+      "[LOGIN REDIRECT CHECK]"
+    );
+
+    console.log(
+      "[LOGIN REDIRECT CHECK] User authenticated:",
+      isUserAuthenticated
+    );
+
+    console.log(
+      "[LOGIN REDIRECT CHECK] Admin authenticated:",
+      isAdminAuthenticated
+    );
+
+    console.log(
+      "[LOGIN REDIRECT CHECK] User:",
+      user
+    );
+
+    /* ===================================================
+       ADMIN -> HOME
+    =================================================== */
+
+    if (
+      isAdminAuthenticated
+    ) {
       console.log(
-        "[LOGIN] Admin authenticated"
+        "[LOGIN] ADMIN AUTHENTICATED"
       );
 
       console.log(
-        "[LOGIN] Navigating -> /admin/dashboard"
+        "[LOGIN] Admin role detected"
+      );
+
+      console.log(
+        "[LOGIN] Redirecting ADMIN -> HOME /"
       );
 
       navigate(
-        "/admin/dashboard",
-        { replace: true }
+        "/",
+        {
+          replace: true,
+        }
+      );
+
+      console.log(
+        "[LOGIN] Admin successfully redirected to HOME"
+      );
+
+      console.log(
+        "=================================================="
       );
 
       return;
     }
+
+    /* ===================================================
+       USER -> HOME
+    =================================================== */
 
     if (
       isUserAuthenticated &&
       user
     ) {
       console.log(
-        "[LOGIN] User authenticated:",
+        "[LOGIN] USER AUTHENTICATED"
+      );
+
+      console.log(
+        "[LOGIN] User:",
         user
       );
 
-      if (
-        user.role === "admin"
-      ) {
-        console.log(
-          "[LOGIN] User state contains admin role"
-        );
-
-        console.log(
-          "[LOGIN] Navigating -> /admin/dashboard"
-        );
-
-        navigate(
-          "/admin/dashboard",
-          { replace: true }
-        );
-
-        return;
-      }
-
-      const redirectTo =
-        location.state?.from || "/";
+      console.log(
+        "[LOGIN] User role:",
+        user.role
+      );
 
       console.log(
-        "[LOGIN] Normal user redirect ->",
-        redirectTo
+        "[LOGIN] Redirecting USER -> HOME /"
       );
 
       navigate(
-        redirectTo,
-        { replace: true }
+        "/",
+        {
+          replace: true,
+        }
       );
+
+      console.log(
+        "[LOGIN] User successfully redirected to HOME"
+      );
+
+      console.log(
+        "=================================================="
+      );
+
+      return;
     }
+
+    console.log(
+      "[LOGIN REDIRECT CHECK] No authenticated account yet"
+    );
+
+    console.log(
+      "=================================================="
+    );
   }, [
     isUserAuthenticated,
     isAdminAuthenticated,
     user,
     navigate,
-    location.state,
   ]);
 
   /* =====================================================
-     ERROR WATCH
+     ERROR DEBUG ONLY
+
+     DO NOT SHOW ADMIN ERROR HERE.
+
+     Admin error is expected for normal users.
+  ===================================================== */
+
+  useEffect(() => {
+    if (adminError) {
+      console.log(
+        "[LOGIN] Admin login attempt failed."
+      );
+
+      console.log(
+        "[LOGIN] This is NORMAL for a regular user."
+      );
+
+      console.log(
+        "[LOGIN] Admin error will NOT be shown to user:"
+      );
+
+      console.log(
+        adminError
+      );
+    }
+  }, [adminError]);
+
+  /* =====================================================
+     USER ERROR DEBUG
+
+     We don't immediately show it because admin login
+     may have already failed.
+
+     Final error is handled in handleSubmit.
   ===================================================== */
 
   useEffect(() => {
     if (userError) {
-      console.error(
-        "[LOGIN] User auth error:",
-        userError
+      console.log(
+        "[LOGIN] Normal user login error:"
       );
 
-      setLoginError(userError);
+      console.log(
+        userError
+      );
     }
   }, [userError]);
 
-  useEffect(() => {
-    if (
-      adminError &&
-      !userError
-    ) {
-      console.error(
-        "[LOGIN] Admin auth error:",
-        adminError
-      );
-
-      setLoginError(adminError);
-    }
-  }, [
-    adminError,
-    userError,
-  ]);
-
   /* =====================================================
-     INPUT
+     INPUT CHANGE
   ===================================================== */
 
   const handleChange = (e) => {
@@ -721,7 +372,11 @@ export default function Login() {
       })
     );
 
+    /* Clear UI error */
+
     setLoginError("");
+
+    /* Clear Redux user error */
 
     if (userError) {
       dispatch(
@@ -737,6 +392,14 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log(
+      "=================================================="
+    );
+
+    console.log(
+      "[LOGIN] SUBMIT START"
+    );
+
     const email =
       form.email
         .trim()
@@ -746,25 +409,17 @@ export default function Login() {
       form.password;
 
     console.log(
-      "===================================="
-    );
-
-    console.log(
-      "[LOGIN] SUBMIT START"
-    );
-
-    console.log(
       "[LOGIN] Email:",
       email
     );
 
     console.log(
-      "[LOGIN] Password entered:",
+      "[LOGIN] Password present:",
       Boolean(password)
     );
 
     console.log(
-      "[LOGIN] Admin token before login:",
+      "[LOGIN] Existing admin token:",
       Boolean(
         localStorage.getItem(
           "coral_admin_token"
@@ -773,8 +428,21 @@ export default function Login() {
     );
 
     console.log(
-      "===================================="
+      "[LOGIN] Existing user token:",
+      Boolean(
+        localStorage.getItem(
+          "coral_token"
+        )
+      )
     );
+
+    console.log(
+      "=================================================="
+    );
+
+    /* =================================================
+       VALIDATION
+    ================================================= */
 
     if (
       !email ||
@@ -791,17 +459,60 @@ export default function Login() {
       return;
     }
 
+    /* =================================================
+       PREVENT DUPLICATE REQUEST
+    ================================================= */
+
+    if (loading) {
+      console.warn(
+        "[LOGIN] Login already in progress"
+      );
+
+      return;
+    }
+
+    /* =================================================
+       CLEAR PREVIOUS ERROR
+    ================================================= */
+
     setLoginError("");
 
-    /* ===================================================
-       STEP 1: ADMIN LOGIN
-    =================================================== */
+    if (userError) {
+      dispatch(
+        clearLoginError()
+      );
+    }
+
+    /* =================================================
+       STEP 1
+       TRY ADMIN LOGIN
+    ================================================= */
 
     console.log(
-      "[LOGIN] STEP 1 -> Trying admin login"
+      "=================================================="
     );
 
-    let adminResult;
+    console.log(
+      "[LOGIN] STEP 1"
+    );
+
+    console.log(
+      "[LOGIN] Trying ADMIN login..."
+    );
+
+    console.log(
+      "[LOGIN] IMPORTANT:"
+    );
+
+    console.log(
+      "[LOGIN] Admin failure will NOT be shown to user."
+    );
+
+    console.log(
+      "=================================================="
+    );
+
+    let adminResult = null;
 
     try {
       adminResult =
@@ -816,12 +527,18 @@ export default function Login() {
         "[LOGIN] Admin result:",
         adminResult
       );
+
     } catch (error) {
+
       console.error(
         "[LOGIN] Admin dispatch crashed:",
         error
       );
     }
+
+    /* =================================================
+       ADMIN SUCCESS
+    ================================================= */
 
     if (
       adminResult &&
@@ -830,7 +547,7 @@ export default function Login() {
       )
     ) {
       console.log(
-        "===================================="
+        "=================================================="
       );
 
       console.log(
@@ -843,14 +560,14 @@ export default function Login() {
       );
 
       console.log(
-        "[LOGIN] Token exists:",
+        "[LOGIN] Admin token received:",
         Boolean(
           adminResult.payload?.token
         )
       );
 
       console.log(
-        "[LOGIN] Saved token exists:",
+        "[LOGIN] Saved admin token:",
         Boolean(
           localStorage.getItem(
             "coral_admin_token"
@@ -859,34 +576,66 @@ export default function Login() {
       );
 
       console.log(
-        "[LOGIN] Navigating -> /admin/dashboard"
+        "[LOGIN] Admin authentication complete"
       );
 
       console.log(
-        "===================================="
+        "[LOGIN] Redirecting ADMIN -> HOME /"
+      );
+
+      console.log(
+        "=================================================="
       );
 
       navigate(
-        "/admin/dashboard",
-        { replace: true }
+        "/",
+        {
+          replace: true,
+        }
       );
 
       return;
     }
 
+    /* =================================================
+       ADMIN FAILED
+
+       IMPORTANT:
+       DO NOT SET loginError.
+
+       This is expected for normal users.
+    ================================================= */
+
     console.log(
-      "[LOGIN] Admin login not successful"
+      "=================================================="
     );
 
-    /* ===================================================
-       STEP 2: NORMAL USER LOGIN
-    =================================================== */
-
     console.log(
-      "[LOGIN] STEP 2 -> Trying normal user login"
+      "[LOGIN] ADMIN LOGIN FAILED"
     );
 
-    let userResult;
+    console.log(
+      "[LOGIN] This does NOT mean overall login failed."
+    );
+
+    console.log(
+      "[LOGIN] Trying normal USER login now..."
+    );
+
+    console.log(
+      "[LOGIN] Admin error hidden from UI."
+    );
+
+    console.log(
+      "=================================================="
+    );
+
+    /* =================================================
+       STEP 2
+       TRY NORMAL USER LOGIN
+    ================================================= */
+
+    let userResult = null;
 
     try {
       userResult =
@@ -901,12 +650,18 @@ export default function Login() {
         "[LOGIN] User result:",
         userResult
       );
+
     } catch (error) {
+
       console.error(
         "[LOGIN] User dispatch crashed:",
         error
       );
     }
+
+    /* =================================================
+       USER SUCCESS
+    ================================================= */
 
     if (
       userResult &&
@@ -915,7 +670,7 @@ export default function Login() {
       )
     ) {
       console.log(
-        "===================================="
+        "=================================================="
       );
 
       console.log(
@@ -935,54 +690,55 @@ export default function Login() {
         loggedUser
       );
 
-      if (
-        loggedUser?.role ===
-        "admin"
-      ) {
-        console.log(
-          "[LOGIN] Safety fallback: admin role found"
-        );
+      console.log(
+        "[LOGIN] Logged user role:",
+        loggedUser?.role
+      );
 
-        navigate(
-          "/admin/dashboard",
-          { replace: true }
-        );
+      /* ===============================================
+         IMPORTANT
 
-        return;
-      }
+         Even if role accidentally comes as admin,
+         we still go HOME.
 
-      const redirectTo =
-        location.state?.from || "/";
+         Admin authentication is handled separately
+         through adminLogin.
+      =============================================== */
 
       console.log(
-        "[LOGIN] Normal user redirect:",
-        redirectTo
+        "[LOGIN] User authentication successful"
+      );
+
+      console.log(
+        "[LOGIN] Redirecting USER -> HOME /"
+      );
+
+      console.log(
+        "=================================================="
       );
 
       navigate(
-        redirectTo,
-        { replace: true }
+        "/",
+        {
+          replace: true,
+        }
       );
 
       return;
     }
 
-    /* ===================================================
-       LOGIN FAILED
-    =================================================== */
+    /* =================================================
+       BOTH LOGIN METHODS FAILED
 
-    const message =
-      userResult?.payload ||
-      adminResult?.payload ||
-      "Invalid email or password.";
+       ONLY NOW SHOW ERROR
+    ================================================= */
 
-    console.error(
-      "===================================="
+    console.log(
+      "=================================================="
     );
 
     console.error(
-      "[LOGIN] LOGIN FAILED:",
-      message
+      "[LOGIN] BOTH LOGIN METHODS FAILED"
     );
 
     console.error(
@@ -995,11 +751,82 @@ export default function Login() {
       userResult
     );
 
-    console.error(
-      "===================================="
+    console.log(
+      "=================================================="
     );
 
-    setLoginError(message);
+    /* =================================================
+       GET FINAL USER-FACING ERROR
+
+       Prefer normal user error.
+
+       Never show:
+       "Admin authentication required"
+       "Invalid admin credentials"
+       etc.
+    ================================================= */
+
+    let finalMessage =
+      "Invalid email or password.";
+
+    if (
+      userResult &&
+      loginUser.rejected.match(
+        userResult
+      )
+    ) {
+      if (
+        typeof userResult.payload ===
+        "string"
+      ) {
+        finalMessage =
+          userResult.payload;
+      }
+    }
+
+    /* =================================================
+       CLEAN ADMIN ERROR MESSAGES
+
+       These should NEVER be displayed for a normal
+       user when admin login was simply unsuccessful.
+    ================================================= */
+
+    const adminErrorText =
+      typeof adminResult?.payload ===
+      "string"
+        ? adminResult.payload
+        : "";
+
+    const isAdminOnlyError =
+      adminErrorText.includes(
+        "Admin authentication"
+      ) ||
+      adminErrorText.includes(
+        "Invalid admin"
+      ) ||
+      adminErrorText.includes(
+        "Admin login"
+      );
+
+    if (
+      isAdminOnlyError
+    ) {
+      console.log(
+        "[LOGIN] Ignoring admin-only error."
+      );
+
+      finalMessage =
+        "Invalid email or password.";
+    }
+
+    console.error(
+      "[LOGIN] FINAL USER ERROR:",
+      finalMessage
+    );
+
+    setLoginError(
+      finalMessage
+    );
   };
 
   /* =====================================================
@@ -1009,13 +836,19 @@ export default function Login() {
   return (
     <main className="min-h-screen bg-[#F8F9F7]">
 
+      {/* =================================================
+          HEADER
+      ================================================= */}
+
       <header className="border-b border-[#E5E7EB] bg-white">
+
         <div className="mx-auto max-w-7xl px-5 py-4 sm:px-8">
 
           <Link
             to="/"
             className="flex w-fit items-center gap-2.5"
           >
+
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#18C66A] font-black text-[#073F32]">
               C
             </div>
@@ -1023,14 +856,24 @@ export default function Login() {
             <span className="text-xl font-black text-[#073F32]">
               Coral
             </span>
+
           </Link>
 
         </div>
+
       </header>
+
+      {/* =================================================
+          LOGIN SECTION
+      ================================================= */}
 
       <section className="flex min-h-[calc(100vh-73px)] items-center justify-center px-5 py-10 sm:py-12">
 
         <div className="grid w-full max-w-5xl overflow-hidden rounded-[32px] bg-white shadow-xl lg:grid-cols-2">
+
+          {/* =================================================
+              LEFT SIDE
+          ================================================= */}
 
           <div className="hidden bg-[#073F32] p-10 text-white lg:flex lg:flex-col lg:justify-between">
 
@@ -1080,6 +923,10 @@ export default function Login() {
 
           </div>
 
+          {/* =================================================
+              RIGHT SIDE
+          ================================================= */}
+
           <div className="p-7 sm:p-10 lg:p-12">
 
             <div className="mx-auto max-w-md">
@@ -1096,18 +943,33 @@ export default function Login() {
                 Login with your Coral user or admin credentials.
               </p>
 
+              {/* =================================================
+                  ERROR
+
+                  IMPORTANT:
+                  This only shows when BOTH login attempts fail.
+              ================================================= */}
+
               {loginError && (
                 <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+
                   <p className="text-sm font-semibold text-red-600">
                     {loginError}
                   </p>
+
                 </div>
               )}
+
+              {/* =================================================
+                  FORM
+              ================================================= */}
 
               <form
                 onSubmit={handleSubmit}
                 className="mt-8"
               >
+
+                {/* EMAIL */}
 
                 <div>
 
@@ -1133,6 +995,8 @@ export default function Login() {
 
                 </div>
 
+                {/* PASSWORD */}
+
                 <div className="mt-5">
 
                   <label
@@ -1157,6 +1021,8 @@ export default function Login() {
 
                 </div>
 
+                {/* LOGIN BUTTON */}
+
                 <button
                   type="submit"
                   disabled={
@@ -1166,16 +1032,21 @@ export default function Login() {
                   }
                   className="mt-7 w-full rounded-full bg-[#18C66A] px-6 py-4 text-sm font-black text-[#073F32] transition hover:bg-[#073F32] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 >
+
                   {loading
                     ? "Signing in..."
                     : "Login to Coral"}
+
                 </button>
 
               </form>
 
+              {/* REGISTER */}
+
               <div className="mt-7 text-center">
 
                 <p className="text-sm text-gray-500">
+
                   Don't have an account?{" "}
 
                   <Link
@@ -1188,6 +1059,8 @@ export default function Login() {
                 </p>
 
               </div>
+
+              {/* INFO */}
 
               <div className="mt-8 rounded-2xl bg-[#F8F9F7] px-4 py-3">
 
