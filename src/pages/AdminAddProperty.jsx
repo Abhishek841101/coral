@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -181,6 +180,17 @@ export default function AdminAddProperty() {
 
     try {
       setLoading(true);
+
+      /* =================================================
+         GET ADMIN TOKEN
+      ================================================= */
+
+      const token = localStorage.getItem("coral_admin_token");
+
+      if (!token) {
+        setError("Authentication required. Please login again.");
+        return;
+      }
 
       /* =================================================
          FORMDATA
@@ -366,12 +376,16 @@ export default function AdminAddProperty() {
 
       /* =================================================
          REQUEST
+         AUTHENTICATION FIX
       ================================================= */
 
       const response = await fetch(
         `${API_URL}/properties`,
         {
           method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           credentials: "include",
           body: formData,
         }
@@ -385,12 +399,28 @@ export default function AdminAddProperty() {
         data = {};
       }
 
+      /* =================================================
+         RESPONSE ERROR HANDLING
+      ================================================= */
+
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("coral_admin_token");
+
+          throw new Error(
+            "Your admin session has expired. Please login again."
+          );
+        }
+
         throw new Error(
-          data.message ||
+          data?.message ||
             "Unable to create property."
         );
       }
+
+      /* =================================================
+         SUCCESS
+      ================================================= */
 
       setSuccess(
         "Property created successfully. It is now waiting for admin review."
@@ -468,7 +498,6 @@ export default function AdminAddProperty() {
 
       </header>
 
-
       {/* CONTENT */}
 
       <section className="mx-auto max-w-[1100px] px-5 py-8 sm:px-8">
@@ -489,28 +518,29 @@ export default function AdminAddProperty() {
 
         </div>
 
-
         {/* ERROR */}
 
         {error && (
           <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 px-5 py-4">
+
             <p className="text-sm font-semibold text-red-600">
               {error}
             </p>
+
           </div>
         )}
-
 
         {/* SUCCESS */}
 
         {success && (
           <div className="mb-6 rounded-2xl border border-green-100 bg-green-50 px-5 py-4">
+
             <p className="text-sm font-semibold text-green-700">
               {success}
             </p>
+
           </div>
         )}
-
 
         <form
           onSubmit={handleSubmit}
@@ -553,7 +583,6 @@ export default function AdminAddProperty() {
 
             </div>
 
-
             <div className="mt-5">
 
               <label className="text-xs font-extrabold text-gray-500">
@@ -571,7 +600,6 @@ export default function AdminAddProperty() {
               />
 
             </div>
-
 
             <div className="mt-5 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
 
@@ -620,10 +648,7 @@ export default function AdminAddProperty() {
 
           </FormSection>
 
-
-          {/* =================================================
-              IMAGES
-          ================================================= */}
+          {/* IMAGES */}
 
           <FormSection
             title="Property Images"
@@ -665,13 +690,13 @@ export default function AdminAddProperty() {
 
               </label>
 
-
               {/* PREVIEWS */}
 
               {previews.length > 0 && (
                 <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
 
                   {previews.map((src, index) => (
+
                     <div
                       key={`${src}-${index}`}
                       className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white"
@@ -701,6 +726,7 @@ export default function AdminAddProperty() {
                       </button>
 
                     </div>
+
                   ))}
 
                 </div>
@@ -709,7 +735,6 @@ export default function AdminAddProperty() {
             </div>
 
           </FormSection>
-
 
           {/* LOCATION */}
 
@@ -773,7 +798,6 @@ export default function AdminAddProperty() {
             </div>
 
           </FormSection>
-
 
           {/* RENT */}
 
@@ -868,7 +892,6 @@ export default function AdminAddProperty() {
 
           </FormSection>
 
-
           {/* PROPERTY DETAILS */}
 
           <FormSection
@@ -959,7 +982,6 @@ export default function AdminAddProperty() {
 
           </FormSection>
 
-
           {/* AMENITIES */}
 
           <FormSection
@@ -1001,7 +1023,6 @@ export default function AdminAddProperty() {
 
           </FormSection>
 
-
           {/* ACTIONS */}
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -1035,7 +1056,6 @@ export default function AdminAddProperty() {
   );
 }
 
-
 /* =====================================================
    FORM SECTION
 ===================================================== */
@@ -1063,7 +1083,6 @@ function FormSection({
     </section>
   );
 }
-
 
 /* =====================================================
    INPUT
@@ -1106,7 +1125,6 @@ function Input({
     </div>
   );
 }
-
 
 /* =====================================================
    SELECT
