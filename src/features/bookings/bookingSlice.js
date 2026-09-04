@@ -530,8 +530,7 @@ const API_URL =
 
 const getErrorMessage = async (response) => {
   try {
-    const data =
-      await response.json();
+    const data = await response.json();
 
     return (
       data?.message ||
@@ -716,14 +715,12 @@ export const cancelBooking =
     ) => {
       try {
         const bookingId =
-          typeof payload ===
-          "string"
+          typeof payload === "string"
             ? payload
             : payload?.bookingId;
 
         const reason =
-          typeof payload ===
-          "object"
+          typeof payload === "object"
             ? payload?.reason
             : "";
 
@@ -776,6 +773,84 @@ export const cancelBooking =
   );
 
 /* =====================================================
+   PAY BOOKING
+   PATCH /api/bookings/:id/pay
+
+   Backend:
+   - paymentStatus = paid
+   - paymentMethod = online
+   - status = confirmed
+   - paymentId generated
+===================================================== */
+
+export const payBooking =
+  createAsyncThunk(
+    "booking/payBooking",
+    async (
+      payload,
+      { rejectWithValue }
+    ) => {
+      try {
+        const bookingId =
+          typeof payload === "string"
+            ? payload
+            : payload?.bookingId;
+
+        const paymentMethod =
+          typeof payload === "object" &&
+          payload?.paymentMethod
+            ? payload.paymentMethod
+            : "online";
+
+        if (!bookingId) {
+          return rejectWithValue(
+            "Booking ID is required."
+          );
+        }
+
+        const response =
+          await fetch(
+            `${API_URL}/bookings/${bookingId}/pay`,
+            {
+              method: "PATCH",
+
+              credentials:
+                "include",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body: JSON.stringify({
+                paymentMethod:
+                  paymentMethod,
+              }),
+            }
+          );
+
+        if (!response.ok) {
+          return rejectWithValue(
+            await getErrorMessage(
+              response
+            )
+          );
+        }
+
+        const data =
+          await response.json();
+
+        return data;
+      } catch (error) {
+        return rejectWithValue(
+          error.message ||
+            "Unable to process payment."
+        );
+      }
+    }
+  );
+
+/* =====================================================
    INITIAL STATE
 ===================================================== */
 
@@ -792,6 +867,8 @@ const initialState = {
 
   cancelLoading: false,
 
+  payLoading: false,
+
   error: null,
 
   bookingError: null,
@@ -799,6 +876,8 @@ const initialState = {
   createError: null,
 
   cancelError: null,
+
+  payError: null,
 };
 
 /* =====================================================
@@ -823,6 +902,7 @@ const bookingSlice =
         state.bookingError = null;
         state.createError = null;
         state.cancelError = null;
+        state.payError = null;
       },
 
       /* -----------------------------------------------
@@ -856,6 +936,16 @@ const bookingSlice =
       },
 
       /* -----------------------------------------------
+         CLEAR PAYMENT ERROR
+      ----------------------------------------------- */
+
+      clearPayBookingError: (
+        state
+      ) => {
+        state.payError = null;
+      },
+
+      /* -----------------------------------------------
          CLEAR CURRENT BOOKING
       ----------------------------------------------- */
 
@@ -879,11 +969,13 @@ const bookingSlice =
         state.bookingLoading = false;
         state.createLoading = false;
         state.cancelLoading = false;
+        state.payLoading = false;
 
         state.error = null;
         state.bookingError = null;
         state.createError = null;
         state.cancelError = null;
+        state.payError = null;
       },
     },
 
@@ -894,6 +986,7 @@ const bookingSlice =
     extraReducers: (
       builder
     ) => {
+
       /* ===============================================
          CREATE BOOKING
       =============================================== */
@@ -1126,6 +1219,82 @@ const bookingSlice =
               "Unable to cancel booking.";
           }
         );
+
+      /* ===============================================
+         PAY BOOKING
+      =============================================== */
+
+      builder
+
+        .addCase(
+          payBooking.pending,
+          (state) => {
+            state.payLoading =
+              true;
+
+            state.payError =
+              null;
+          }
+        )
+
+        .addCase(
+          payBooking.fulfilled,
+          (
+            state,
+            action
+          ) => {
+            state.payLoading =
+              false;
+
+            state.payError =
+              null;
+
+            const paidBooking =
+              action.payload
+                ?.booking;
+
+            if (
+              paidBooking
+            ) {
+              state.booking =
+                paidBooking;
+
+              const index =
+                state.bookings.findIndex(
+                  (item) =>
+                    item._id ===
+                    paidBooking._id
+                );
+
+              if (index !== -1) {
+                state.bookings[
+                  index
+                ] =
+                  paidBooking;
+              } else {
+                state.bookings.unshift(
+                  paidBooking
+                );
+              }
+            }
+          }
+        )
+
+        .addCase(
+          payBooking.rejected,
+          (
+            state,
+            action
+          ) => {
+            state.payLoading =
+              false;
+
+            state.payError =
+              action.payload ||
+              action.error?.message ||
+              "Unable to process payment.";
+          }
+        );
     },
   });
 
@@ -1138,6 +1307,7 @@ export const {
   clearCreateBookingError,
   clearBookingError,
   clearCancelBookingError,
+  clearPayBookingError,
   clearCurrentBooking,
   resetBookingState,
 } =
@@ -1181,10 +1351,17 @@ export const selectCancelBookingLoading = (
   state.booking?.cancelLoading ||
   false;
 
+export const selectPayBookingLoading = (
+  state
+) =>
+  state.booking?.payLoading ||
+  false;
+
 export const selectBookingError = (
   state
 ) =>
-  state.booking?.error || null;
+  state.booking?.error ||
+  null;
 
 export const selectSingleBookingError = (
   state
@@ -1204,9 +1381,14 @@ export const selectCancelBookingError = (
   state.booking?.cancelError ||
   null;
 
+export const selectPayBookingError = (
+  state
+) =>
+  state.booking?.payError ||
+  null;
+
 /* =====================================================
    EXPORT REDUCER
 ===================================================== */
-
 
 export default bookingSlice.reducer;
