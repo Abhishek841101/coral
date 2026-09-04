@@ -1,28 +1,69 @@
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 
-import { getBookingById } from "../features/bookings/bookingSlice";
+import { useEffect } from "react";
+
+import {
+  useDispatch,
+  useSelector,
+} from "react-redux";
+
+import {
+  getBookingById,
+  selectBooking,
+  selectBookingLoading,
+  selectSingleBookingError,
+} from "../features/bookings/bookingSlice";
 
 export default function BookingConfirmation() {
-  const { state } = useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const {
-    booking,
-    bookingLoading,
-    bookingError,
-  } = useSelector((store) => store.booking);
+  /* =====================================================
+     REDUX
+  ===================================================== */
 
-  const bookingId = state?.bookingId;
+  const booking = useSelector(
+    selectBooking
+  );
+
+  const bookingLoading = useSelector(
+    selectBookingLoading
+  );
+
+  const bookingError = useSelector(
+    selectSingleBookingError
+  );
+
+  /* =====================================================
+     BOOKING ID
+  ===================================================== */
+
+  const bookingId =
+    location.state?.bookingId ||
+    location.state?.booking?._id ||
+    location.state?.booking?.id ||
+    "";
+
+  /* =====================================================
+     FETCH BOOKING
+  ===================================================== */
 
   useEffect(() => {
-    if (bookingId) {
-      dispatch(getBookingById(bookingId));
-    }
-  }, [dispatch, bookingId]);
+    if (!bookingId) return;
+
+    dispatch(
+      getBookingById(bookingId)
+    );
+  }, [
+    dispatch,
+    bookingId,
+  ]);
 
   /* =====================================================
      NO BOOKING ID
@@ -31,28 +72,31 @@ export default function BookingConfirmation() {
   if (!bookingId) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
-        <div className="text-center">
 
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#E9F8F0] text-2xl">
-            ✓
+        <div className="w-full max-w-md text-center">
+
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-3xl">
+            !
           </div>
 
           <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
             No booking found
           </h1>
 
-          <p className="mt-3 text-sm text-[#667085]">
-            Please start a new booking from Coral.
+          <p className="mt-3 text-sm leading-6 text-[#667085]">
+            We could not find your booking reference.
+            Please start your booking again.
           </p>
 
           <Link
             to="/"
-            className="mt-6 inline-block rounded-full bg-[#073F32] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32]"
+            className="mt-7 inline-flex rounded-full bg-[#073F32] px-7 py-3.5 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32]"
           >
             Back to Coral
           </Link>
 
         </div>
+
       </main>
     );
   }
@@ -61,24 +105,86 @@ export default function BookingConfirmation() {
      LOADING
   ===================================================== */
 
-  if (bookingLoading && !booking) {
+  if (
+    bookingLoading &&
+    !booking
+  ) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
-        <div className="text-center">
+      <main className="min-h-screen bg-[#F8F9F7]">
 
-          <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-[#E9F8F0] text-2xl">
-            🏨
+        {/* HEADER */}
+
+        <header className="border-b border-[#E5E7EB] bg-white">
+
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
+
+            <Link
+              to="/"
+              className="flex items-center gap-2.5"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#18C66A] font-extrabold text-[#073F32]">
+                C
+              </div>
+
+              <span className="text-xl font-extrabold tracking-tight text-[#073F32]">
+                Coral
+              </span>
+            </Link>
+
+            <span className="text-sm font-bold text-[#667085]">
+              Booking confirmation
+            </span>
+
           </div>
 
-          <h1 className="mt-6 text-2xl font-extrabold text-[#10254A]">
-            Loading your booking...
-          </h1>
+        </header>
 
-          <p className="mt-3 text-sm text-[#667085]">
-            Please wait while we fetch your reservation details.
-          </p>
+        {/* LOADING */}
 
-        </div>
+        <section className="px-5 py-16 sm:px-8 lg:px-10">
+
+          <div className="mx-auto max-w-4xl">
+
+            <div className="text-center">
+
+              <div className="mx-auto flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-[#E9F8F0] text-3xl">
+                🏨
+              </div>
+
+              <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
+                Loading your booking...
+              </h1>
+
+              <p className="mt-3 text-sm text-[#667085]">
+                Please wait while we fetch your reservation details.
+              </p>
+
+            </div>
+
+            <div className="mt-10 overflow-hidden rounded-[30px] border border-[#E5E7EB] bg-white p-8 shadow-sm">
+
+              <div className="h-6 w-48 animate-pulse rounded bg-gray-200" />
+
+              <div className="mt-8 grid gap-5 sm:grid-cols-2">
+
+                <div className="h-24 animate-pulse rounded-2xl bg-gray-100" />
+
+                <div className="h-24 animate-pulse rounded-2xl bg-gray-100" />
+
+                <div className="h-24 animate-pulse rounded-2xl bg-gray-100" />
+
+                <div className="h-24 animate-pulse rounded-2xl bg-gray-100" />
+
+              </div>
+
+              <div className="mt-8 h-14 animate-pulse rounded-2xl bg-gray-100" />
+
+            </div>
+
+          </div>
+
+        </section>
+
       </main>
     );
   }
@@ -87,49 +193,155 @@ export default function BookingConfirmation() {
      ERROR
   ===================================================== */
 
-  if (bookingError && !booking) {
+  if (
+    bookingError &&
+    !booking
+  ) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
-        <div className="text-center">
+      <main className="min-h-screen bg-[#F8F9F7]">
 
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl">
-            !
-          </div>
+        {/* HEADER */}
 
-          <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
-            Unable to load booking
-          </h1>
+        <header className="border-b border-[#E5E7EB] bg-white">
 
-          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#667085]">
-            {bookingError}
-          </p>
-
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-
-            <button
-              type="button"
-              onClick={() => dispatch(getBookingById(bookingId))}
-              className="rounded-full bg-[#073F32] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32]"
-            >
-              Try again
-            </button>
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
 
             <Link
               to="/"
-              className="rounded-full border border-[#073F32] px-6 py-3 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
+              className="flex items-center gap-2.5"
             >
-              Back to Coral
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#18C66A] font-extrabold text-[#073F32]">
+                C
+              </div>
+
+              <span className="text-xl font-extrabold tracking-tight text-[#073F32]">
+                Coral
+              </span>
             </Link>
+
+            <span className="text-sm font-bold text-[#667085]">
+              Booking confirmation
+            </span>
 
           </div>
 
-        </div>
+        </header>
+
+        {/* ERROR */}
+
+        <section className="flex min-h-[75vh] items-center justify-center px-5 py-12">
+
+          <div className="w-full max-w-lg text-center">
+
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-3xl font-extrabold text-red-500">
+              !
+            </div>
+
+            <p className="mt-6 text-xs font-extrabold tracking-[0.18em] text-red-500">
+              BOOKING ERROR
+            </p>
+
+            <h1 className="mt-2 text-3xl font-extrabold text-[#10254A] sm:text-4xl">
+              Unable to load your booking
+            </h1>
+
+            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#667085]">
+              {bookingError ||
+                "Something went wrong while loading your booking details."}
+            </p>
+
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
+
+              <button
+                type="button"
+                onClick={() =>
+                  dispatch(
+                    getBookingById(
+                      bookingId
+                    )
+                  )
+                }
+                className="rounded-full bg-[#073F32] px-7 py-3.5 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32]"
+              >
+                Try again
+              </button>
+
+              <Link
+                to="/"
+                className="rounded-full border border-[#073F32] px-7 py-3.5 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
+              >
+                Back to Coral
+              </Link>
+
+            </div>
+
+            <div className="mt-7 rounded-2xl bg-white p-4">
+
+              <p className="text-xs text-[#667085]">
+                Booking reference
+              </p>
+
+              <p className="mt-1 break-all text-sm font-extrabold text-[#073F32]">
+                {bookingId}
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
       </main>
     );
   }
 
+  /* =====================================================
+     SAFETY FALLBACK
+
+     IMPORTANT:
+     Never return blank screen.
+  ===================================================== */
+
   if (!booking) {
-    return null;
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
+
+        <div className="text-center">
+
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9F8F0] text-3xl">
+            🏨
+          </div>
+
+          <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
+            Booking details unavailable
+          </h1>
+
+          <p className="mt-3 text-sm text-[#667085]">
+            Your booking reference is:
+          </p>
+
+          <p className="mt-2 break-all text-sm font-extrabold text-[#073F32]">
+            {bookingId}
+          </p>
+
+          <button
+            type="button"
+            onClick={() =>
+              dispatch(
+                getBookingById(
+                  bookingId
+                )
+              )
+            }
+            className="mt-6 rounded-full bg-[#073F32] px-7 py-3.5 text-sm font-extrabold text-white"
+          >
+            Load booking
+          </button>
+
+        </div>
+
+      </main>
+    );
   }
 
   /* =====================================================
@@ -137,125 +349,197 @@ export default function BookingConfirmation() {
   ===================================================== */
 
   const property =
-    booking.property && typeof booking.property === "object"
+    booking.property &&
+    typeof booking.property === "object"
       ? booking.property
       : null;
 
   const user =
-    booking.user && typeof booking.user === "object"
+    booking.user &&
+    typeof booking.user === "object"
       ? booking.user
       : null;
 
   const displayBookingId =
-    booking._id || booking.id || bookingId;
+    booking._id ||
+    booking.id ||
+    bookingId;
+
+  /* =====================================================
+     BASIC DETAILS
+  ===================================================== */
 
   const propertyName =
     property?.title ||
     property?.name ||
-    state?.propertyName ||
     "Coral Property";
+
+  const propertyLocation = [
+    property?.locality,
+    property?.city,
+    property?.state,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   const guestName =
     booking.guestName ||
-    `${state?.firstName || ""} ${state?.lastName || ""}`.trim() ||
     user?.name ||
     "Guest";
 
   const guestEmail =
     booking.guestEmail ||
-    state?.email ||
     user?.email ||
     "";
 
   const guestPhone =
     booking.guestPhone ||
-    state?.phone ||
     user?.phone ||
     "";
 
+  /* =====================================================
+     DATES
+  ===================================================== */
+
+  const formatDate = (
+    value
+  ) => {
+    if (!value) return "-";
+
+    const date =
+      new Date(value);
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return "-";
+    }
+
+    return date.toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }
+    );
+  };
+
   const checkIn =
-    booking.checkIn
-      ? new Date(booking.checkIn).toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
-      : state?.checkIn || "-";
+    formatDate(
+      booking.checkIn
+    );
 
   const checkOut =
-    booking.checkOut
-      ? new Date(booking.checkOut).toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
-      : state?.checkOut || "-";
+    formatDate(
+      booking.checkOut
+    );
 
-  const guests = Number(booking.guests || state?.guests || 1);
-  const rooms = Number(booking.rooms || state?.rooms || 1);
-  const nights = Number(booking.nights || state?.nights || 1);
+  /* =====================================================
+     COUNTS
+  ===================================================== */
+
+  const guests =
+    Number(
+      booking.guests
+    ) || 1;
+
+  const rooms =
+    Number(
+      booking.rooms
+    ) || 1;
+
+  const nights =
+    Number(
+      booking.nights
+    ) || 1;
+
+  /* =====================================================
+     ROOM
+  ===================================================== */
 
   const roomName =
     property?.propertyType ||
-    state?.roomName ||
     "Stay";
+
+  /* =====================================================
+     SPECIAL REQUEST
+  ===================================================== */
 
   const specialRequest =
     booking.specialRequest ||
-    state?.requests ||
     "";
 
-  const stayTotal = Number(
-    booking.subtotal ??
-      state?.stayTotal ??
-      0
-  );
+  /* =====================================================
+     PRICE
 
-  const taxes = Number(
-    booking.taxes ??
-      state?.taxes ??
-      0
-  );
+     IMPORTANT:
+     Always use backend values.
+  ===================================================== */
 
-  const totalAmount = Number(
-    booking.totalAmount ??
-      state?.totalPrice ??
-      0
-  );
+  const stayTotal =
+    Number(
+      booking.subtotal
+    ) || 0;
+
+  const taxes =
+    Number(
+      booking.taxes
+    ) || 0;
+
+  const totalAmount =
+    Number(
+      booking.totalAmount
+    ) || 0;
+
+  const pricePerNight =
+    Number(
+      booking.pricePerNight
+    ) || 0;
+
+  /* =====================================================
+     STATUS
+  ===================================================== */
 
   const paymentStatus =
-    booking.paymentStatus || "pending";
+    booking.paymentStatus ||
+    "pending";
 
   const bookingStatus =
-    booking.status || "pending";
+    booking.status ||
+    "pending";
 
-  const isPaid = paymentStatus === "paid";
-
-  const paymentStatusText = isPaid
-    ? "Payment successful"
-    : "Pending payment";
+  const isPaid =
+    paymentStatus === "paid";
 
   /* =====================================================
      PAYMENT
   ===================================================== */
 
   const handlePayment = () => {
-    navigate("/payment", {
-      state: {
-        bookingId: displayBookingId,
-        booking,
-      },
-    });
+    navigate(
+      "/payment",
+      {
+        state: {
+          bookingId:
+            displayBookingId,
+        },
+      }
+    );
   };
 
   /* =====================================================
-     UI
+     MAIN UI
   ===================================================== */
 
   return (
     <main className="min-h-screen bg-[#F8F9F7]">
 
-      {/* ================= HEADER ================= */}
+      {/* =================================================
+          HEADER
+      ================================================= */}
 
       <header className="border-b border-[#E5E7EB] bg-white">
 
@@ -265,6 +549,7 @@ export default function BookingConfirmation() {
             to="/"
             className="flex items-center gap-2.5"
           >
+
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#18C66A] font-extrabold text-[#073F32]">
               C
             </div>
@@ -272,6 +557,7 @@ export default function BookingConfirmation() {
             <span className="text-xl font-extrabold tracking-tight text-[#073F32]">
               Coral
             </span>
+
           </Link>
 
           <span className="text-sm font-bold text-[#667085]">
@@ -282,13 +568,17 @@ export default function BookingConfirmation() {
 
       </header>
 
-      {/* ================= CONTENT ================= */}
+      {/* =================================================
+          CONTENT
+      ================================================= */}
 
       <section className="px-5 py-10 sm:px-8 lg:px-10 lg:py-16">
 
         <div className="mx-auto max-w-5xl">
 
-          {/* ================= SUCCESS HEADER ================= */}
+          {/* =================================================
+              SUCCESS HEADER
+          ================================================= */}
 
           <div className="text-center">
 
@@ -301,7 +591,7 @@ export default function BookingConfirmation() {
             </div>
 
             <p className="mt-6 text-sm font-extrabold tracking-[0.16em] text-[#18C66A]">
-              ALMOST THERE
+              BOOKING CREATED
             </p>
 
             <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-[#10254A] sm:text-5xl">
@@ -309,21 +599,25 @@ export default function BookingConfirmation() {
             </h1>
 
             <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[#667085]">
-              Review your booking details below. Your reservation will be
-              confirmed after payment.
+              Your booking request has been successfully created.
+              Review the details below and continue to payment.
             </p>
 
           </div>
 
-          {/* ================= BOOKING CARD ================= */}
+          {/* =================================================
+              BOOKING CARD
+          ================================================= */}
 
           <div className="mt-10 overflow-hidden rounded-[30px] border border-[#E5E7EB] bg-white shadow-xl">
 
-            {/* ================= BOOKING ID ================= */}
+            {/* =================================================
+                BOOKING ID
+            ================================================= */}
 
             <div className="border-b border-[#E5E7EB] bg-[#E9F8F0] px-6 py-5 sm:px-8">
 
-              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
 
                 <div>
 
@@ -344,22 +638,30 @@ export default function BookingConfirmation() {
                       : "text-[#B7791F]"
                   }`}
                 >
-                  {isPaid ? "Paid" : "Pending payment"}
+                  {isPaid
+                    ? "Paid"
+                    : "Payment pending"}
                 </span>
 
               </div>
 
             </div>
 
-            {/* ================= BODY ================= */}
+            {/* =================================================
+                BODY
+            ================================================= */}
 
             <div className="grid lg:grid-cols-[1fr_340px]">
 
-              {/* ================= LEFT ================= */}
+              {/* =================================================
+                  LEFT
+              ================================================= */}
 
               <div className="p-6 sm:p-8">
 
-                {/* ================= GUEST ================= */}
+                {/* =================================================
+                    GUEST
+                ================================================= */}
 
                 <div>
 
@@ -385,7 +687,9 @@ export default function BookingConfirmation() {
 
                 </div>
 
-                {/* ================= STAY ================= */}
+                {/* =================================================
+                    STAY
+                ================================================= */}
 
                 <div className="mt-8 border-t border-[#E5E7EB] pt-7">
 
@@ -397,7 +701,15 @@ export default function BookingConfirmation() {
                     {propertyName}
                   </h2>
 
+                  {propertyLocation && (
+                    <p className="mt-1 text-sm text-[#667085]">
+                      📍 {propertyLocation}
+                    </p>
+                  )}
+
                   <div className="mt-5 grid gap-4 sm:grid-cols-2">
+
+                    {/* CHECK IN */}
 
                     <div className="rounded-2xl bg-[#F8F9F7] p-4">
 
@@ -411,6 +723,8 @@ export default function BookingConfirmation() {
 
                     </div>
 
+                    {/* CHECK OUT */}
+
                     <div className="rounded-2xl bg-[#F8F9F7] p-4">
 
                       <p className="text-xs font-bold text-[#667085]">
@@ -423,6 +737,8 @@ export default function BookingConfirmation() {
 
                     </div>
 
+                    {/* GUESTS */}
+
                     <div className="rounded-2xl bg-[#F8F9F7] p-4">
 
                       <p className="text-xs font-bold text-[#667085]">
@@ -434,6 +750,8 @@ export default function BookingConfirmation() {
                       </p>
 
                     </div>
+
+                    {/* ROOMS */}
 
                     <div className="rounded-2xl bg-[#F8F9F7] p-4">
 
@@ -451,7 +769,9 @@ export default function BookingConfirmation() {
 
                 </div>
 
-                {/* ================= ROOM ================= */}
+                {/* =================================================
+                    ROOM TYPE
+                ================================================= */}
 
                 <div className="mt-8 border-t border-[#E5E7EB] pt-7">
 
@@ -473,10 +793,14 @@ export default function BookingConfirmation() {
 
                       <p className="mt-1 text-xs text-[#667085]">
                         {nights}{" "}
-                        {nights === 1 ? "night" : "nights"}{" "}
+                        {nights === 1
+                          ? "night"
+                          : "nights"}{" "}
                         ·{" "}
                         {rooms}{" "}
-                        {rooms === 1 ? "room" : "rooms"}
+                        {rooms === 1
+                          ? "room"
+                          : "rooms"}
                       </p>
 
                     </div>
@@ -485,7 +809,9 @@ export default function BookingConfirmation() {
 
                 </div>
 
-                {/* ================= SPECIAL REQUEST ================= */}
+                {/* =================================================
+                    SPECIAL REQUEST
+                ================================================= */}
 
                 {specialRequest && (
                   <div className="mt-8 border-t border-[#E5E7EB] pt-7">
@@ -501,7 +827,9 @@ export default function BookingConfirmation() {
                   </div>
                 )}
 
-                {/* ================= BOOKING STATUS ================= */}
+                {/* =================================================
+                    BOOKING STATUS
+                ================================================= */}
 
                 <div className="mt-8 border-t border-[#E5E7EB] pt-7">
 
@@ -515,10 +843,10 @@ export default function BookingConfirmation() {
                       {bookingStatus}
                     </p>
 
-                    <p className="mt-1 text-xs text-[#667085]">
+                    <p className="mt-1 text-xs leading-5 text-[#667085]">
                       {isPaid
-                        ? "Your payment has been received."
-                        : "Complete payment to confirm your reservation."}
+                        ? "Your payment has been received and your booking is confirmed."
+                        : "Your booking has been created. Complete payment to confirm your reservation."}
                     </p>
 
                   </div>
@@ -527,7 +855,9 @@ export default function BookingConfirmation() {
 
               </div>
 
-              {/* ================= RIGHT ================= */}
+              {/* =================================================
+                  RIGHT PRICE
+              ================================================= */}
 
               <aside className="border-t border-[#E5E7EB] bg-[#FAFAF9] p-6 sm:p-8 lg:border-l lg:border-t-0">
 
@@ -537,17 +867,35 @@ export default function BookingConfirmation() {
 
                 <div className="mt-6 space-y-4">
 
+                  {/* PRICE PER NIGHT */}
+
                   <div className="flex justify-between gap-4 text-sm text-[#667085]">
 
                     <span>
-                      Stay
+                      ₹
+                      {pricePerNight.toLocaleString(
+                        "en-IN"
+                      )}{" "}
+                      × {nights}{" "}
+                      {nights === 1
+                        ? "night"
+                        : "nights"}{" "}
+                      × {rooms}{" "}
+                      {rooms === 1
+                        ? "room"
+                        : "rooms"}
                     </span>
 
                     <span className="font-semibold text-[#344054]">
-                      ₹{stayTotal.toLocaleString("en-IN")}
+                      ₹
+                      {stayTotal.toLocaleString(
+                        "en-IN"
+                      )}
                     </span>
 
                   </div>
+
+                  {/* TAX */}
 
                   <div className="flex justify-between gap-4 text-sm text-[#667085]">
 
@@ -556,14 +904,17 @@ export default function BookingConfirmation() {
                     </span>
 
                     <span className="font-semibold text-[#344054]">
-                      ₹{taxes.toLocaleString("en-IN")}
+                      ₹
+                      {taxes.toLocaleString(
+                        "en-IN"
+                      )}
                     </span>
 
                   </div>
 
                 </div>
 
-                {/* ================= TOTAL ================= */}
+                {/* TOTAL */}
 
                 <div className="mt-6 border-t border-[#E5E7EB] pt-5">
 
@@ -574,35 +925,45 @@ export default function BookingConfirmation() {
                     </span>
 
                     <span className="text-2xl font-extrabold text-[#073F32]">
-                      ₹{totalAmount.toLocaleString("en-IN")}
+                      ₹
+                      {totalAmount.toLocaleString(
+                        "en-IN"
+                      )}
                     </span>
 
                   </div>
 
                 </div>
 
-                {/* ================= PAYMENT BUTTON ================= */}
+                {/* PAYMENT */}
 
                 {!isPaid && (
                   <button
                     type="button"
-                    onClick={handlePayment}
+                    onClick={
+                      handlePayment
+                    }
                     className="mt-7 w-full rounded-full bg-[#18C66A] py-4 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
                   >
                     Proceed to payment →
                   </button>
                 )}
 
+                {/* ALREADY PAID */}
+
                 {isPaid && (
                   <button
                     type="button"
                     onClick={() =>
-                      navigate("/booking-success", {
-                        state: {
-                          bookingId: displayBookingId,
-                          booking,
-                        },
-                      })
+                      navigate(
+                        "/booking-success",
+                        {
+                          state: {
+                            bookingId:
+                              displayBookingId,
+                          },
+                        }
+                      )
                     }
                     className="mt-7 w-full rounded-full bg-[#18C66A] py-4 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
                   >
@@ -620,7 +981,9 @@ export default function BookingConfirmation() {
 
           </div>
 
-          {/* ================= HELP ================= */}
+          {/* =================================================
+              HELP
+          ================================================= */}
 
           <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-[24px] bg-white p-5 sm:flex-row">
 
