@@ -17,16 +17,21 @@ const { state } = useLocation();
 const navigate = useNavigate();
 const dispatch = useDispatch();
 
-const booking = useSelector(selectBooking);
+const reduxBooking = useSelector(selectBooking);
 const bookingLoading = useSelector(selectBookingLoading);
 const bookingError = useSelector(selectSingleBookingError);
 const payLoading = useSelector(selectPayBookingLoading);
 const payError = useSelector(selectPayBookingError);
 
+const stateBooking = state?.booking || null;
+
 const bookingId =
 state?.bookingId ||
-state?.booking?._id ||
-state?.booking?.id;
+stateBooking?._id ||
+stateBooking?.id ||
+"";
+
+const booking = stateBooking || reduxBooking || null;
 
 const [method, setMethod] = useState("card");
 
@@ -44,21 +49,34 @@ const [paymentError, setPaymentError] = useState("");
 
 /* =====================================================
 FETCH BOOKING
+
+
+ Only fetch when booking was not already passed
+ from BookingConfirmation.
+
+
 ===================================================== */
 
 useEffect(() => {
-if (bookingId) {
+if (!bookingId || stateBooking) return;
+
+
 dispatch(getBookingById(bookingId));
-}
-}, [dispatch, bookingId]);
+
+
+}, [dispatch, bookingId, stateBooking]);
 
 /* =====================================================
 NO BOOKING ID
 ===================================================== */
 
 if (!bookingId) {
-return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="text-center"> <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl">
-! </div>
+return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="text-center">
+
+
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl">
+        !
+      </div>
 
       <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
         Payment session expired
@@ -74,6 +92,7 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
       >
         Back to Coral
       </Link>
+
     </div>
   </main>
 );
@@ -86,9 +105,14 @@ LOADING BOOKING
 ===================================================== */
 
 if (bookingLoading && !booking) {
-return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="text-center"> <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-[#E9F8F0] text-2xl">
-🔒 </div>
+return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
 
+
+    <div className="text-center">
+
+      <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-[#E9F8F0] text-2xl">
+        🔒
+      </div>
 
       <h1 className="mt-6 text-2xl font-extrabold text-[#10254A]">
         Loading secure checkout...
@@ -97,7 +121,9 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
       <p className="mt-3 text-sm text-[#667085]">
         Please wait while we load your booking.
       </p>
+
     </div>
+
   </main>
 );
 
@@ -109,9 +135,14 @@ BOOKING ERROR
 ===================================================== */
 
 if (bookingError && !booking) {
-return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="max-w-md text-center"> <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl">
-! </div>
+return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
 
+
+    <div className="max-w-md text-center">
+
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl">
+        !
+      </div>
 
       <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
         Unable to load booking
@@ -122,15 +153,19 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
       </p>
 
       <div className="mt-6 flex flex-wrap justify-center gap-3">
+
         <button
           type="button"
           onClick={() => {
             setPaymentError("");
             dispatch(getBookingById(bookingId));
           }}
-          className="rounded-full bg-[#073F32] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32]"
+          disabled={bookingLoading}
+          className="rounded-full bg-[#073F32] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Try again
+          {bookingLoading
+            ? "Loading..."
+            : "Try again"}
         </button>
 
         <Link
@@ -139,8 +174,11 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
         >
           Back to Coral
         </Link>
+
       </div>
+
     </div>
+
   </main>
 );
 
@@ -152,9 +190,14 @@ NO BOOKING DATA
 ===================================================== */
 
 if (!booking) {
-return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="text-center"> <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl">
-! </div>
+return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
 
+
+    <div className="text-center">
+
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl">
+        !
+      </div>
 
       <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
         Booking not found
@@ -170,7 +213,9 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
       >
         Back to Coral
       </Link>
+
     </div>
+
   </main>
 );
 
@@ -194,43 +239,67 @@ property.name ||
 
 const propertyImage =
 property.image ||
-property.images?.[0] ||
+property.images?.find(
+(image) => image?.isPrimary
+)?.url ||
+(typeof property.images?.[0] === "string"
+? property.images[0]
+: property.images?.[0]?.url) ||
 "";
 
-const propertyLocation =
-property.location ||
-property.locality ||
-property.city ||
-"";
+const propertyLocation = [
+property.locality,
+property.city,
+property.state,
+]
+.filter(Boolean)
+.join(", ");
 
 const rating =
 property.rating ||
 property.averageRating ||
 "5.0";
 
-const checkIn = booking.checkIn
-? new Date(booking.checkIn).toLocaleDateString("en-IN", {
-day: "2-digit",
-month: "short",
-year: "numeric",
-})
-: "-";
+const formatDate = (value) => {
+if (!value) return "-";
 
-const checkOut = booking.checkOut
-? new Date(booking.checkOut).toLocaleDateString("en-IN", {
-day: "2-digit",
-month: "short",
-year: "numeric",
-})
-: "-";
 
-const guests = Number(booking.guests || 1);
-const rooms = Number(booking.rooms || 1);
-const nights = Number(booking.nights || 1);
+const date = new Date(value);
 
-const subtotal = Number(booking.subtotal || 0);
-const taxes = Number(booking.taxes || 0);
-const totalAmount = Number(booking.totalAmount || 0);
+if (Number.isNaN(date.getTime())) {
+  return "-";
+}
+
+return date.toLocaleDateString("en-IN", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+
+
+};
+
+const checkIn = formatDate(booking.checkIn);
+const checkOut = formatDate(booking.checkOut);
+
+const guests =
+Number(booking.guests) || 1;
+
+const rooms =
+Number(booking.rooms) || 1;
+
+const nights =
+Number(booking.nights) || 1;
+
+const subtotal =
+Number(booking.subtotal) || 0;
+
+const taxes =
+Number(booking.taxes) || 0;
+
+const totalAmount =
+Number(booking.totalAmount) ||
+subtotal + taxes;
 
 const currentPaymentStatus =
 booking.paymentStatus || "pending";
@@ -253,6 +322,8 @@ setCard((previous) => ({
   ...previous,
   number: formatted,
 }));
+
+setPaymentError("");
 
 
 };
@@ -277,6 +348,8 @@ setCard((previous) => ({
   expiry: formatted,
 }));
 
+setPaymentError("");
+
 
 };
 
@@ -285,11 +358,13 @@ const numbersOnly = value
 .replace(/\D/g, "")
 .slice(0, 4);
 
+
 setCard((previous) => ({
   ...previous,
   cvv: numbersOnly,
 }));
 
+setPaymentError("");
 
 };
 
@@ -299,7 +374,8 @@ VALIDATION
 
 const validatePayment = () => {
 if (method === "card") {
-const cardNumber = card.number.replace(/\s/g, "");
+const cardNumber =
+card.number.replace(/\s/g, "");
 
 
   if (
@@ -353,12 +429,22 @@ const handlePayment = async (event) => {
 event.preventDefault();
 
 
+if (payLoading) return;
+
 setPaymentError("");
 
-const validationError = validatePayment();
+const validationError =
+  validatePayment();
 
 if (validationError) {
   setPaymentError(validationError);
+  return;
+}
+
+if (!bookingId) {
+  setPaymentError(
+    "Booking reference is missing."
+  );
   return;
 }
 
@@ -369,7 +455,11 @@ const resultAction = await dispatch(
   })
 );
 
-if (payBooking.fulfilled.match(resultAction)) {
+if (
+  payBooking.fulfilled.match(
+    resultAction
+  )
+) {
   const updatedBooking =
     resultAction.payload?.booking ||
     resultAction.payload?.data?.booking ||
@@ -396,10 +486,10 @@ if (payBooking.fulfilled.match(resultAction)) {
 const errorMessage =
   resultAction.payload ||
   resultAction.error?.message ||
+  payError ||
   "Payment failed. Please try again.";
 
 setPaymentError(errorMessage);
-
 
 };
 
@@ -409,16 +499,26 @@ PAYMENT ERROR
 
 const finalPaymentError =
 paymentError ||
-(payError && !paymentError ? payError : "");
+payError ||
+"";
 
 /* =====================================================
 ALREADY PAID
 ===================================================== */
 
 if (currentPaymentStatus === "paid") {
-return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="max-w-md text-center"> <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9F8F0]"> <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#18C66A] text-2xl font-extrabold text-[#073F32]">
-✓ </div> </div>
+return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
 
+
+    <div className="max-w-md text-center">
+
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9F8F0]">
+
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#18C66A] text-2xl font-extrabold text-[#073F32]">
+          ✓
+        </div>
+
+      </div>
 
       <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
         Payment already completed
@@ -436,7 +536,8 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
             state: {
               bookingId,
               booking,
-              paymentMethod: booking.paymentMethod,
+              paymentMethod:
+                booking.paymentMethod,
               paymentStatus: "success",
             },
             replace: true,
@@ -446,9 +547,12 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
       >
         View booking →
       </button>
+
     </div>
+
   </main>
 );
+
 
 }
 
@@ -458,16 +562,18 @@ MAIN UI
 
 return ( <main className="min-h-screen bg-[#F8F9F7]">
 
-
+`
   {/* ================= HEADER ================= */}
 
   <header className="border-b border-[#E5E7EB] bg-white">
+
     <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
 
       <Link
         to="/"
         className="flex items-center gap-2.5"
       >
+
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#18C66A] font-extrabold text-[#073F32]">
           C
         </div>
@@ -475,9 +581,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
         <span className="text-xl font-extrabold text-[#073F32]">
           Coral
         </span>
+
       </Link>
 
       <div className="flex items-center gap-2 text-xs font-bold text-[#667085]">
+
         <span className="hidden sm:inline">
           Secure checkout
         </span>
@@ -485,19 +593,23 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9F8F0] text-[#073F32]">
           🔒
         </span>
+
       </div>
 
     </div>
+
   </header>
 
   {/* ================= CONTENT ================= */}
 
   <section className="px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
+
     <div className="mx-auto max-w-6xl">
 
       {/* ================= HEADING ================= */}
 
       <div className="mb-10">
+
         <p className="text-sm font-extrabold tracking-[0.16em] text-[#18C66A]">
           SECURE CHECKOUT
         </p>
@@ -510,15 +622,18 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
           You're one step away from confirming your
           Coral booking.
         </p>
+
       </div>
 
       {/* ================= ERROR ================= */}
 
       {finalPaymentError && (
         <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
+
           <p className="text-sm font-bold text-red-700">
             {finalPaymentError}
           </p>
+
         </div>
       )}
 
@@ -542,6 +657,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
           {/* ================= METHODS ================= */}
 
           <div className="mt-7 grid gap-3 sm:grid-cols-3">
+
             {[
               {
                 id: "card",
@@ -559,7 +675,9 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                 icon: "🏦",
               },
             ].map((item) => {
-              const active = method === item.id;
+
+              const active =
+                method === item.id;
 
               return (
                 <button
@@ -575,6 +693,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                       : "border-[#E5E7EB] hover:border-[#18C66A]"
                   }`}
                 >
+
                   <div className="text-xl">
                     {item.icon}
                   </div>
@@ -582,9 +701,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <p className="mt-2 text-sm font-extrabold text-[#10254A]">
                     {item.label}
                   </p>
+
                 </button>
               );
             })}
+
           </div>
 
           {/* ================= CARD ================= */}
@@ -593,25 +714,29 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
             <div className="mt-8">
 
               <div>
+
                 <label className="text-xs font-extrabold text-[#667085]">
                   CARDHOLDER NAME
                 </label>
 
                 <input
                   value={card.name}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     setCard((previous) => ({
                       ...previous,
                       name: event.target.value,
-                    }))
-                  }
+                    }));
+                    setPaymentError("");
+                  }}
                   placeholder="Name on card"
                   autoComplete="cc-name"
                   className="mt-2 w-full rounded-2xl border border-[#E5E7EB] px-4 py-3.5 text-sm font-semibold text-[#10254A] outline-none transition focus:border-[#18C66A]"
                 />
+
               </div>
 
               <div className="mt-5">
+
                 <label className="text-xs font-extrabold text-[#667085]">
                   CARD NUMBER
                 </label>
@@ -621,17 +746,21 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   maxLength={19}
                   value={card.number}
                   onChange={(event) =>
-                    handleCardNumber(event.target.value)
+                    handleCardNumber(
+                      event.target.value
+                    )
                   }
                   placeholder="1234 5678 9012 3456"
                   autoComplete="cc-number"
                   className="mt-2 w-full rounded-2xl border border-[#E5E7EB] px-4 py-3.5 text-sm font-semibold tracking-wider text-[#10254A] outline-none transition focus:border-[#18C66A]"
                 />
+
               </div>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
 
                 <div>
+
                   <label className="text-xs font-extrabold text-[#667085]">
                     EXPIRY
                   </label>
@@ -641,15 +770,19 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                     inputMode="numeric"
                     value={card.expiry}
                     onChange={(event) =>
-                      handleExpiry(event.target.value)
+                      handleExpiry(
+                        event.target.value
+                      )
                     }
                     placeholder="MM/YY"
                     autoComplete="cc-exp"
                     className="mt-2 w-full rounded-2xl border border-[#E5E7EB] px-4 py-3.5 text-sm font-semibold text-[#10254A] outline-none transition focus:border-[#18C66A]"
                   />
+
                 </div>
 
                 <div>
+
                   <label className="text-xs font-extrabold text-[#667085]">
                     CVV
                   </label>
@@ -660,12 +793,15 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                     maxLength={4}
                     value={card.cvv}
                     onChange={(event) =>
-                      handleCvv(event.target.value)
+                      handleCvv(
+                        event.target.value
+                      )
                     }
                     placeholder="•••"
                     autoComplete="cc-csc"
                     className="mt-2 w-full rounded-2xl border border-[#E5E7EB] px-4 py-3.5 text-sm font-semibold text-[#10254A] outline-none transition focus:border-[#18C66A]"
                   />
+
                 </div>
 
               </div>
@@ -684,15 +820,17 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
               <input
                 value={upiId}
-                onChange={(event) =>
-                  setUpiId(event.target.value)
-                }
+                onChange={(event) => {
+                  setUpiId(event.target.value);
+                  setPaymentError("");
+                }}
                 placeholder="example@upi"
                 autoComplete="off"
                 className="mt-2 w-full rounded-2xl border border-[#E5E7EB] px-4 py-3.5 text-sm font-semibold text-[#10254A] outline-none transition focus:border-[#18C66A]"
               />
 
               <div className="mt-4 rounded-2xl bg-[#E9F8F0] p-4">
+
                 <p className="text-sm font-extrabold text-[#073F32]">
                   Quick & secure
                 </p>
@@ -701,6 +839,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   You'll receive a payment request in
                   your UPI app.
                 </p>
+
               </div>
 
             </div>
@@ -717,11 +856,13 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
               <select
                 value={bank}
-                onChange={(event) =>
-                  setBank(event.target.value)
-                }
+                onChange={(event) => {
+                  setBank(event.target.value);
+                  setPaymentError("");
+                }}
                 className="mt-2 w-full rounded-2xl border border-[#E5E7EB] bg-white px-4 py-3.5 text-sm font-semibold text-[#10254A] outline-none focus:border-[#18C66A]"
               >
+
                 <option value="">
                   Select your bank
                 </option>
@@ -745,6 +886,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                 <option value="Kotak Mahindra Bank">
                   Kotak Mahindra Bank
                 </option>
+
               </select>
 
             </div>
@@ -782,6 +924,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
             {/* ================= IMAGE ================= */}
 
             <div className="h-[220px] bg-[#E9F8F0]">
+
               {propertyImage ? (
                 <img
                   src={propertyImage}
@@ -793,6 +936,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   🏨
                 </div>
               )}
+
             </div>
 
             <div className="p-6">
@@ -816,6 +960,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
               <div className="mt-6 space-y-4 border-t border-[#E5E7EB] pt-5">
 
                 <div className="flex justify-between gap-4 text-sm">
+
                   <span className="text-[#667085]">
                     Check-in
                   </span>
@@ -823,9 +968,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <span className="text-right font-bold text-[#10254A]">
                     {checkIn}
                   </span>
+
                 </div>
 
                 <div className="flex justify-between gap-4 text-sm">
+
                   <span className="text-[#667085]">
                     Check-out
                   </span>
@@ -833,9 +980,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <span className="text-right font-bold text-[#10254A]">
                     {checkOut}
                   </span>
+
                 </div>
 
                 <div className="flex justify-between text-sm">
+
                   <span className="text-[#667085]">
                     Guests
                   </span>
@@ -843,9 +992,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <span className="font-bold text-[#10254A]">
                     {guests}
                   </span>
+
                 </div>
 
                 <div className="flex justify-between text-sm">
+
                   <span className="text-[#667085]">
                     Rooms
                   </span>
@@ -853,9 +1004,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <span className="font-bold text-[#10254A]">
                     {rooms}
                   </span>
+
                 </div>
 
                 <div className="flex justify-between text-sm">
+
                   <span className="text-[#667085]">
                     Nights
                   </span>
@@ -863,6 +1016,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <span className="font-bold text-[#10254A]">
                     {nights}
                   </span>
+
                 </div>
 
               </div>
@@ -872,6 +1026,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
               <div className="mt-6 space-y-3 border-t border-[#E5E7EB] pt-5">
 
                 <div className="flex justify-between text-sm">
+
                   <span className="text-[#667085]">
                     Stay
                   </span>
@@ -879,9 +1034,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <span className="font-semibold text-[#344054]">
                     ₹{subtotal.toLocaleString("en-IN")}
                   </span>
+
                 </div>
 
                 <div className="flex justify-between text-sm">
+
                   <span className="text-[#667085]">
                     Taxes & fees
                   </span>
@@ -889,6 +1046,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <span className="font-semibold text-[#344054]">
                     ₹{taxes.toLocaleString("en-IN")}
                   </span>
+
                 </div>
 
               </div>
@@ -896,6 +1054,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
               {/* ================= TOTAL ================= */}
 
               <div className="mt-5 border-t border-[#E5E7EB] pt-5">
+
                 <div className="flex items-center justify-between">
 
                   <span className="font-extrabold text-[#10254A]">
@@ -907,14 +1066,17 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   </span>
 
                 </div>
+
               </div>
 
             </div>
+
           </div>
 
           {/* ================= SECURITY ================= */}
 
           <div className="mt-4 rounded-[24px] bg-[#E9F8F0] p-5">
+
             <p className="text-sm font-extrabold text-[#073F32]">
               Coral secure checkout
             </p>
@@ -922,13 +1084,17 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
             <p className="mt-1 text-xs leading-5 text-[#667085]">
               Your payment information is protected.
             </p>
+
           </div>
 
         </aside>
 
       </div>
+
     </div>
+
   </section>
+
 </main>
 
 
