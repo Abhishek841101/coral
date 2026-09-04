@@ -1,7 +1,18 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL;
+const ADMIN_TOKEN_KEY = "coral_admin_token";
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+
+  return token
+    ? {
+        Authorization: `Bearer ${token}`,
+      }
+    : {};
+};
 
 export default function AdminProperties() {
   const navigate = useNavigate();
@@ -33,24 +44,23 @@ export default function AdminProperties() {
 
       const response = await fetch(url, {
         method: "GET",
-        credentials: "include",
+        headers: {
+          ...getAuthHeaders(),
+        },
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Unable to fetch properties."
+          data.message || "Unable to fetch properties."
         );
       }
 
       setProperties(data.properties || []);
     } catch (err) {
-      console.error(err);
       setError(
-        err.message ||
-          "Unable to fetch properties."
+        err.message || "Unable to fetch properties."
       );
     } finally {
       setLoading(false);
@@ -98,9 +108,9 @@ export default function AdminProperties() {
         `${API_URL}${endpoint}`,
         {
           method,
-          credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            ...getAuthHeaders(),
           },
           ...(action === "reject"
             ? {
@@ -116,18 +126,14 @@ export default function AdminProperties() {
 
       if (!response.ok) {
         throw new Error(
-          data.message ||
-            "Action failed."
+          data.message || "Action failed."
         );
       }
 
       await fetchProperties();
     } catch (err) {
-      console.error(err);
-
       setError(
-        err.message ||
-          "Unable to perform action."
+        err.message || "Unable to perform action."
       );
     } finally {
       setActionLoading("");
@@ -167,27 +173,20 @@ export default function AdminProperties() {
 
   return (
     <main className="min-h-screen bg-[#F5F7F6]">
-
       {/* HEADER */}
 
       <header className="border-b border-[#E5E7EB] bg-white">
-
         <div className="mx-auto flex max-w-[1500px] items-center justify-between px-5 py-4 sm:px-8">
-
           <button
             type="button"
-            onClick={() =>
-              navigate("/admin")
-            }
+            onClick={() => navigate("/admin")}
             className="flex items-center gap-3"
           >
-
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#18C66A] font-black text-[#073F32]">
               C
             </div>
 
             <div className="text-left">
-
               <p className="text-lg font-black leading-none text-[#073F32]">
                 Coral
               </p>
@@ -195,11 +194,8 @@ export default function AdminProperties() {
               <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.15em] text-gray-400">
                 Admin Panel
               </p>
-
             </div>
-
           </button>
-
 
           <button
             type="button"
@@ -210,20 +206,15 @@ export default function AdminProperties() {
           >
             + Add Property
           </button>
-
         </div>
-
       </header>
-
 
       {/* CONTENT */}
 
       <section className="mx-auto max-w-[1500px] px-5 py-8 sm:px-8">
-
         {/* TITLE */}
 
         <div>
-
           <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#18A85B]">
             Property Management
           </p>
@@ -235,14 +226,11 @@ export default function AdminProperties() {
           <p className="mt-2 text-sm text-gray-500">
             Review and manage property listings.
           </p>
-
         </div>
-
 
         {/* FILTERS */}
 
         <div className="mt-7 flex flex-wrap gap-2">
-
           <FilterButton
             active={filter === "pending"}
             onClick={() =>
@@ -278,9 +266,7 @@ export default function AdminProperties() {
           >
             All
           </FilterButton>
-
         </div>
-
 
         {/* ERROR */}
 
@@ -292,13 +278,10 @@ export default function AdminProperties() {
           </div>
         )}
 
-
         {/* LOADING */}
 
         {loading ? (
-
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
-
             {Array.from({
               length: 4,
             }).map((_, index) => (
@@ -306,13 +289,9 @@ export default function AdminProperties() {
                 key={index}
               />
             ))}
-
           </div>
-
         ) : properties.length === 0 ? (
-
           <div className="mt-8 rounded-[28px] bg-white px-6 py-16 text-center shadow-sm">
-
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#E9F8F0] text-2xl">
               🏠
             </div>
@@ -324,19 +303,17 @@ export default function AdminProperties() {
             <p className="mt-2 text-sm text-gray-500">
               There are no properties in this category.
             </p>
-
           </div>
-
         ) : (
-
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
-
             {properties.map(
               (property) => (
                 <PropertyCard
                   key={property._id}
                   property={property}
-                  actionLoading={actionLoading}
+                  actionLoading={
+                    actionLoading
+                  }
                   onApprove={() =>
                     handleAction(
                       property._id,
@@ -368,17 +345,12 @@ export default function AdminProperties() {
                 />
               )
             )}
-
           </div>
-
         )}
-
       </section>
-
     </main>
   );
 }
-
 
 /* =====================================================
    PROPERTY CARD
@@ -395,13 +367,11 @@ function PropertyCard({
 }) {
   const image =
     property.images?.find(
-      (item) =>
-        item.isPrimary
+      (item) => item.isPrimary
     )?.url ||
     property.images?.[0]?.url;
 
-  const owner =
-    property.owner;
+  const owner = property.owner;
 
   const isPending =
     property.approvalStatus ===
@@ -417,48 +387,35 @@ function PropertyCard({
 
   return (
     <article className="overflow-hidden rounded-[28px] border border-[#E5E7EB] bg-white shadow-sm">
-
       {/* IMAGE */}
 
       <div className="relative h-60 bg-[#E9F8F0]">
-
         {image ? (
-
           <img
             src={image}
             alt={property.title}
             className="h-full w-full object-cover"
           />
-
         ) : (
-
           <div className="flex h-full items-center justify-center text-5xl">
             🏠
           </div>
-
         )}
 
         <div className="absolute left-4 top-4">
-
           <StatusBadge
             status={
               property.approvalStatus
             }
           />
-
         </div>
-
       </div>
-
 
       {/* DETAILS */}
 
       <div className="p-6">
-
         <div className="flex items-start justify-between gap-4">
-
           <div className="min-w-0">
-
             <h2 className="text-xl font-black text-[#073F32]">
               {property.title}
             </h2>
@@ -467,11 +424,9 @@ function PropertyCard({
               {property.locality},{" "}
               {property.city}
             </p>
-
           </div>
 
           <div className="shrink-0 text-right">
-
             <p className="text-xs text-gray-400">
               Rent
             </p>
@@ -483,20 +438,17 @@ function PropertyCard({
               ).toLocaleString(
                 "en-IN"
               )}
+
               <span className="text-xs font-semibold text-gray-400">
                 /{property.rentPeriod}
               </span>
             </p>
-
           </div>
-
         </div>
-
 
         {/* PROPERTY INFO */}
 
         <div className="mt-4 flex flex-wrap gap-2">
-
           {property.propertyType && (
             <InfoBadge>
               {property.propertyType}
@@ -528,14 +480,11 @@ function PropertyCard({
           <InfoBadge>
             {property.availability}
           </InfoBadge>
-
         </div>
-
 
         {/* OWNER */}
 
         <div className="mt-5 rounded-2xl bg-[#F8F9F7] p-4">
-
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-gray-400">
             Property Owner
           </p>
@@ -555,16 +504,13 @@ function PropertyCard({
               {owner.phone}
             </p>
           )}
-
         </div>
-
 
         {/* REJECTION REASON */}
 
         {isRejected &&
           property.rejectionReason && (
             <div className="mt-4 rounded-2xl bg-red-50 p-4">
-
               <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-red-400">
                 Rejection Reason
               </p>
@@ -572,15 +518,12 @@ function PropertyCard({
               <p className="mt-1 text-sm text-red-600">
                 {property.rejectionReason}
               </p>
-
             </div>
           )}
-
 
         {/* ACTIONS */}
 
         <div className="mt-5 flex flex-wrap gap-2">
-
           {isPending && (
             <>
               <ActionButton
@@ -607,7 +550,6 @@ function PropertyCard({
             </>
           )}
 
-
           {isApproved &&
             property.status ===
               "active" && (
@@ -617,12 +559,13 @@ function PropertyCard({
                   actionLoading ===
                   `deactivate-${property._id}`
                 }
-                onClick={onDeactivate}
+                onClick={
+                  onDeactivate
+                }
               >
                 Deactivate
               </ActionButton>
             )}
-
 
           {isApproved &&
             property.status ===
@@ -639,7 +582,6 @@ function PropertyCard({
               </ActionButton>
             )}
 
-
           {isRejected && (
             <ActionButton
               variant="approve"
@@ -653,7 +595,6 @@ function PropertyCard({
             </ActionButton>
           )}
 
-
           <ActionButton
             variant="danger"
             loading={
@@ -664,15 +605,11 @@ function PropertyCard({
           >
             Delete
           </ActionButton>
-
         </div>
-
       </div>
-
     </article>
   );
 }
-
 
 /* =====================================================
    STATUS
@@ -693,7 +630,6 @@ function StatusBadge({
     </span>
   );
 }
-
 
 /* =====================================================
    FILTER BUTTON
@@ -718,7 +654,6 @@ function FilterButton({
     </button>
   );
 }
-
 
 /* =====================================================
    ACTION BUTTON
@@ -758,7 +693,6 @@ function ActionButton({
   );
 }
 
-
 /* =====================================================
    INFO BADGE
 ===================================================== */
@@ -773,7 +707,6 @@ function InfoBadge({
   );
 }
 
-
 /* =====================================================
    SKELETON
 ===================================================== */
@@ -781,11 +714,9 @@ function InfoBadge({
 function PropertySkeleton() {
   return (
     <div className="overflow-hidden rounded-[28px] bg-white shadow-sm">
-
       <div className="h-60 animate-pulse bg-gray-200" />
 
       <div className="p-6">
-
         <div className="h-6 w-2/3 animate-pulse rounded bg-gray-200" />
 
         <div className="mt-3 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
@@ -793,9 +724,7 @@ function PropertySkeleton() {
         <div className="mt-5 h-16 animate-pulse rounded-2xl bg-gray-200" />
 
         <div className="mt-5 h-10 animate-pulse rounded-full bg-gray-200" />
-
       </div>
-
     </div>
   );
 }
