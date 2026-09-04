@@ -1,10 +1,34 @@
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import { getBookingById } from "../features/bookings/bookingSlice";
 
 export default function BookingConfirmation() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  if (!state) {
+  const {
+    booking,
+    bookingLoading,
+    bookingError,
+  } = useSelector((store) => store.booking);
+
+  const bookingId = state?.bookingId;
+
+  useEffect(() => {
+    if (bookingId) {
+      dispatch(getBookingById(bookingId));
+    }
+  }, [dispatch, bookingId]);
+
+  /* =====================================================
+     NO BOOKING ID
+  ===================================================== */
+
+  if (!bookingId) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
         <div className="text-center">
@@ -33,14 +57,206 @@ export default function BookingConfirmation() {
     );
   }
 
-  const bookingId =
-    state.bookingId ||
-    `COR-${Date.now().toString().slice(-6)}`;
+  /* =====================================================
+     LOADING
+  ===================================================== */
+
+  if (bookingLoading && !booking) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
+        <div className="text-center">
+
+          <div className="mx-auto flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-[#E9F8F0] text-2xl">
+            🏨
+          </div>
+
+          <h1 className="mt-6 text-2xl font-extrabold text-[#10254A]">
+            Loading your booking...
+          </h1>
+
+          <p className="mt-3 text-sm text-[#667085]">
+            Please wait while we fetch your reservation details.
+          </p>
+
+        </div>
+      </main>
+    );
+  }
+
+  /* =====================================================
+     ERROR
+  ===================================================== */
+
+  if (bookingError && !booking) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5">
+        <div className="text-center">
+
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-2xl">
+            !
+          </div>
+
+          <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
+            Unable to load booking
+          </h1>
+
+          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-[#667085]">
+            {bookingError}
+          </p>
+
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+
+            <button
+              type="button"
+              onClick={() => dispatch(getBookingById(bookingId))}
+              className="rounded-full bg-[#073F32] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32]"
+            >
+              Try again
+            </button>
+
+            <Link
+              to="/"
+              className="rounded-full border border-[#073F32] px-6 py-3 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
+            >
+              Back to Coral
+            </Link>
+
+          </div>
+
+        </div>
+      </main>
+    );
+  }
+
+  if (!booking) {
+    return null;
+  }
+
+  /* =====================================================
+     BOOKING DATA
+  ===================================================== */
+
+  const property =
+    booking.property && typeof booking.property === "object"
+      ? booking.property
+      : null;
+
+  const user =
+    booking.user && typeof booking.user === "object"
+      ? booking.user
+      : null;
+
+  const displayBookingId =
+    booking._id || booking.id || bookingId;
+
+  const propertyName =
+    property?.title ||
+    property?.name ||
+    state?.propertyName ||
+    "Coral Property";
+
+  const guestName =
+    booking.guestName ||
+    `${state?.firstName || ""} ${state?.lastName || ""}`.trim() ||
+    user?.name ||
+    "Guest";
+
+  const guestEmail =
+    booking.guestEmail ||
+    state?.email ||
+    user?.email ||
+    "";
+
+  const guestPhone =
+    booking.guestPhone ||
+    state?.phone ||
+    user?.phone ||
+    "";
+
+  const checkIn =
+    booking.checkIn
+      ? new Date(booking.checkIn).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : state?.checkIn || "-";
+
+  const checkOut =
+    booking.checkOut
+      ? new Date(booking.checkOut).toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : state?.checkOut || "-";
+
+  const guests = Number(booking.guests || state?.guests || 1);
+  const rooms = Number(booking.rooms || state?.rooms || 1);
+  const nights = Number(booking.nights || state?.nights || 1);
+
+  const roomName =
+    property?.propertyType ||
+    state?.roomName ||
+    "Stay";
+
+  const specialRequest =
+    booking.specialRequest ||
+    state?.requests ||
+    "";
+
+  const stayTotal = Number(
+    booking.subtotal ??
+      state?.stayTotal ??
+      0
+  );
+
+  const taxes = Number(
+    booking.taxes ??
+      state?.taxes ??
+      0
+  );
+
+  const totalAmount = Number(
+    booking.totalAmount ??
+      state?.totalPrice ??
+      0
+  );
+
+  const paymentStatus =
+    booking.paymentStatus || "pending";
+
+  const bookingStatus =
+    booking.status || "pending";
+
+  const isPaid = paymentStatus === "paid";
+
+  const paymentStatusText = isPaid
+    ? "Payment successful"
+    : "Pending payment";
+
+  /* =====================================================
+     PAYMENT
+  ===================================================== */
+
+  const handlePayment = () => {
+    navigate("/payment", {
+      state: {
+        bookingId: displayBookingId,
+        booking,
+      },
+    });
+  };
+
+  /* =====================================================
+     UI
+  ===================================================== */
 
   return (
     <main className="min-h-screen bg-[#F8F9F7]">
 
       {/* ================= HEADER ================= */}
+
       <header className="border-b border-[#E5E7EB] bg-white">
 
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
@@ -67,11 +283,13 @@ export default function BookingConfirmation() {
       </header>
 
       {/* ================= CONTENT ================= */}
+
       <section className="px-5 py-10 sm:px-8 lg:px-10 lg:py-16">
 
         <div className="mx-auto max-w-5xl">
 
           {/* ================= SUCCESS HEADER ================= */}
+
           <div className="text-center">
 
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9F8F0]">
@@ -98,9 +316,11 @@ export default function BookingConfirmation() {
           </div>
 
           {/* ================= BOOKING CARD ================= */}
+
           <div className="mt-10 overflow-hidden rounded-[30px] border border-[#E5E7EB] bg-white shadow-xl">
 
-            {/* Booking ID */}
+            {/* ================= BOOKING ID ================= */}
+
             <div className="border-b border-[#E5E7EB] bg-[#E9F8F0] px-6 py-5 sm:px-8">
 
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
@@ -111,14 +331,20 @@ export default function BookingConfirmation() {
                     BOOKING ID
                   </p>
 
-                  <p className="mt-1 text-lg font-extrabold text-[#073F32]">
-                    {bookingId}
+                  <p className="mt-1 break-all text-lg font-extrabold text-[#073F32]">
+                    {displayBookingId}
                   </p>
 
                 </div>
 
-                <span className="w-fit rounded-full bg-white px-4 py-2 text-xs font-extrabold text-[#18A85B]">
-                  Pending payment
+                <span
+                  className={`w-fit rounded-full bg-white px-4 py-2 text-xs font-extrabold ${
+                    isPaid
+                      ? "text-[#18A85B]"
+                      : "text-[#B7791F]"
+                  }`}
+                >
+                  {isPaid ? "Paid" : "Pending payment"}
                 </span>
 
               </div>
@@ -126,12 +352,15 @@ export default function BookingConfirmation() {
             </div>
 
             {/* ================= BODY ================= */}
+
             <div className="grid lg:grid-cols-[1fr_340px]">
 
               {/* ================= LEFT ================= */}
+
               <div className="p-6 sm:p-8">
 
-                {/* Guest */}
+                {/* ================= GUEST ================= */}
+
                 <div>
 
                   <p className="text-xs font-extrabold tracking-wider text-[#18C66A]">
@@ -139,20 +368,25 @@ export default function BookingConfirmation() {
                   </p>
 
                   <h2 className="mt-2 text-2xl font-extrabold text-[#10254A]">
-                    {state.firstName} {state.lastName}
+                    {guestName}
                   </h2>
 
-                  <p className="mt-1 text-sm text-[#667085]">
-                    {state.email}
-                  </p>
+                  {guestEmail && (
+                    <p className="mt-1 text-sm text-[#667085]">
+                      {guestEmail}
+                    </p>
+                  )}
 
-                  <p className="mt-1 text-sm text-[#667085]">
-                    {state.phone}
-                  </p>
+                  {guestPhone && (
+                    <p className="mt-1 text-sm text-[#667085]">
+                      {guestPhone}
+                    </p>
+                  )}
 
                 </div>
 
-                {/* Stay */}
+                {/* ================= STAY ================= */}
+
                 <div className="mt-8 border-t border-[#E5E7EB] pt-7">
 
                   <p className="text-xs font-extrabold tracking-wider text-[#18C66A]">
@@ -160,56 +394,65 @@ export default function BookingConfirmation() {
                   </p>
 
                   <h2 className="mt-2 text-2xl font-extrabold text-[#10254A]">
-                    {state.propertyName}
+                    {propertyName}
                   </h2>
 
                   <div className="mt-5 grid gap-4 sm:grid-cols-2">
 
                     <div className="rounded-2xl bg-[#F8F9F7] p-4">
+
                       <p className="text-xs font-bold text-[#667085]">
                         CHECK-IN
                       </p>
 
                       <p className="mt-1 text-sm font-extrabold text-[#10254A]">
-                        {state.checkIn}
+                        {checkIn}
                       </p>
+
                     </div>
 
                     <div className="rounded-2xl bg-[#F8F9F7] p-4">
+
                       <p className="text-xs font-bold text-[#667085]">
                         CHECK-OUT
                       </p>
 
                       <p className="mt-1 text-sm font-extrabold text-[#10254A]">
-                        {state.checkOut}
+                        {checkOut}
                       </p>
+
                     </div>
 
                     <div className="rounded-2xl bg-[#F8F9F7] p-4">
+
                       <p className="text-xs font-bold text-[#667085]">
                         GUESTS
                       </p>
 
                       <p className="mt-1 text-sm font-extrabold text-[#10254A]">
-                        {state.guests}
+                        {guests}
                       </p>
+
                     </div>
 
                     <div className="rounded-2xl bg-[#F8F9F7] p-4">
+
                       <p className="text-xs font-bold text-[#667085]">
                         ROOMS
                       </p>
 
                       <p className="mt-1 text-sm font-extrabold text-[#10254A]">
-                        {state.rooms}
+                        {rooms}
                       </p>
+
                     </div>
 
                   </div>
 
                 </div>
 
-                {/* Room */}
+                {/* ================= ROOM ================= */}
+
                 <div className="mt-8 border-t border-[#E5E7EB] pt-7">
 
                   <p className="text-xs font-extrabold tracking-wider text-[#18C66A]">
@@ -225,15 +468,15 @@ export default function BookingConfirmation() {
                     <div>
 
                       <p className="text-sm font-extrabold text-[#10254A]">
-                        {state.roomName}
+                        {roomName}
                       </p>
 
                       <p className="mt-1 text-xs text-[#667085]">
-                        {state.nights}{" "}
-                        {state.nights === 1 ? "night" : "nights"}{" "}
+                        {nights}{" "}
+                        {nights === 1 ? "night" : "nights"}{" "}
                         ·{" "}
-                        {state.rooms}{" "}
-                        {state.rooms === 1 ? "room" : "rooms"}
+                        {rooms}{" "}
+                        {rooms === 1 ? "room" : "rooms"}
                       </p>
 
                     </div>
@@ -242,8 +485,9 @@ export default function BookingConfirmation() {
 
                 </div>
 
-                {/* Special Request */}
-                {state.requests && (
+                {/* ================= SPECIAL REQUEST ================= */}
+
+                {specialRequest && (
                   <div className="mt-8 border-t border-[#E5E7EB] pt-7">
 
                     <p className="text-xs font-extrabold tracking-wider text-[#18C66A]">
@@ -251,15 +495,40 @@ export default function BookingConfirmation() {
                     </p>
 
                     <p className="mt-3 rounded-2xl bg-[#F8F9F7] p-4 text-sm leading-6 text-[#667085]">
-                      {state.requests}
+                      {specialRequest}
                     </p>
 
                   </div>
                 )}
 
+                {/* ================= BOOKING STATUS ================= */}
+
+                <div className="mt-8 border-t border-[#E5E7EB] pt-7">
+
+                  <p className="text-xs font-extrabold tracking-wider text-[#18C66A]">
+                    BOOKING STATUS
+                  </p>
+
+                  <div className="mt-3 rounded-2xl bg-[#F8F9F7] p-4">
+
+                    <p className="text-sm font-extrabold capitalize text-[#10254A]">
+                      {bookingStatus}
+                    </p>
+
+                    <p className="mt-1 text-xs text-[#667085]">
+                      {isPaid
+                        ? "Your payment has been received."
+                        : "Complete payment to confirm your reservation."}
+                    </p>
+
+                  </div>
+
+                </div>
+
               </div>
 
               {/* ================= RIGHT ================= */}
+
               <aside className="border-t border-[#E5E7EB] bg-[#FAFAF9] p-6 sm:p-8 lg:border-l lg:border-t-0">
 
                 <h3 className="text-xl font-extrabold text-[#10254A]">
@@ -275,7 +544,7 @@ export default function BookingConfirmation() {
                     </span>
 
                     <span className="font-semibold text-[#344054]">
-                      ₹{Number(state.stayTotal || 0).toLocaleString("en-IN")}
+                      ₹{stayTotal.toLocaleString("en-IN")}
                     </span>
 
                   </div>
@@ -287,14 +556,15 @@ export default function BookingConfirmation() {
                     </span>
 
                     <span className="font-semibold text-[#344054]">
-                      ₹{Number(state.taxes || 0).toLocaleString("en-IN")}
+                      ₹{taxes.toLocaleString("en-IN")}
                     </span>
 
                   </div>
 
                 </div>
 
-                {/* Total */}
+                {/* ================= TOTAL ================= */}
+
                 <div className="mt-6 border-t border-[#E5E7EB] pt-5">
 
                   <div className="flex items-end justify-between gap-4">
@@ -304,10 +574,7 @@ export default function BookingConfirmation() {
                     </span>
 
                     <span className="text-2xl font-extrabold text-[#073F32]">
-                      ₹
-                      {Number(state.totalPrice || 0).toLocaleString(
-                        "en-IN"
-                      )}
+                      ₹{totalAmount.toLocaleString("en-IN")}
                     </span>
 
                   </div>
@@ -315,17 +582,33 @@ export default function BookingConfirmation() {
                 </div>
 
                 {/* ================= PAYMENT BUTTON ================= */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate("/payment", {
-                      state: state,
-                    })
-                  }
-                  className="mt-7 w-full rounded-full bg-[#18C66A] py-4 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
-                >
-                  Proceed to payment →
-                </button>
+
+                {!isPaid && (
+                  <button
+                    type="button"
+                    onClick={handlePayment}
+                    className="mt-7 w-full rounded-full bg-[#18C66A] py-4 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
+                  >
+                    Proceed to payment →
+                  </button>
+                )}
+
+                {isPaid && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate("/booking-success", {
+                        state: {
+                          bookingId: displayBookingId,
+                          booking,
+                        },
+                      })
+                    }
+                    className="mt-7 w-full rounded-full bg-[#18C66A] py-4 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
+                  >
+                    View booking confirmation →
+                  </button>
+                )}
 
                 <p className="mt-4 text-center text-xs leading-5 text-[#667085]">
                   Secure payment · No hidden charges
@@ -338,6 +621,7 @@ export default function BookingConfirmation() {
           </div>
 
           {/* ================= HELP ================= */}
+
           <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-[24px] bg-white p-5 sm:flex-row">
 
             <div>
@@ -368,3 +652,4 @@ export default function BookingConfirmation() {
     </main>
   );
 }
+
