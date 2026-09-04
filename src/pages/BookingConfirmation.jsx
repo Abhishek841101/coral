@@ -3,7 +3,9 @@ Link,
 useLocation,
 useNavigate,
 } from "react-router-dom";
+
 import { useEffect, useMemo } from "react";
+
 import {
 useDispatch,
 useSelector,
@@ -21,17 +23,9 @@ const location = useLocation();
 const navigate = useNavigate();
 const dispatch = useDispatch();
 
-/* =====================================================
-REDUX
-===================================================== */
-
 const reduxBooking = useSelector(selectBooking);
 const bookingLoading = useSelector(selectBookingLoading);
 const bookingError = useSelector(selectSingleBookingError);
-
-/* =====================================================
-BOOKING FROM NAVIGATION
-===================================================== */
 
 const stateBooking = location.state?.booking || null;
 
@@ -41,47 +35,28 @@ stateBooking?._id ||
 stateBooking?.id ||
 "";
 
-/* =====================================================
-BOOKING DATA
-
-
- If Redux already has booking, use it.
- Otherwise use booking passed through navigation.
-
-
-===================================================== */
-
 const booking = useMemo(() => {
-if (reduxBooking) {
-return reduxBooking;
+if (stateBooking) {
+return stateBooking;
 }
 
 
-if (stateBooking) {
-  return stateBooking;
+if (reduxBooking) {
+  return reduxBooking;
 }
 
 return null;
 
 
-}, [reduxBooking, stateBooking]);
-
-/* =====================================================
-FETCH FRESH BOOKING
-===================================================== */
+}, [stateBooking, reduxBooking]);
 
 useEffect(() => {
-if (!bookingId) return;
+if (!bookingId || stateBooking) return;
 
 
 dispatch(getBookingById(bookingId));
 
-
-}, [dispatch, bookingId]);
-
-/* =====================================================
-NO BOOKING ID
-===================================================== */
+}, [dispatch, bookingId, stateBooking]);
 
 if (!bookingId) {
 return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="w-full max-w-md text-center">
@@ -113,15 +88,6 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
 
 
 }
-
-/* =====================================================
-LOADING
-
-
- Only show full loader when no booking data exists.
-
-
-===================================================== */
 
 if (bookingLoading && !booking) {
 return ( <main className="min-h-screen bg-[#F8F9F7]">
@@ -175,14 +141,6 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
 
 }
-
-/* =====================================================
-API ERROR
-
- If navigation already contains booking details,
- don't hide the page just because refresh API failed.
-
-===================================================== */
 
 if (bookingError && !booking) {
 return ( <main className="min-h-screen bg-[#F8F9F7]">
@@ -256,6 +214,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
         </div>
 
         <div className="mt-7 rounded-2xl bg-white p-4">
+
           <p className="text-xs text-[#667085]">
             Booking reference
           </p>
@@ -263,6 +222,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
           <p className="mt-1 break-all text-sm font-extrabold text-[#073F32]">
             {bookingId}
           </p>
+
         </div>
 
       </div>
@@ -274,10 +234,6 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
 
 }
-
-/* =====================================================
-SAFETY FALLBACK
-===================================================== */
 
 if (!booking) {
 return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="w-full max-w-md text-center">
@@ -319,10 +275,6 @@ return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F
 
 }
 
-/* =====================================================
-PROPERTY
-===================================================== */
-
 const property =
 booking.property &&
 typeof booking.property === "object"
@@ -335,10 +287,6 @@ typeof booking.user === "object"
 ? booking.user
 : {};
 
-/* =====================================================
-BASIC DATA
-===================================================== */
-
 const propertyName =
 property.title ||
 property.name ||
@@ -346,7 +294,13 @@ property.name ||
 
 const propertyImage =
 property.image ||
-property.images?.[0] ||
+property.images?.find(
+(image) => image?.isPrimary
+)?.url ||
+property.images?.[0]?.url ||
+(typeof property.images?.[0] === "string"
+? property.images[0]
+: "") ||
 "";
 
 const propertyLocation = [
@@ -372,13 +326,8 @@ booking.guestPhone ||
 user.phone ||
 "—";
 
-/* =====================================================
-DATES
-===================================================== */
-
 const formatDate = (value) => {
 if (!value) return "—";
-
 
 const date = new Date(value);
 
@@ -398,10 +347,6 @@ return date.toLocaleDateString("en-IN", {
 const checkIn = formatDate(booking.checkIn);
 const checkOut = formatDate(booking.checkOut);
 
-/* =====================================================
-COUNTS
-===================================================== */
-
 const guests =
 Number(booking.guests) || 1;
 
@@ -410,10 +355,6 @@ Number(booking.rooms) || 1;
 
 const nights =
 Number(booking.nights) || 1;
-
-/* =====================================================
-PRICE
-===================================================== */
 
 const pricePerNight =
 Number(booking.pricePerNight) || 0;
@@ -428,10 +369,6 @@ const totalAmount =
 Number(booking.totalAmount) ||
 subtotal + taxes;
 
-/* =====================================================
-STATUS
-===================================================== */
-
 const bookingStatus =
 booking.status || "pending";
 
@@ -441,54 +378,35 @@ booking.paymentStatus || "pending";
 const isPaid =
 paymentStatus === "paid";
 
-/* =====================================================
-ROOM TYPE
-===================================================== */
-
 const roomType =
 property.propertyType ||
 property.type ||
 "Stay";
 
-/* =====================================================
-SPECIAL REQUEST
-===================================================== */
-
 const specialRequest =
 booking.specialRequest || "";
-
-/* =====================================================
-BOOKING ID
-===================================================== */
 
 const displayBookingId =
 booking._id ||
 booking.id ||
 bookingId;
 
-/* =====================================================
-PAYMENT
-===================================================== */
-
 const handlePayment = () => {
-navigate("/payment", {
-state: {
-bookingId: displayBookingId,
-booking,
-},
-});
-};
+if (!displayBookingId) return;
 
-/* =====================================================
-MAIN UI
-===================================================== */
+
+navigate("/payment", {
+  state: {
+    bookingId: displayBookingId,
+    booking,
+  },
+});
+
+
+};
 
 return ( <main className="min-h-screen bg-[#F8F9F7]">
 
-
-  {/* =================================================
-      HEADER
-  ================================================= */}
 
   <header className="border-b border-[#E5E7EB] bg-white">
     <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
@@ -507,6 +425,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
       </Link>
 
       <div className="flex items-center gap-2 text-sm font-bold text-[#667085]">
+
         <span className="hidden sm:inline">
           Booking confirmation
         </span>
@@ -514,29 +433,24 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9F8F0]">
           ✓
         </span>
+
       </div>
 
     </div>
   </header>
 
-  {/* =================================================
-      CONTENT
-  ================================================= */}
-
   <section className="px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
 
     <div className="mx-auto max-w-6xl">
 
-      {/* =================================================
-          TOP SUCCESS
-      ================================================= */}
-
       <div className="text-center">
 
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9F8F0]">
+
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#18C66A] text-2xl font-extrabold text-[#073F32]">
             ✓
           </div>
+
         </div>
 
         <p className="mt-6 text-sm font-extrabold tracking-[0.16em] text-[#18C66A]">
@@ -555,21 +469,14 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
       </div>
 
-      {/* =================================================
-          BOOKING CARD
-      ================================================= */}
-
       <div className="mt-10 overflow-hidden rounded-[32px] border border-[#E5E7EB] bg-white shadow-xl">
-
-        {/* =================================================
-            BOOKING HEADER
-        ================================================= */}
 
         <div className="bg-[#073F32] px-6 py-6 text-white sm:px-8">
 
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
             <div>
+
               <p className="text-xs font-bold tracking-[0.16em] text-[#A7E9C5]">
                 BOOKING REFERENCE
               </p>
@@ -577,6 +484,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
               <p className="mt-2 break-all text-lg font-extrabold">
                 {displayBookingId}
               </p>
+
             </div>
 
             <div className="w-fit rounded-full bg-white/10 px-4 py-2 text-xs font-extrabold capitalize text-[#A7E9C5]">
@@ -587,21 +495,9 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
         </div>
 
-        {/* =================================================
-            BODY
-        ================================================= */}
-
         <div className="grid lg:grid-cols-[1fr_360px]">
 
-          {/* =================================================
-              LEFT
-          ================================================= */}
-
           <div className="p-6 sm:p-8">
-
-            {/* =================================================
-                PROPERTY
-            ================================================= */}
 
             <section>
 
@@ -649,10 +545,6 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
             </section>
 
-            {/* =================================================
-                DATES
-            ================================================= */}
-
             <section className="mt-8 border-t border-[#E5E7EB] pt-8">
 
               <h2 className="text-xl font-extrabold text-[#10254A]">
@@ -662,6 +554,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
 
                 <div className="rounded-2xl bg-[#F8F9F7] p-5">
+
                   <p className="text-xs font-extrabold tracking-wider text-[#667085]">
                     CHECK-IN
                   </p>
@@ -669,9 +562,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <p className="mt-2 text-lg font-extrabold text-[#10254A]">
                     {checkIn}
                   </p>
+
                 </div>
 
                 <div className="rounded-2xl bg-[#F8F9F7] p-5">
+
                   <p className="text-xs font-extrabold tracking-wider text-[#667085]">
                     CHECK-OUT
                   </p>
@@ -679,9 +574,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <p className="mt-2 text-lg font-extrabold text-[#10254A]">
                     {checkOut}
                   </p>
+
                 </div>
 
                 <div className="rounded-2xl bg-[#F8F9F7] p-5">
+
                   <p className="text-xs font-extrabold tracking-wider text-[#667085]">
                     GUESTS
                   </p>
@@ -692,9 +589,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                       ? "Guest"
                       : "Guests"}
                   </p>
+
                 </div>
 
                 <div className="rounded-2xl bg-[#F8F9F7] p-5">
+
                   <p className="text-xs font-extrabold tracking-wider text-[#667085]">
                     ROOMS
                   </p>
@@ -705,6 +604,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                       ? "Room"
                       : "Rooms"}
                   </p>
+
                 </div>
 
               </div>
@@ -730,10 +630,6 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
             </section>
 
-            {/* =================================================
-                GUEST DETAILS
-            ================================================= */}
-
             <section className="mt-8 border-t border-[#E5E7EB] pt-8">
 
               <h2 className="text-xl font-extrabold text-[#10254A]">
@@ -743,6 +639,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
 
                 <div className="rounded-2xl border border-[#E5E7EB] p-4">
+
                   <p className="text-xs font-bold text-[#667085]">
                     GUEST NAME
                   </p>
@@ -750,9 +647,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <p className="mt-1 text-sm font-extrabold text-[#10254A]">
                     {guestName}
                   </p>
+
                 </div>
 
                 <div className="rounded-2xl border border-[#E5E7EB] p-4">
+
                   <p className="text-xs font-bold text-[#667085]">
                     PHONE
                   </p>
@@ -760,9 +659,11 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <p className="mt-1 text-sm font-extrabold text-[#10254A]">
                     {guestPhone}
                   </p>
+
                 </div>
 
                 <div className="rounded-2xl border border-[#E5E7EB] p-4 sm:col-span-2">
+
                   <p className="text-xs font-bold text-[#667085]">
                     EMAIL
                   </p>
@@ -770,15 +671,12 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <p className="mt-1 break-all text-sm font-extrabold text-[#10254A]">
                     {guestEmail}
                   </p>
+
                 </div>
 
               </div>
 
             </section>
-
-            {/* =================================================
-                SPECIAL REQUEST
-            ================================================= */}
 
             {specialRequest && (
               <section className="mt-8 border-t border-[#E5E7EB] pt-8">
@@ -788,19 +686,17 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                 </h2>
 
                 <div className="mt-4 rounded-2xl bg-[#F8F9F7] p-5">
+
                   <p className="text-sm leading-6 text-[#667085]">
                     {specialRequest}
                   </p>
+
                 </div>
 
               </section>
             )}
 
           </div>
-
-          {/* =================================================
-              RIGHT PRICE SUMMARY
-          ================================================= */}
 
           <aside className="border-t border-[#E5E7EB] bg-[#FAFAF9] p-6 sm:p-8 lg:border-l lg:border-t-0">
 
@@ -817,18 +713,24 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
               <div className="mt-7 space-y-4">
 
                 <div className="flex justify-between gap-4 text-sm">
+
                   <span className="text-[#667085]">
                     ₹{pricePerNight.toLocaleString("en-IN")} ×{" "}
                     {nights} nights ×{" "}
-                    {rooms} {rooms === 1 ? "room" : "rooms"}
+                    {rooms}{" "}
+                    {rooms === 1
+                      ? "room"
+                      : "rooms"}
                   </span>
 
                   <span className="font-bold text-[#344054]">
                     ₹{subtotal.toLocaleString("en-IN")}
                   </span>
+
                 </div>
 
                 <div className="flex justify-between gap-4 text-sm">
+
                   <span className="text-[#667085]">
                     Taxes & fees
                   </span>
@@ -836,6 +738,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <span className="font-bold text-[#344054]">
                     ₹{taxes.toLocaleString("en-IN")}
                   </span>
+
                 </div>
 
               </div>
@@ -856,10 +759,6 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
               </div>
 
-              {/* =================================================
-                  PAYMENT STATUS
-              ================================================= */}
-
               <div className="mt-6 rounded-2xl bg-[#FFF7E6] p-4">
 
                 <div className="flex gap-3">
@@ -871,12 +770,15 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                   <div>
 
                     <p className="text-sm font-extrabold text-[#8A5A00]">
-                      Payment pending
+                      {isPaid
+                        ? "Payment completed"
+                        : "Payment pending"}
                     </p>
 
                     <p className="mt-1 text-xs leading-5 text-[#9A6A13]">
-                      Complete payment to confirm
-                      your reservation.
+                      {isPaid
+                        ? "Your reservation payment has been completed."
+                        : "Complete payment to confirm your reservation."}
                     </p>
 
                   </div>
@@ -884,10 +786,6 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
                 </div>
 
               </div>
-
-              {/* =================================================
-                  PAYMENT BUTTON
-              ================================================= */}
 
               {!isPaid && (
                 <button
@@ -918,13 +816,10 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
 
       </div>
 
-      {/* =================================================
-          FOOTER
-      ================================================= */}
-
       <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-[24px] bg-white p-5 sm:flex-row">
 
         <div>
+
           <p className="text-sm font-extrabold text-[#073F32]">
             Almost there!
           </p>
@@ -932,6 +827,7 @@ return ( <main className="min-h-screen bg-[#F8F9F7]">
           <p className="mt-1 text-xs text-[#667085]">
             Review your details before proceeding to payment.
           </p>
+
         </div>
 
         <Link

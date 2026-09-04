@@ -1595,15 +1595,16 @@ export default function Booking() {
         return;
       }
 
-      navigate(
-        "/booking-confirmation",
-        {
-          state: {
-            bookingId:
-              createdBooking._id,
-          },
-        }
-      );
+     navigate(
+"/booking-confirmation",
+{
+state: {
+bookingId: createdBooking._id,
+booking: createdBooking,
+},
+}
+);
+
     }
   };
 
