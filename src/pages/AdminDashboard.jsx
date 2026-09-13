@@ -629,7 +629,6 @@
 
 
 
-
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -1262,9 +1261,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() =>
-                navigate(
-                  "/admin/bookings"
-                )
+                navigate("/admin/bookings/pending")
               }
               className="text-sm font-extrabold text-[#18A85B] transition hover:text-[#073F32]"
             >
@@ -1295,6 +1292,9 @@ export default function AdminDashboard() {
               }
               icon="⏳"
               highlight
+              onClick={() =>
+                navigate("/admin/bookings/pending")
+              }
             />
 
             <StatCard
@@ -1306,6 +1306,9 @@ export default function AdminDashboard() {
                 bookingLoading
               }
               icon="✓"
+              onClick={() =>
+                navigate("/admin/bookings/confirmed")
+              }
             />
 
             <StatCard
@@ -1739,11 +1742,11 @@ export default function AdminDashboard() {
 
                 <div className="rounded-2xl bg-[#F5F7F6] p-4">
                   <p className="text-[10px] font-black uppercase tracking-wider text-gray-400">
-                    Booked Rooms
+                    Confirmed Bookings
                   </p>
 
                   <p className="mt-1 text-2xl font-black text-[#073F32]">
-                    {selectedDate.bookedRooms ||
+                    {selectedDate.bookingCount ||
                       0}
                   </p>
                 </div>
@@ -1782,9 +1785,9 @@ export default function AdminDashboard() {
                           ?.phone ||
                         "";
 
-                      const rooms =
-                        booking?.rooms ||
-                        1;
+                      const bookingStatus =
+                        booking?.status ||
+                        "confirmed";
 
                       return (
                         <div
@@ -1843,11 +1846,11 @@ export default function AdminDashboard() {
 
                               <div>
                                 <p className="text-[9px] font-black uppercase tracking-wide text-gray-400">
-                                  Rooms
+                                  Status
                                 </p>
 
-                                <p className="mt-1 text-xs font-bold text-[#073F32]">
-                                  {rooms}
+                                <p className="mt-1 text-xs font-bold uppercase text-[#168B4B]">
+                                  {bookingStatus}
                                 </p>
                               </div>
 
@@ -2000,9 +2003,7 @@ export default function AdminDashboard() {
               description="Review and manage customer bookings"
               icon="📋"
               onClick={() =>
-                navigate(
-                  "/admin/bookings"
-                )
+                navigate("/admin/bookings/pending")
               }
             />
 
@@ -2037,10 +2038,18 @@ function StatCard({
   loading,
   icon,
   highlight = false,
+  onClick,
 }) {
   return (
-    <div
-      className={`rounded-[24px] border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className={`w-full rounded-[24px] border bg-white p-5 text-left shadow-sm transition ${
+        onClick
+          ? "cursor-pointer hover:-translate-y-0.5 hover:border-[#BCEFD3] hover:shadow-md"
+          : "cursor-default"
+      } ${
         highlight
           ? "border-[#BCEFD3]"
           : "border-[#E5E7EB]"
@@ -2073,7 +2082,7 @@ function StatCard({
         </p>
       )}
 
-    </div>
+    </button>
   );
 }
 

@@ -1,15 +1,6 @@
-import {
-Link,
-useLocation,
-useNavigate,
-} from "react-router-dom";
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo } from "react";
-
-import {
-useDispatch,
-useSelector,
-} from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
 getBookingById,
@@ -23,828 +14,517 @@ const location = useLocation();
 const navigate = useNavigate();
 const dispatch = useDispatch();
 
-const reduxBooking = useSelector(selectBooking);
-const bookingLoading = useSelector(selectBookingLoading);
-const bookingError = useSelector(selectSingleBookingError);
-
 const stateBooking = location.state?.booking || null;
-
-const bookingId =
+const stateBookingId =
 location.state?.bookingId ||
 stateBooking?._id ||
 stateBooking?.id ||
 "";
 
-const booking = useMemo(() => {
-if (stateBooking) {
-return stateBooking;
+const reduxBooking = useSelector(selectBooking);
+const bookingLoading = useSelector(selectBookingLoading);
+const bookingError = useSelector(selectSingleBookingError);
+
+const booking = stateBooking || reduxBooking;
+
+useEffect(() => {
+if (!stateBooking && stateBookingId) {
+dispatch(getBookingById(stateBookingId));
 }
+}, [dispatch, stateBooking, stateBookingId]);
 
+const property = useMemo(() => {
+if (!booking?.property) return null;
 
-if (reduxBooking) {
-  return reduxBooking;
+if (typeof booking.property === "object") {
+  return booking.property;
 }
 
 return null;
 
+}, [booking]);
 
-}, [stateBooking, reduxBooking]);
+const formatDate = (date) => {
+if (!date) return "—";
 
-useEffect(() => {
-if (!bookingId || stateBooking) return;
+const parsedDate = new Date(date);
 
-
-dispatch(getBookingById(bookingId));
-
-}, [dispatch, bookingId, stateBooking]);
-
-if (!bookingId) {
-return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="w-full max-w-md text-center">
-
-
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-3xl">
-        !
-      </div>
-
-      <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
-        No booking found
-      </h1>
-
-      <p className="mt-3 text-sm leading-6 text-[#667085]">
-        We could not find your booking reference.
-        Please start your booking again.
-      </p>
-
-      <Link
-        to="/"
-        className="mt-7 inline-flex rounded-full bg-[#073F32] px-7 py-3.5 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32]"
-      >
-        Back to Coral
-      </Link>
-
-    </div>
-  </main>
-);
-
-
-}
-
-if (bookingLoading && !booking) {
-return ( <main className="min-h-screen bg-[#F8F9F7]">
-
-
-    <header className="border-b border-[#E5E7EB] bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
-
-        <Link
-          to="/"
-          className="flex items-center gap-2.5"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#18C66A] font-extrabold text-[#073F32]">
-            C
-          </div>
-
-          <span className="text-xl font-extrabold tracking-tight text-[#073F32]">
-            Coral
-          </span>
-        </Link>
-
-        <span className="text-sm font-bold text-[#667085]">
-          Booking confirmation
-        </span>
-
-      </div>
-    </header>
-
-    <section className="flex min-h-[75vh] items-center justify-center px-5 py-12">
-
-      <div className="text-center">
-
-        <div className="mx-auto flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-[#E9F8F0] text-3xl">
-          🏨
-        </div>
-
-        <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
-          Loading your booking...
-        </h1>
-
-        <p className="mt-3 text-sm text-[#667085]">
-          Please wait while we fetch your reservation details.
-        </p>
-
-      </div>
-
-    </section>
-
-  </main>
-);
-
-
-}
-
-if (bookingError && !booking) {
-return ( <main className="min-h-screen bg-[#F8F9F7]">
-
-
-    <header className="border-b border-[#E5E7EB] bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
-
-        <Link
-          to="/"
-          className="flex items-center gap-2.5"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#18C66A] font-extrabold text-[#073F32]">
-            C
-          </div>
-
-          <span className="text-xl font-extrabold tracking-tight text-[#073F32]">
-            Coral
-          </span>
-        </Link>
-
-        <span className="text-sm font-bold text-[#667085]">
-          Booking confirmation
-        </span>
-
-      </div>
-    </header>
-
-    <section className="flex min-h-[75vh] items-center justify-center px-5 py-12">
-
-      <div className="w-full max-w-lg text-center">
-
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-3xl font-extrabold text-red-500">
-          !
-        </div>
-
-        <p className="mt-6 text-xs font-extrabold tracking-[0.18em] text-red-500">
-          BOOKING ERROR
-        </p>
-
-        <h1 className="mt-2 text-3xl font-extrabold text-[#10254A] sm:text-4xl">
-          Unable to load your booking
-        </h1>
-
-        <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#667085]">
-          {bookingError}
-        </p>
-
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-
-          <button
-            type="button"
-            onClick={() =>
-              dispatch(getBookingById(bookingId))
-            }
-            disabled={bookingLoading}
-            className="rounded-full bg-[#073F32] px-7 py-3.5 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {bookingLoading
-              ? "Loading..."
-              : "Try again"}
-          </button>
-
-          <Link
-            to="/"
-            className="rounded-full border border-[#073F32] px-7 py-3.5 text-sm font-extrabold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
-          >
-            Back to Coral
-          </Link>
-
-        </div>
-
-        <div className="mt-7 rounded-2xl bg-white p-4">
-
-          <p className="text-xs text-[#667085]">
-            Booking reference
-          </p>
-
-          <p className="mt-1 break-all text-sm font-extrabold text-[#073F32]">
-            {bookingId}
-          </p>
-
-        </div>
-
-      </div>
-
-    </section>
-
-  </main>
-);
-
-
-}
-
-if (!booking) {
-return ( <main className="flex min-h-screen items-center justify-center bg-[#F8F9F7] px-5"> <div className="w-full max-w-md text-center">
-
-
-      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9F8F0] text-3xl">
-        🏨
-      </div>
-
-      <h1 className="mt-6 text-3xl font-extrabold text-[#10254A]">
-        Booking details unavailable
-      </h1>
-
-      <p className="mt-3 text-sm text-[#667085]">
-        Your booking reference is:
-      </p>
-
-      <p className="mt-2 break-all text-sm font-extrabold text-[#073F32]">
-        {bookingId}
-      </p>
-
-      <button
-        type="button"
-        onClick={() =>
-          dispatch(getBookingById(bookingId))
-        }
-        disabled={bookingLoading}
-        className="mt-6 rounded-full bg-[#073F32] px-7 py-3.5 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {bookingLoading
-          ? "Loading..."
-          : "Load booking"}
-      </button>
-
-    </div>
-  </main>
-);
-
-
-}
-
-const property =
-booking.property &&
-typeof booking.property === "object"
-? booking.property
-: {};
-
-const user =
-booking.user &&
-typeof booking.user === "object"
-? booking.user
-: {};
-
-const propertyName =
-property.title ||
-property.name ||
-"Coral Property";
-
-const propertyImage =
-property.image ||
-property.images?.find(
-(image) => image?.isPrimary
-)?.url ||
-property.images?.[0]?.url ||
-(typeof property.images?.[0] === "string"
-? property.images[0]
-: "") ||
-"";
-
-const propertyLocation = [
-property.locality,
-property.city,
-property.state,
-]
-.filter(Boolean)
-.join(", ");
-
-const guestName =
-booking.guestName ||
-user.name ||
-"Guest";
-
-const guestEmail =
-booking.guestEmail ||
-user.email ||
-"—";
-
-const guestPhone =
-booking.guestPhone ||
-user.phone ||
-"—";
-
-const formatDate = (value) => {
-if (!value) return "—";
-
-const date = new Date(value);
-
-if (Number.isNaN(date.getTime())) {
+if (Number.isNaN(parsedDate.getTime())) {
   return "—";
 }
 
-return date.toLocaleDateString("en-IN", {
+return parsedDate.toLocaleDateString("en-IN", {
   day: "2-digit",
   month: "short",
   year: "numeric",
 });
 
+};
+
+const getPropertyImage = () => {
+if (!property?.images) return null;
+
+if (Array.isArray(property.images)) {
+  return property.images[0] || null;
+}
+
+return property.images;
 
 };
 
-const checkIn = formatDate(booking.checkIn);
-const checkOut = formatDate(booking.checkOut);
+const getStatusDetails = () => {
+switch (booking?.status) {
+case "confirmed":
+return {
+label: "Booking Confirmed",
+title: "Your booking is confirmed",
+description:
+"Your booking has been confirmed by our team. Please keep your booking details available for reference.",
+className:
+"bg-green-50 border-green-200 text-green-700",
+};
 
-const guests =
-Number(booking.guests) || 1;
+  case "rejected":
+    return {
+      label: "Request Rejected",
+      title: "Booking request was rejected",
+      description:
+        booking?.rejectionReason ||
+        "Unfortunately, this booking request could not be confirmed.",
+      className:
+        "bg-red-50 border-red-200 text-red-700",
+    };
 
-const rooms =
-Number(booking.rooms) || 1;
+  case "cancelled":
+    return {
+      label: "Booking Cancelled",
+      title: "Booking has been cancelled",
+      description:
+        booking?.cancellationReason ||
+        "This booking is no longer active.",
+      className:
+        "bg-gray-100 border-gray-200 text-gray-700",
+    };
 
-const nights =
-Number(booking.nights) || 1;
+  case "completed":
+    return {
+      label: "Booking Completed",
+      title: "Booking completed",
+      description:
+        "This booking has been marked as completed.",
+      className:
+        "bg-blue-50 border-blue-200 text-blue-700",
+    };
 
-const pricePerNight =
-Number(booking.pricePerNight) || 0;
+  default:
+    return {
+      label: "Request Submitted",
+      title: "Booking request submitted",
+      description:
+        "Your booking request has been received. Our team will review it and contact you for confirmation.",
+      className:
+        "bg-amber-50 border-amber-200 text-amber-700",
+    };
+}
 
-const subtotal =
-Number(booking.subtotal) || 0;
+};
 
-const taxes =
-Number(booking.taxes) || 0;
+const statusDetails = getStatusDetails();
+
+const pricePerNight = Number(booking?.pricePerNight) || 0;
+const nights = Number(booking?.nights) || 0;
+
+const calculatedTotal = pricePerNight * nights;
 
 const totalAmount =
-Number(booking.totalAmount) ||
-subtotal + taxes;
+Number(booking?.totalAmount) ||
+Number(booking?.subtotal) ||
+calculatedTotal;
 
-const bookingStatus =
-booking.status || "pending";
+if (bookingLoading && !booking) {
+return (
+<div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center max-w-md w-full">
+<div className="w-10 h-10 border-4 border-gray-200 border-t-gray-900 rounded-full animate-spin mx-auto mb-5" />
 
-const paymentStatus =
-booking.paymentStatus || "pending";
+      <h2 className="text-lg font-semibold text-gray-900">
+        Loading booking details
+      </h2>
 
-const isPaid =
-paymentStatus === "paid";
+      <p className="text-sm text-gray-500 mt-2">
+        Please wait while we load your booking request.
+      </p>
+    </div>
+  </div>
+);
 
-const roomType =
-property.propertyType ||
-property.type ||
-"Stay";
+}
 
-const specialRequest =
-booking.specialRequest || "";
+if (bookingError && !booking) {
+return (
+<div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center max-w-md w-full">
+<h2 className="text-xl font-semibold text-gray-900">
+Unable to load booking
+</h2>
 
-const displayBookingId =
-booking._id ||
-booking.id ||
-bookingId;
+      <p className="text-sm text-red-600 mt-3">
+        {bookingError}
+      </p>
 
-const handlePayment = () => {
-if (!displayBookingId) return;
+      <button
+        type="button"
+        onClick={() => navigate("/")}
+        className="mt-6 px-5 py-3 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition"
+      >
+        Back to Home
+      </button>
+    </div>
+  </div>
+);
 
+}
 
-navigate("/payment", {
-  state: {
-    bookingId: displayBookingId,
-    booking,
-  },
-});
+if (!booking) {
+return (
+<div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center max-w-md w-full">
+<h2 className="text-xl font-semibold text-gray-900">
+Booking not found
+</h2>
 
-
-};
-
-return ( <main className="min-h-screen bg-[#F8F9F7]">
-
-
-  <header className="border-b border-[#E5E7EB] bg-white">
-    <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
+      <p className="text-sm text-gray-500 mt-3">
+        We could not find the booking request you are looking for.
+      </p>
 
       <Link
         to="/"
-        className="flex items-center gap-2.5"
+        className="inline-flex mt-6 px-5 py-3 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition"
       >
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#18C66A] font-extrabold text-[#073F32]">
-          C
-        </div>
-
-        <span className="text-xl font-extrabold tracking-tight text-[#073F32]">
-          Coral
-        </span>
+        Back to Home
       </Link>
-
-      <div className="flex items-center gap-2 text-sm font-bold text-[#667085]">
-
-        <span className="hidden sm:inline">
-          Booking confirmation
-        </span>
-
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E9F8F0]">
-          ✓
-        </span>
-
-      </div>
-
     </div>
-  </header>
+  </div>
+);
 
-  <section className="px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
+}
 
-    <div className="mx-auto max-w-6xl">
+const propertyImage = getPropertyImage();
 
-      <div className="text-center">
+return (
+<div className="min-h-screen bg-gray-50">
+<div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+<div className="mb-8">
+<button
+type="button"
+onClick={() => navigate(-1)}
+className="text-sm font-medium text-gray-600 hover:text-gray-900 transition"
+>
+← Back
+</button>
+</div>
 
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#E9F8F0]">
-
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#18C66A] text-2xl font-extrabold text-[#073F32]">
-            ✓
-          </div>
-
+    <div className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="px-5 sm:px-8 py-8 border-b border-gray-200">
+        <div
+          className={`inline-flex items-center px-3 py-1.5 rounded-full border text-xs font-semibold ${statusDetails.className}`}
+        >
+          {statusDetails.label}
         </div>
 
-        <p className="mt-6 text-sm font-extrabold tracking-[0.16em] text-[#18C66A]">
-          BOOKING CREATED
-        </p>
-
-        <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-[#10254A] sm:text-5xl">
-          Your booking is ready!
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mt-4">
+          {statusDetails.title}
         </h1>
 
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-[#667085] sm:text-base">
-          Your booking request has been successfully
-          created. Review all your details below and
-          continue to secure your reservation.
+        <p className="text-gray-600 text-sm sm:text-base mt-2 max-w-2xl leading-6">
+          {statusDetails.description}
         </p>
 
+        {booking._id && (
+          <div className="mt-5">
+            <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
+              Booking Request ID
+            </p>
+
+            <p className="text-sm font-mono text-gray-700 mt-1 break-all">
+              {booking._id}
+            </p>
+          </div>
+        )}
       </div>
 
-      <div className="mt-10 overflow-hidden rounded-[32px] border border-[#E5E7EB] bg-white shadow-xl">
-
-        <div className="bg-[#073F32] px-6 py-6 text-white sm:px-8">
-
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-
-            <div>
-
-              <p className="text-xs font-bold tracking-[0.16em] text-[#A7E9C5]">
-                BOOKING REFERENCE
-              </p>
-
-              <p className="mt-2 break-all text-lg font-extrabold">
-                {displayBookingId}
-              </p>
-
-            </div>
-
-            <div className="w-fit rounded-full bg-white/10 px-4 py-2 text-xs font-extrabold capitalize text-[#A7E9C5]">
-              {bookingStatus}
-            </div>
-
-          </div>
-
-        </div>
-
-        <div className="grid lg:grid-cols-[1fr_360px]">
-
-          <div className="p-6 sm:p-8">
-
+      <div className="p-5 sm:p-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
             <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Property Details
+                </h2>
 
-              <p className="text-xs font-extrabold tracking-[0.16em] text-[#18C66A]">
-                YOUR STAY
-              </p>
+                {property?.propertyType && (
+                  <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 capitalize">
+                    {property.propertyType}
+                  </span>
+                )}
+              </div>
 
-              <div className="mt-4 flex flex-col gap-5 sm:flex-row">
-
-                <div className="h-40 w-full overflow-hidden rounded-2xl bg-[#E9F8F0] sm:h-32 sm:w-48">
-
+              <div className="border border-gray-200 rounded-2xl overflow-hidden">
+                <div className="flex flex-col sm:flex-row">
                   {propertyImage ? (
                     <img
                       src={propertyImage}
-                      alt={propertyName}
-                      className="h-full w-full object-cover"
+                      alt={property?.title || "Property"}
+                      className="w-full sm:w-48 h-48 sm:h-auto object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-4xl">
-                      🏨
+                    <div className="w-full sm:w-48 h-48 sm:h-auto bg-gray-100 flex items-center justify-center">
+                      <span className="text-sm text-gray-400">
+                        No image
+                      </span>
                     </div>
                   )}
 
-                </div>
+                  <div className="p-5 flex-1">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {property?.title || "Property"}
+                    </h3>
 
-                <div className="flex-1">
+                    {(property?.locality || property?.city) && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        {[property.locality, property.city]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </p>
+                    )}
 
-                  <h2 className="text-2xl font-extrabold text-[#10254A]">
-                    {propertyName}
-                  </h2>
+                    {property?.rent !== undefined &&
+                      property?.rent !== null && (
+                        <div className="mt-4">
+                          <span className="text-xl font-bold text-gray-900">
+                            ₹{Number(property.rent).toLocaleString("en-IN")}
+                          </span>
 
-                  {propertyLocation && (
-                    <p className="mt-2 text-sm text-[#667085]">
-                      📍 {propertyLocation}
-                    </p>
-                  )}
-
-                  <div className="mt-4 inline-flex rounded-full bg-[#E9F8F0] px-3 py-1.5 text-xs font-extrabold text-[#073F32]">
-                    🛏 {roomType}
+                          <span className="text-sm text-gray-500 ml-1">
+                            / {property.rentPeriod || "night"}
+                          </span>
+                        </div>
+                      )}
                   </div>
-
                 </div>
-
               </div>
-
             </section>
 
-            <section className="mt-8 border-t border-[#E5E7EB] pt-8">
-
-              <h2 className="text-xl font-extrabold text-[#10254A]">
-                Stay details
+            <section>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">
+                Stay Details
               </h2>
 
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-
-                <div className="rounded-2xl bg-[#F8F9F7] p-5">
-
-                  <p className="text-xs font-extrabold tracking-wider text-[#667085]">
-                    CHECK-IN
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="border border-gray-200 rounded-2xl p-5">
+                  <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
+                    Check-in
                   </p>
 
-                  <p className="mt-2 text-lg font-extrabold text-[#10254A]">
-                    {checkIn}
+                  <p className="text-base font-semibold text-gray-900 mt-2">
+                    {formatDate(booking.checkIn)}
                   </p>
-
                 </div>
 
-                <div className="rounded-2xl bg-[#F8F9F7] p-5">
-
-                  <p className="text-xs font-extrabold tracking-wider text-[#667085]">
-                    CHECK-OUT
+                <div className="border border-gray-200 rounded-2xl p-5">
+                  <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
+                    Check-out
                   </p>
 
-                  <p className="mt-2 text-lg font-extrabold text-[#10254A]">
-                    {checkOut}
+                  <p className="text-base font-semibold text-gray-900 mt-2">
+                    {formatDate(booking.checkOut)}
                   </p>
-
                 </div>
 
-                <div className="rounded-2xl bg-[#F8F9F7] p-5">
-
-                  <p className="text-xs font-extrabold tracking-wider text-[#667085]">
-                    GUESTS
+                <div className="border border-gray-200 rounded-2xl p-5">
+                  <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
+                    Guests
                   </p>
 
-                  <p className="mt-2 text-lg font-extrabold text-[#10254A]">
-                    {guests}{" "}
-                    {guests === 1
-                      ? "Guest"
-                      : "Guests"}
+                  <p className="text-base font-semibold text-gray-900 mt-2">
+                    {booking.guests || 1}
                   </p>
-
                 </div>
 
-                <div className="rounded-2xl bg-[#F8F9F7] p-5">
-
-                  <p className="text-xs font-extrabold tracking-wider text-[#667085]">
-                    ROOMS
-                  </p>
-
-                  <p className="mt-2 text-lg font-extrabold text-[#10254A]">
-                    {rooms}{" "}
-                    {rooms === 1
-                      ? "Room"
-                      : "Rooms"}
-                  </p>
-
-                </div>
-
-              </div>
-
-              <div className="mt-4 rounded-2xl bg-[#E9F8F0] p-5">
-
-                <div className="flex items-center justify-between">
-
-                  <span className="text-sm font-bold text-[#667085]">
+                <div className="border border-gray-200 rounded-2xl p-5">
+                  <p className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
                     Duration
-                  </span>
+                  </p>
 
-                  <span className="text-sm font-extrabold text-[#073F32]">
-                    {nights}{" "}
-                    {nights === 1
-                      ? "Night"
-                      : "Nights"}
-                  </span>
-
+                  <p className="text-base font-semibold text-gray-900 mt-2">
+                    {nights} {nights === 1 ? "night" : "nights"}
+                  </p>
                 </div>
-
               </div>
-
             </section>
 
-            <section className="mt-8 border-t border-[#E5E7EB] pt-8">
-
-              <h2 className="text-xl font-extrabold text-[#10254A]">
-                Guest details
+            <section>
+              <h2 className="text-lg font-bold text-gray-900 mb-4">
+                Guest Details
               </h2>
 
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="border border-gray-200 rounded-2xl divide-y divide-gray-200">
+                <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-sm text-gray-500">
+                    Name
+                  </span>
 
-                <div className="rounded-2xl border border-[#E5E7EB] p-4">
-
-                  <p className="text-xs font-bold text-[#667085]">
-                    GUEST NAME
-                  </p>
-
-                  <p className="mt-1 text-sm font-extrabold text-[#10254A]">
-                    {guestName}
-                  </p>
-
+                  <span className="text-sm font-semibold text-gray-900">
+                    {booking.guestName || "—"}
+                  </span>
                 </div>
 
-                <div className="rounded-2xl border border-[#E5E7EB] p-4">
+                <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-sm text-gray-500">
+                    Phone
+                  </span>
 
-                  <p className="text-xs font-bold text-[#667085]">
-                    PHONE
-                  </p>
-
-                  <p className="mt-1 text-sm font-extrabold text-[#10254A]">
-                    {guestPhone}
-                  </p>
-
+                  <span className="text-sm font-semibold text-gray-900">
+                    {booking.guestPhone || "—"}
+                  </span>
                 </div>
 
-                <div className="rounded-2xl border border-[#E5E7EB] p-4 sm:col-span-2">
+                <div className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-sm text-gray-500">
+                    Email
+                  </span>
 
-                  <p className="text-xs font-bold text-[#667085]">
-                    EMAIL
-                  </p>
-
-                  <p className="mt-1 break-all text-sm font-extrabold text-[#10254A]">
-                    {guestEmail}
-                  </p>
-
+                  <span className="text-sm font-semibold text-gray-900 break-all sm:text-right">
+                    {booking.guestEmail || "—"}
+                  </span>
                 </div>
-
               </div>
-
             </section>
 
-            {specialRequest && (
-              <section className="mt-8 border-t border-[#E5E7EB] pt-8">
-
-                <h2 className="text-xl font-extrabold text-[#10254A]">
-                  Special request
+            {booking.specialRequest && (
+              <section>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">
+                  Special Request
                 </h2>
 
-                <div className="mt-4 rounded-2xl bg-[#F8F9F7] p-5">
-
-                  <p className="text-sm leading-6 text-[#667085]">
-                    {specialRequest}
+                <div className="border border-gray-200 rounded-2xl p-5">
+                  <p className="text-sm text-gray-600 leading-6">
+                    {booking.specialRequest}
                   </p>
-
                 </div>
-
               </section>
             )}
-
           </div>
 
-          <aside className="border-t border-[#E5E7EB] bg-[#FAFAF9] p-6 sm:p-8 lg:border-l lg:border-t-0">
-
-            <div className="lg:sticky lg:top-6">
-
-              <p className="text-xs font-extrabold tracking-[0.16em] text-[#18C66A]">
-                PAYMENT
-              </p>
-
-              <h2 className="mt-2 text-2xl font-extrabold text-[#10254A]">
-                Price summary
+          <div>
+            <div className="border border-gray-200 rounded-2xl p-5 sm:p-6 lg:sticky lg:top-6">
+              <h2 className="text-lg font-bold text-gray-900">
+                Booking Summary
               </h2>
 
-              <div className="mt-7 space-y-4">
-
-                <div className="flex justify-between gap-4 text-sm">
-
-                  <span className="text-[#667085]">
-                    ₹{pricePerNight.toLocaleString("en-IN")} ×{" "}
-                    {nights} nights ×{" "}
-                    {rooms}{" "}
-                    {rooms === 1
-                      ? "room"
-                      : "rooms"}
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-gray-500">
+                    Rent per night
                   </span>
 
-                  <span className="font-bold text-[#344054]">
-                    ₹{subtotal.toLocaleString("en-IN")}
+                  <span className="text-sm font-semibold text-gray-900">
+                    ₹{pricePerNight.toLocaleString("en-IN")}
                   </span>
-
                 </div>
 
-                <div className="flex justify-between gap-4 text-sm">
-
-                  <span className="text-[#667085]">
-                    Taxes & fees
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-gray-500">
+                    Nights
                   </span>
 
-                  <span className="font-bold text-[#344054]">
-                    ₹{taxes.toLocaleString("en-IN")}
+                  <span className="text-sm font-semibold text-gray-900">
+                    {nights}
                   </span>
-
                 </div>
 
-              </div>
-
-              <div className="mt-6 border-t border-[#E5E7EB] pt-6">
-
-                <div className="flex items-center justify-between">
-
-                  <span className="text-base font-extrabold text-[#10254A]">
+                <div className="border-t border-gray-200 pt-4 flex items-center justify-between gap-4">
+                  <span className="text-base font-bold text-gray-900">
                     Total
                   </span>
 
-                  <span className="text-3xl font-extrabold text-[#073F32]">
+                  <span className="text-xl font-bold text-gray-900">
                     ₹{totalAmount.toLocaleString("en-IN")}
                   </span>
-
                 </div>
-
               </div>
 
-              <div className="mt-6 rounded-2xl bg-[#FFF7E6] p-4">
+              <div className="mt-6 rounded-xl bg-gray-50 border border-gray-200 p-4">
+                <p className="text-sm font-semibold text-gray-900">
+                  No online payment required
+                </p>
 
-                <div className="flex gap-3">
-
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FFE7B3]">
-                    💳
-                  </div>
-
-                  <div>
-
-                    <p className="text-sm font-extrabold text-[#8A5A00]">
-                      {isPaid
-                        ? "Payment completed"
-                        : "Payment pending"}
-                    </p>
-
-                    <p className="mt-1 text-xs leading-5 text-[#9A6A13]">
-                      {isPaid
-                        ? "Your reservation payment has been completed."
-                        : "Complete payment to confirm your reservation."}
-                    </p>
-
-                  </div>
-
-                </div>
-
+                <p className="text-xs text-gray-500 mt-1 leading-5">
+                  Payment and final confirmation will be handled
+                  manually by our team.
+                </p>
               </div>
 
-              {!isPaid && (
-                <button
-                  type="button"
-                  onClick={handlePayment}
-                  className="mt-7 w-full rounded-full bg-[#18C66A] py-4 text-sm font-extrabold text-[#073F32] shadow-sm transition hover:bg-[#073F32] hover:text-white"
-                >
-                  Proceed to payment →
-                </button>
-              )}
+              <Link
+                to="/my-bookings"
+                className="mt-6 w-full inline-flex items-center justify-center px-5 py-3.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition"
+              >
+                View My Bookings
+              </Link>
 
-              {isPaid && (
-                <div className="mt-7 rounded-full bg-[#E9F8F0] py-4 text-center text-sm font-extrabold text-[#073F32]">
-                  Payment already completed ✓
-                </div>
-              )}
-
-              <p className="mt-4 text-center text-xs leading-5 text-[#667085]">
-                Secure checkout · Your booking details
-                are protected
-              </p>
-
+              <Link
+                to="/"
+                className="mt-3 w-full inline-flex items-center justify-center px-5 py-3.5 rounded-xl border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition"
+              >
+                Back to Home
+              </Link>
             </div>
-
-          </aside>
-
+          </div>
         </div>
-
       </div>
-
-      <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-[24px] bg-white p-5 sm:flex-row">
-
-        <div>
-
-          <p className="text-sm font-extrabold text-[#073F32]">
-            Almost there!
-          </p>
-
-          <p className="mt-1 text-xs text-[#667085]">
-            Review your details before proceeding to payment.
-          </p>
-
-        </div>
-
-        <Link
-          to="/"
-          className="rounded-full border border-[#073F32] px-5 py-3 text-sm font-bold text-[#073F32] transition hover:bg-[#073F32] hover:text-white"
-        >
-          Back to Coral
-        </Link>
-
-      </div>
-
     </div>
 
-  </section>
+    {booking.status === "pending" && (
+      <div className="mt-6 bg-white border border-gray-200 rounded-2xl p-5 sm:p-6">
+        <h3 className="font-semibold text-gray-900">
+          What happens next?
+        </h3>
 
-</main>
+        <div className="mt-4 grid sm:grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              1. Request received
+            </p>
 
+            <p className="text-xs text-gray-500 mt-1 leading-5">
+              Your booking request has been submitted successfully.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              2. Admin review
+            </p>
+
+            <p className="text-xs text-gray-500 mt-1 leading-5">
+              Our team will check the property availability.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-gray-900">
+              3. Confirmation
+            </p>
+
+            <p className="text-xs text-gray-500 mt-1 leading-5">
+              You will be contacted for payment and final confirmation.
+            </p>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+</div>
 
 );
 }

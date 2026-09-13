@@ -1,11 +1,11 @@
 import {
-  BrowserRouter,
-  Routes,
-  Route,
+BrowserRouter,
+Routes,
+Route,
 } from "react-router-dom";
 
 /* =====================================================
-   USER PAGES
+USER PAGES
 ===================================================== */
 
 import Home from "./pages/Home";
@@ -18,10 +18,17 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 
+/* =====================================================
+PROPERTY BOOKING
+===================================================== */
+
 import Booking from "./pages/Booking";
 import BookingConfirmation from "./pages/BookingConfirmation";
-import Payment from "./pages/Payment";
 import BookingSuccess from "./pages/BookingSuccess";
+
+/* =====================================================
+TOUR PAGES
+===================================================== */
 
 import TourDetails from "./pages/TourDetails";
 import TourBooking from "./pages/TourBooking";
@@ -29,233 +36,240 @@ import TourConfirmation from "./pages/TourConfirmation";
 import TourPayment from "./pages/TourPayment";
 import TourSuccess from "./pages/TourSuccess";
 
+/* =====================================================
+VISA PAGES
+===================================================== */
+
 import VisaDetails from "./pages/VisaDetails";
 import VisaApplication from "./pages/VisaApplication";
 import VisaConfirmation from "./pages/VisaConfirmation";
 import VisaPayment from "./pages/VisaPayment";
 import VisaSuccess from "./pages/VisaSuccess";
-import AdminProperties from "./pages/AdminProperties";
+
 /* =====================================================
-   ADMIN PAGES
+ADMIN PAGES
 ===================================================== */
 
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAddProperty from "./pages/AdminAddProperty";
+import AdminProperties from "./pages/AdminProperties";
 
+import AdminPendingBooking from "./pages/AdminPendingBooking";
+import AdminConfirmedBooking from "./pages/AdminConfirmedBooking";
+import AdminBookingDetails from "./pages/AdminBookingDetails";
 
 export default function App() {
-  return (
-    <BrowserRouter>
+return (
+<BrowserRouter>
 
-      <Routes>
+  <Routes>
 
-        {/* =================================================
-            USER AUTH
-        ================================================= */}
+    {/* =================================================
+        USER AUTH
+    ================================================= */}
 
-        <Route
-          path="/login"
-          element={<Login />}
-        />
+    <Route
+      path="/login"
+      element={<Login />}
+    />
 
-        <Route
-          path="/register"
-          element={<Register />}
-        />
-
-
-        {/* =================================================
-            USER PROFILE / DASHBOARD
-        ================================================= */}
-
-        <Route
-          path="/profile"
-          element={<Profile />}
-        />
-
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
+    <Route
+      path="/register"
+      element={<Register />}
+    />
 
 
-        {/* =================================================
-            HOME
-        ================================================= */}
+    {/* =================================================
+        USER PROFILE / DASHBOARD
+    ================================================= */}
 
-        <Route
-          path="/"
-          element={<Home />}
-        />
+    <Route
+      path="/profile"
+      element={<Profile />}
+    />
 
-
-        {/* =================================================
-            PUBLIC PROPERTIES
-        ================================================= */}
-
-        <Route
-          path="/properties"
-          element={<Properties />}
-        />
-
-        <Route
-          path="/property/:id"
-          element={<PropertyDetails />}
-        />
-
-        <Route
-          path="/property-enquiry"
-          element={<PropertyEnquiry />}
-        />
+    <Route
+      path="/dashboard"
+      element={<Dashboard />}
+    />
 
 
-        {/* =================================================
-            BOOKING
-        ================================================= */}
+    {/* =================================================
+        HOME
+    ================================================= */}
 
-        <Route
-          path="/booking"
-          element={<Booking />}
-        />
-
-        <Route
-          path="/booking/:id"
-          element={<Booking />}
-        />
-
-        <Route
-          path="/booking-confirmation"
-          element={<BookingConfirmation />}
-        />
-
-        <Route
-          path="/payment"
-          element={<Payment />}
-        />
-
-        <Route
-          path="/booking-success"
-          element={<BookingSuccess />}
-        />
+    <Route
+      path="/"
+      element={<Home />}
+    />
 
 
-        {/* =================================================
-            TOURS
-        ================================================= */}
+    {/* =================================================
+        PUBLIC PROPERTIES
+    ================================================= */}
 
-        <Route
-          path="/tour/:id"
-          element={<TourDetails />}
-        />
+    <Route
+      path="/properties"
+      element={<Properties />}
+    />
 
-        <Route
-          path="/tour-booking"
-          element={<TourBooking />}
-        />
+    <Route
+      path="/property/:id"
+      element={<PropertyDetails />}
+    />
 
-        <Route
-          path="/tour-confirmation"
-          element={<TourConfirmation />}
-        />
-
-        <Route
-          path="/tour-payment"
-          element={<TourPayment />}
-        />
-
-        <Route
-          path="/tour-success"
-          element={<TourSuccess />}
-        />
-
-{/* ADMIN */}
-
-<Route
-  path="/admin"
-  element={<AdminDashboard />}
-/>
-
-<Route
-  path="/admin/dashboard"
-  element={<AdminDashboard />}
-/>
-
-<Route
-  path="/admin/properties"
-  element={<AdminProperties />}
-/>
-
-<Route
-  path="/admin/properties/add"
-  element={<AdminAddProperty />}
-/>
-        {/* =================================================
-            VISA
-        ================================================= */}
-
-        <Route
-          path="/visa/:id"
-          element={<VisaDetails />}
-        />
-
-        <Route
-          path="/visa-application"
-          element={<VisaApplication />}
-        />
-
-        <Route
-          path="/visa-confirmation"
-          element={<VisaConfirmation />}
-        />
-
-        <Route
-          path="/visa-payment"
-          element={<VisaPayment />}
-        />
-
-        <Route
-          path="/visa-success"
-          element={<VisaSuccess />}
-        />
+    <Route
+      path="/property-enquiry"
+      element={<PropertyEnquiry />}
+    />
 
 
-        {/* =================================================
-            ADMIN
-        ================================================= */}
+    {/* =================================================
+        PROPERTY BOOKING
+    ================================================= */}
 
-        {/* Main Admin Dashboard */}
+    <Route
+      path="/booking"
+      element={<Booking />}
+    />
 
-        <Route
-          path="/admin"
-          element={<AdminDashboard />}
-        />
+    <Route
+      path="/booking/:id"
+      element={<Booking />}
+    />
 
-        {/* Backward-compatible dashboard URL */}
+    <Route
+      path="/booking-confirmation"
+      element={<BookingConfirmation />}
+    />
 
-        <Route
-          path="/admin/dashboard"
-          element={<AdminDashboard />}
-        />
+    <Route
+      path="/booking-success"
+      element={<BookingSuccess />}
+    />
 
-        {/* Admin Add Property */}
 
-        <Route
-          path="/admin/properties/add"
-          element={<AdminAddProperty />}
-        />
+    {/* =================================================
+        TOURS
+    ================================================= */}
 
-        {/* Admin Properties
-            Temporary: public Properties page
-            until dedicated AdminProperties page is created.
-        */}
+    <Route
+      path="/tour/:id"
+      element={<TourDetails />}
+    />
 
-        <Route
-          path="/admin/properties"
-          element={<Properties />}
-        />
+    <Route
+      path="/tour-booking"
+      element={<TourBooking />}
+    />
 
-      </Routes>
+    <Route
+      path="/tour-confirmation"
+      element={<TourConfirmation />}
+    />
 
-    </BrowserRouter>
-  );
+    <Route
+      path="/tour-payment"
+      element={<TourPayment />}
+    />
+
+    <Route
+      path="/tour-success"
+      element={<TourSuccess />}
+    />
+
+
+    {/* =================================================
+        VISA
+    ================================================= */}
+
+    <Route
+      path="/visa/:id"
+      element={<VisaDetails />}
+    />
+
+    <Route
+      path="/visa-application"
+      element={<VisaApplication />}
+    />
+
+    <Route
+      path="/visa-confirmation"
+      element={<VisaConfirmation />}
+    />
+
+    <Route
+      path="/visa-payment"
+      element={<VisaPayment />}
+    />
+
+    <Route
+      path="/visa-success"
+      element={<VisaSuccess />}
+    />
+
+
+    {/* =================================================
+        ADMIN DASHBOARD
+    ================================================= */}
+
+    <Route
+      path="/admin"
+      element={<AdminDashboard />}
+    />
+
+    <Route
+      path="/admin/dashboard"
+      element={<AdminDashboard />}
+    />
+
+
+    {/* =================================================
+        ADMIN PROPERTY MANAGEMENT
+        OLD FLOW - UNCHANGED
+    ================================================= */}
+
+    <Route
+      path="/admin/properties"
+      element={<AdminProperties />}
+    />
+
+    <Route
+      path="/admin/properties/add"
+      element={<AdminAddProperty />}
+    />
+
+
+    {/* =================================================
+        ADMIN BOOKING MANAGEMENT
+    ================================================= */}
+
+    {/* Pending Bookings */}
+
+    <Route
+      path="/admin/bookings/pending"
+      element={<AdminPendingBooking />}
+    />
+
+
+    {/* Confirmed Bookings */}
+
+    <Route
+      path="/admin/bookings/confirmed"
+      element={<AdminConfirmedBooking />}
+    />
+
+
+    {/* Individual Booking Details */}
+
+    <Route
+      path="/admin/bookings/:id"
+      element={<AdminBookingDetails />}
+    />
+
+  </Routes>
+
+</BrowserRouter>
+
+);
 }

@@ -1,204 +1,338 @@
 
-// import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-// const API_URL = import.meta.env.VITE_API_URL;
+
+// import {
+//   createAsyncThunk,
+//   createSlice,
+// } from "@reduxjs/toolkit";
+
+// /* =====================================================
+//    API URL
+// ===================================================== */
+
+// const API_URL =
+//   import.meta.env.VITE_API_URL;
+
+// /* =====================================================
+//    HELPER
+// ===================================================== */
+
+// const getErrorMessage = async (response) => {
+//   try {
+//     const data = await response.json();
+
+//     return (
+//       data?.message ||
+//       "Something went wrong."
+//     );
+//   } catch {
+//     return "Something went wrong.";
+//   }
+// };
 
 // /* =====================================================
 //    CREATE BOOKING
+//    POST /api/bookings
+
+//    New booking is created as PENDING.
+//    No online payment.
 // ===================================================== */
 
-// export const createBooking = createAsyncThunk(
-//   "bookings/createBooking",
+// export const createBooking =
+//   createAsyncThunk(
+//     "booking/createBooking",
 
-//   async (bookingData, { rejectWithValue }) => {
-//     try {
-//       const response = await fetch(
-//         `${API_URL}/bookings`,
-//         {
-//           method: "POST",
-//           credentials: "include",
-
-//           headers: {
-//             "Content-Type": "application/json",
-//           },
-
-//           body: JSON.stringify(bookingData),
-//         }
-//       );
-
-//       let data = {};
-
+//     async (
+//       bookingData,
+//       { rejectWithValue }
+//     ) => {
 //       try {
-//         data = await response.json();
-//       } catch {
-//         data = {};
-//       }
+//         const response =
+//           await fetch(
+//             `${API_URL}/bookings`,
+//             {
+//               method: "POST",
 
-//       if (!response.ok) {
+//               credentials: "include",
+
+//               headers: {
+//                 "Content-Type":
+//                   "application/json",
+//               },
+
+//               body: JSON.stringify(
+//                 bookingData
+//               ),
+//             }
+//           );
+
+//         if (!response.ok) {
+//           return rejectWithValue(
+//             await getErrorMessage(
+//               response
+//             )
+//           );
+//         }
+
+//         const data =
+//           await response.json();
+
+//         return data;
+//       } catch (error) {
 //         return rejectWithValue(
-//           data?.message ||
+//           error?.message ||
 //             "Unable to create booking."
 //         );
 //       }
-
-//       return data;
-//     } catch (error) {
-//       return rejectWithValue(
-//         error?.message ||
-//           "Unable to connect to server."
-//       );
 //     }
-//   }
-// );
+//   );
 
 // /* =====================================================
 //    GET MY BOOKINGS
+//    GET /api/bookings/my
 // ===================================================== */
 
-// export const getMyBookings = createAsyncThunk(
-//   "bookings/getMyBookings",
+// export const getMyBookings =
+//   createAsyncThunk(
+//     "booking/getMyBookings",
 
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await fetch(
-//         `${API_URL}/bookings/my`,
-//         {
-//           method: "GET",
-//           credentials: "include",
-//         }
-//       );
-
-//       let data = {};
-
+//     async (
+//       _,
+//       { rejectWithValue }
+//     ) => {
 //       try {
-//         data = await response.json();
-//       } catch {
-//         data = {};
-//       }
+//         const response =
+//           await fetch(
+//             `${API_URL}/bookings/my`,
+//             {
+//               method: "GET",
 
-//       if (!response.ok) {
+//               credentials: "include",
+
+//               headers: {
+//                 "Content-Type":
+//                   "application/json",
+//               },
+//             }
+//           );
+
+//         if (!response.ok) {
+//           return rejectWithValue(
+//             await getErrorMessage(
+//               response
+//             )
+//           );
+//         }
+
+//         const data =
+//           await response.json();
+
+//         return data;
+//       } catch (error) {
 //         return rejectWithValue(
-//           data?.message ||
+//           error?.message ||
 //             "Unable to fetch bookings."
 //         );
 //       }
-
-//       return data;
-//     } catch (error) {
-//       return rejectWithValue(
-//         error?.message ||
-//           "Unable to connect to server."
-//       );
 //     }
-//   }
-// );
+//   );
 
 // /* =====================================================
-//    GET SINGLE BOOKING
+//    GET BOOKING BY ID
+//    GET /api/bookings/:id
 // ===================================================== */
 
-// export const getBookingById = createAsyncThunk(
-//   "bookings/getBookingById",
+// export const getBookingById =
+//   createAsyncThunk(
+//     "booking/getBookingById",
 
-//   async (id, { rejectWithValue }) => {
-//     try {
-//       if (!id) {
-//         return rejectWithValue(
-//           "Booking ID is required."
-//         );
-//       }
-
-//       const response = await fetch(
-//         `${API_URL}/bookings/${id}`,
-//         {
-//           method: "GET",
-//           credentials: "include",
-//         }
-//       );
-
-//       let data = {};
-
+//     async (
+//       bookingId,
+//       { rejectWithValue }
+//     ) => {
 //       try {
-//         data = await response.json();
-//       } catch {
-//         data = {};
-//       }
+//         if (!bookingId) {
+//           return rejectWithValue(
+//             "Booking ID is required."
+//           );
+//         }
 
-//       if (!response.ok) {
+//         const response =
+//           await fetch(
+//             `${API_URL}/bookings/${bookingId}`,
+//             {
+//               method: "GET",
+
+//               credentials: "include",
+
+//               headers: {
+//                 "Content-Type":
+//                   "application/json",
+//               },
+//             }
+//           );
+
+//         if (!response.ok) {
+//           return rejectWithValue(
+//             await getErrorMessage(
+//               response
+//             )
+//           );
+//         }
+
+//         const data =
+//           await response.json();
+
+//         return data;
+//       } catch (error) {
 //         return rejectWithValue(
-//           data?.message ||
+//           error?.message ||
 //             "Unable to fetch booking."
 //         );
 //       }
-
-//       return data;
-//     } catch (error) {
-//       return rejectWithValue(
-//         error?.message ||
-//           "Unable to connect to server."
-//       );
 //     }
-//   }
-// );
+//   );
 
 // /* =====================================================
 //    CANCEL BOOKING
+//    PATCH /api/bookings/:id/cancel
 // ===================================================== */
 
-// export const cancelBooking = createAsyncThunk(
-//   "bookings/cancelBooking",
+// export const cancelBooking =
+//   createAsyncThunk(
+//     "booking/cancelBooking",
 
-//   async (
-//     { id, reason = "" },
-//     { rejectWithValue }
-//   ) => {
-//     try {
-//       if (!id) {
-//         return rejectWithValue(
-//           "Booking ID is required."
-//         );
-//       }
-
-//       const response = await fetch(
-//         `${API_URL}/bookings/${id}/cancel`,
-//         {
-//           method: "PATCH",
-//           credentials: "include",
-
-//           headers: {
-//             "Content-Type": "application/json",
-//           },
-
-//           body: JSON.stringify({
-//             reason,
-//           }),
-//         }
-//       );
-
-//       let data = {};
-
+//     async (
+//       payload,
+//       { rejectWithValue }
+//     ) => {
 //       try {
-//         data = await response.json();
-//       } catch {
-//         data = {};
-//       }
+//         const bookingId =
+//           typeof payload === "string"
+//             ? payload
+//             : payload?.bookingId;
 
-//       if (!response.ok) {
+//         const reason =
+//           typeof payload === "object"
+//             ? payload?.reason
+//             : "";
+
+//         if (!bookingId) {
+//           return rejectWithValue(
+//             "Booking ID is required."
+//           );
+//         }
+
+//         const response =
+//           await fetch(
+//             `${API_URL}/bookings/${bookingId}/cancel`,
+//             {
+//               method: "PATCH",
+
+//               credentials: "include",
+
+//               headers: {
+//                 "Content-Type":
+//                   "application/json",
+//               },
+
+//               body: JSON.stringify({
+//                 reason:
+//                   reason || "",
+//               }),
+//             }
+//           );
+
+//         if (!response.ok) {
+//           return rejectWithValue(
+//             await getErrorMessage(
+//               response
+//             )
+//           );
+//         }
+
+//         const data =
+//           await response.json();
+
+//         return data;
+//       } catch (error) {
 //         return rejectWithValue(
-//           data?.message ||
+//           error?.message ||
 //             "Unable to cancel booking."
 //         );
 //       }
-
-//       return data;
-//     } catch (error) {
-//       return rejectWithValue(
-//         error?.message ||
-//           "Unable to connect to server."
-//       );
 //     }
-//   }
-// );
+//   );
+
+// /* =====================================================
+//    ADMIN APPROVE BOOKING
+
+//    PATCH /api/bookings/:id/approve
+
+//    Admin uses this after:
+//    - Reviewing booking
+//    - Contacting customer
+//    - Handling payment separately
+
+//    Result:
+//    status = confirmed
+// ===================================================== */
+
+// export const approveBooking =
+//   createAsyncThunk(
+//     "booking/approveBooking",
+
+//     async (
+//       payload,
+//       { rejectWithValue }
+//     ) => {
+//       try {
+//         const bookingId =
+//           typeof payload === "string"
+//             ? payload
+//             : payload?.bookingId;
+
+//         if (!bookingId) {
+//           return rejectWithValue(
+//             "Booking ID is required."
+//           );
+//         }
+
+//         const response =
+//           await fetch(
+//             `${API_URL}/bookings/${bookingId}/approve`,
+//             {
+//               method: "PATCH",
+
+//               credentials: "include",
+
+//               headers: {
+//                 "Content-Type":
+//                   "application/json",
+//               },
+//             }
+//           );
+
+//         if (!response.ok) {
+//           return rejectWithValue(
+//             await getErrorMessage(
+//               response
+//             )
+//           );
+//         }
+
+//         const data =
+//           await response.json();
+
+//         return data;
+//       } catch (error) {
+//         return rejectWithValue(
+//           error?.message ||
+//             "Unable to approve booking."
+//         );
+//       }
+//     }
+//   );
 
 // /* =====================================================
 //    INITIAL STATE
@@ -206,1189 +340,1268 @@
 
 // const initialState = {
 //   bookings: [],
+
 //   booking: null,
 
 //   loading: false,
+
 //   bookingLoading: false,
+
 //   createLoading: false,
+
 //   cancelLoading: false,
 
+//   approveLoading: false,
+
 //   error: null,
+
 //   bookingError: null,
+
 //   createError: null,
+
 //   cancelError: null,
+
+//   approveError: null,
 // };
 
 // /* =====================================================
 //    SLICE
 // ===================================================== */
 
-// const bookingSlice = createSlice({
-//   name: "bookings",
+// const bookingSlice =
+//   createSlice({
+//     name: "booking",
 
-//   initialState,
+//     initialState,
 
-//   reducers: {
-//     clearBookingError: (state) => {
-//       state.error = null;
+//     reducers: {
+//       /* -----------------------------------------------
+//          CLEAR ALL ERRORS
+//       ----------------------------------------------- */
+
+//       clearBookingErrors: (
+//         state
+//       ) => {
+//         state.error = null;
+//         state.bookingError = null;
+//         state.createError = null;
+//         state.cancelError = null;
+//         state.approveError = null;
+//       },
+
+//       /* -----------------------------------------------
+//          CLEAR CREATE ERROR
+//       ----------------------------------------------- */
+
+//       clearCreateBookingError: (
+//         state
+//       ) => {
+//         state.createError = null;
+//       },
+
+//       /* -----------------------------------------------
+//          CLEAR BOOKING ERROR
+//       ----------------------------------------------- */
+
+//       clearBookingError: (
+//         state
+//       ) => {
+//         state.bookingError = null;
+//       },
+
+//       /* -----------------------------------------------
+//          CLEAR CANCEL ERROR
+//       ----------------------------------------------- */
+
+//       clearCancelBookingError: (
+//         state
+//       ) => {
+//         state.cancelError = null;
+//       },
+
+//       /* -----------------------------------------------
+//          CLEAR APPROVE ERROR
+//       ----------------------------------------------- */
+
+//       clearApproveBookingError: (
+//         state
+//       ) => {
+//         state.approveError = null;
+//       },
+
+//       /* -----------------------------------------------
+//          CLEAR CURRENT BOOKING
+//       ----------------------------------------------- */
+
+//       clearCurrentBooking: (
+//         state
+//       ) => {
+//         state.booking = null;
+//       },
+
+//       /* -----------------------------------------------
+//          RESET BOOKING STATE
+//       ----------------------------------------------- */
+
+//       resetBookingState: (
+//         state
+//       ) => {
+//         state.bookings = [];
+//         state.booking = null;
+
+//         state.loading = false;
+//         state.bookingLoading = false;
+//         state.createLoading = false;
+//         state.cancelLoading = false;
+//         state.approveLoading = false;
+
+//         state.error = null;
+//         state.bookingError = null;
+//         state.createError = null;
+//         state.cancelError = null;
+//         state.approveError = null;
+//       },
 //     },
-
-//     clearBookingDetails: (state) => {
-//       state.booking = null;
-//       state.bookingError = null;
-//     },
-
-//     clearCreateBookingError: (state) => {
-//       state.createError = null;
-//     },
-
-//     clearCancelBookingError: (state) => {
-//       state.cancelError = null;
-//     },
-
-//     clearAllBookingErrors: (state) => {
-//       state.error = null;
-//       state.bookingError = null;
-//       state.createError = null;
-//       state.cancelError = null;
-//     },
-//   },
-
-//   extraReducers: (builder) => {
 
 //     /* =================================================
-//        CREATE BOOKING
+//        EXTRA REDUCERS
 //     ================================================= */
 
-//     builder
+//     extraReducers: (
+//       builder
+//     ) => {
 
-//       .addCase(
-//         createBooking.pending,
-//         (state) => {
-//           state.createLoading = true;
-//           state.createError = null;
-//         }
-//       )
+//       /* ===============================================
+//          CREATE BOOKING
+//       =============================================== */
 
-//       .addCase(
-//         createBooking.fulfilled,
-//         (state, action) => {
-//           state.createLoading = false;
-//           state.createError = null;
+//       builder
 
-//           const createdBooking =
-//             action.payload?.booking;
+//         .addCase(
+//           createBooking.pending,
+//           (state) => {
+//             state.createLoading = true;
+//             state.createError = null;
+//             state.error = null;
+//           }
+//         )
 
-//           state.booking =
-//             createdBooking || null;
+//         .addCase(
+//           createBooking.fulfilled,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.createLoading = false;
+//             state.createError = null;
 
-//           if (createdBooking) {
-//             const existingIndex =
-//               state.bookings.findIndex(
-//                 (item) =>
-//                   item?._id ===
-//                   createdBooking?._id
-//               );
+//             const createdBooking =
+//               action.payload
+//                 ?.booking;
 
-//             if (existingIndex === -1) {
+//             if (
+//               createdBooking
+//             ) {
+//               state.booking =
+//                 createdBooking;
+
 //               state.bookings.unshift(
 //                 createdBooking
 //               );
-//             } else {
-//               state.bookings[
-//                 existingIndex
-//               ] = createdBooking;
 //             }
 //           }
-//         }
-//       )
+//         )
 
-//       .addCase(
-//         createBooking.rejected,
-//         (state, action) => {
-//           state.createLoading = false;
+//         .addCase(
+//           createBooking.rejected,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.createLoading = false;
 
-//           state.createError =
-//             action.payload ||
-//             "Unable to create booking.";
-//         }
-//       );
-
-//     /* =================================================
-//        GET MY BOOKINGS
-//     ================================================= */
-
-//     builder
-
-//       .addCase(
-//         getMyBookings.pending,
-//         (state) => {
-//           state.loading = true;
-//           state.error = null;
-//         }
-//       )
-
-//       .addCase(
-//         getMyBookings.fulfilled,
-//         (state, action) => {
-//           state.loading = false;
-//           state.error = null;
-
-//           state.bookings =
-//             Array.isArray(
-//               action.payload?.bookings
-//             )
-//               ? action.payload.bookings
-//               : [];
-//         }
-//       )
-
-//       .addCase(
-//         getMyBookings.rejected,
-//         (state, action) => {
-//           state.loading = false;
-
-//           state.error =
-//             action.payload ||
-//             "Unable to fetch bookings.";
-//         }
-//       );
-
-//     /* =================================================
-//        GET SINGLE BOOKING
-//     ================================================= */
-
-//     builder
-
-//       .addCase(
-//         getBookingById.pending,
-//         (state) => {
-//           state.bookingLoading = true;
-//           state.bookingError = null;
-//         }
-//       )
-
-//       .addCase(
-//         getBookingById.fulfilled,
-//         (state, action) => {
-//           state.bookingLoading = false;
-//           state.bookingError = null;
-
-//           state.booking =
-//             action.payload?.booking ||
-//             null;
-//         }
-//       )
-
-//       .addCase(
-//         getBookingById.rejected,
-//         (state, action) => {
-//           state.bookingLoading = false;
-
-//           state.bookingError =
-//             action.payload ||
-//             "Unable to fetch booking.";
-//         }
-//       );
-
-//     /* =================================================
-//        CANCEL BOOKING
-//     ================================================= */
-
-//     builder
-
-//       .addCase(
-//         cancelBooking.pending,
-//         (state) => {
-//           state.cancelLoading = true;
-//           state.cancelError = null;
-//         }
-//       )
-
-//       .addCase(
-//         cancelBooking.fulfilled,
-//         (state, action) => {
-//           state.cancelLoading = false;
-//           state.cancelError = null;
-
-//           const updatedBooking =
-//             action.payload?.booking;
-
-//           if (!updatedBooking) {
-//             return;
+//             state.createError =
+//               action.payload ||
+//               action.error?.message ||
+//               "Unable to create booking.";
 //           }
+//         );
 
-//           state.booking =
-//             updatedBooking;
+//       /* ===============================================
+//          GET MY BOOKINGS
+//       =============================================== */
 
-//           const index =
-//             state.bookings.findIndex(
-//               (item) =>
-//                 item?._id ===
-//                 updatedBooking?._id
-//             );
+//       builder
 
-//           if (index !== -1) {
-//             state.bookings[index] =
-//               updatedBooking;
+//         .addCase(
+//           getMyBookings.pending,
+//           (state) => {
+//             state.loading = true;
+//             state.error = null;
 //           }
-//         }
-//       )
+//         )
 
-//       .addCase(
-//         cancelBooking.rejected,
-//         (state, action) => {
-//           state.cancelLoading = false;
+//         .addCase(
+//           getMyBookings.fulfilled,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.loading = false;
+//             state.error = null;
 
-//           state.cancelError =
-//             action.payload ||
-//             "Unable to cancel booking.";
-//         }
-//       );
-//   },
-// });
+//             state.bookings =
+//               Array.isArray(
+//                 action.payload
+//                   ?.bookings
+//               )
+//                 ? action.payload.bookings
+//                 : [];
+//           }
+//         )
+
+//         .addCase(
+//           getMyBookings.rejected,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.loading = false;
+
+//             state.error =
+//               action.payload ||
+//               action.error?.message ||
+//               "Unable to fetch bookings.";
+//           }
+//         );
+
+//       /* ===============================================
+//          GET SINGLE BOOKING
+//       =============================================== */
+
+//       builder
+
+//         .addCase(
+//           getBookingById.pending,
+//           (state) => {
+//             state.bookingLoading = true;
+//             state.bookingError = null;
+//           }
+//         )
+
+//         .addCase(
+//           getBookingById.fulfilled,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.bookingLoading = false;
+//             state.bookingError = null;
+
+//             state.booking =
+//               action.payload
+//                 ?.booking || null;
+//           }
+//         )
+
+//         .addCase(
+//           getBookingById.rejected,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.bookingLoading = false;
+
+//             state.bookingError =
+//               action.payload ||
+//               action.error?.message ||
+//               "Unable to fetch booking.";
+//           }
+//         );
+
+//       /* ===============================================
+//          CANCEL BOOKING
+//       =============================================== */
+
+//       builder
+
+//         .addCase(
+//           cancelBooking.pending,
+//           (state) => {
+//             state.cancelLoading = true;
+//             state.cancelError = null;
+//           }
+//         )
+
+//         .addCase(
+//           cancelBooking.fulfilled,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.cancelLoading = false;
+//             state.cancelError = null;
+
+//             const cancelledBooking =
+//               action.payload
+//                 ?.booking;
+
+//             if (
+//               cancelledBooking
+//             ) {
+//               state.booking =
+//                 cancelledBooking;
+
+//               const index =
+//                 state.bookings.findIndex(
+//                   (item) =>
+//                     item?._id ===
+//                     cancelledBooking?._id
+//                 );
+
+//               if (index !== -1) {
+//                 state.bookings[index] =
+//                   cancelledBooking;
+//               }
+//             }
+//           }
+//         )
+
+//         .addCase(
+//           cancelBooking.rejected,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.cancelLoading = false;
+
+//             state.cancelError =
+//               action.payload ||
+//               action.error?.message ||
+//               "Unable to cancel booking.";
+//           }
+//         );
+
+//       /* ===============================================
+//          APPROVE BOOKING
+//       =============================================== */
+
+//       builder
+
+//         .addCase(
+//           approveBooking.pending,
+//           (state) => {
+//             state.approveLoading = true;
+//             state.approveError = null;
+//           }
+//         )
+
+//         .addCase(
+//           approveBooking.fulfilled,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.approveLoading = false;
+//             state.approveError = null;
+
+//             const approvedBooking =
+//               action.payload
+//                 ?.booking;
+
+//             if (
+//               approvedBooking
+//             ) {
+//               state.booking =
+//                 approvedBooking;
+
+//               const index =
+//                 state.bookings.findIndex(
+//                   (item) =>
+//                     item?._id ===
+//                     approvedBooking?._id
+//                 );
+
+//               if (index !== -1) {
+//                 state.bookings[index] =
+//                   approvedBooking;
+//               } else {
+//                 state.bookings.unshift(
+//                   approvedBooking
+//                 );
+//               }
+//             }
+//           }
+//         )
+
+//         .addCase(
+//           approveBooking.rejected,
+//           (
+//             state,
+//             action
+//           ) => {
+//             state.approveLoading = false;
+
+//             state.approveError =
+//               action.payload ||
+//               action.error?.message ||
+//               "Unable to approve booking.";
+//           }
+//         );
+//     },
+//   });
 
 // /* =====================================================
 //    ACTIONS
 // ===================================================== */
 
 // export const {
-//   clearBookingError,
-//   clearBookingDetails,
+//   clearBookingErrors,
 //   clearCreateBookingError,
+//   clearBookingError,
 //   clearCancelBookingError,
-//   clearAllBookingErrors,
-// } = bookingSlice.actions;
+//   clearApproveBookingError,
+//   clearCurrentBooking,
+//   resetBookingState,
+// } =
+//   bookingSlice.actions;
 
 // /* =====================================================
 //    SELECTORS
 // ===================================================== */
 
-// export const selectBookings = (state) =>
-//   state.bookings?.bookings || [];
+// export const selectBookings = (
+//   state
+// ) =>
+//   state.booking?.bookings || [];
 
-// export const selectBooking = (state) =>
-//   state.bookings?.booking || null;
+// export const selectBooking = (
+//   state
+// ) =>
+//   state.booking?.booking || null;
 
-// export const selectBookingsLoading = (state) =>
-//   state.bookings?.loading || false;
+// export const selectBookingLoading = (
+//   state
+// ) =>
+//   state.booking?.bookingLoading ||
+//   false;
 
-// export const selectBookingLoading = (state) =>
-//   state.bookings?.bookingLoading || false;
+// export const selectBookingsLoading = (
+//   state
+// ) =>
+//   state.booking?.loading ||
+//   false;
 
 // export const selectCreateBookingLoading = (
 //   state
 // ) =>
-//   state.bookings?.createLoading || false;
+//   state.booking?.createLoading ||
+//   false;
 
 // export const selectCancelBookingLoading = (
 //   state
 // ) =>
-//   state.bookings?.cancelLoading || false;
+//   state.booking?.cancelLoading ||
+//   false;
 
-// export const selectBookingError = (state) =>
-//   state.bookings?.error || null;
-
-// export const selectBookingDetailsError = (
+// export const selectApproveBookingLoading = (
 //   state
 // ) =>
-//   state.bookings?.bookingError || null;
+//   state.booking?.approveLoading ||
+//   false;
+
+// export const selectBookingError = (
+//   state
+// ) =>
+//   state.booking?.error ||
+//   null;
+
+// export const selectSingleBookingError = (
+//   state
+// ) =>
+//   state.booking?.bookingError ||
+//   null;
 
 // export const selectCreateBookingError = (
 //   state
 // ) =>
-//   state.bookings?.createError || null;
+//   state.booking?.createError ||
+//   null;
 
 // export const selectCancelBookingError = (
 //   state
 // ) =>
-//   state.bookings?.cancelError || null;
+//   state.booking?.cancelError ||
+//   null;
+
+// export const selectApproveBookingError = (
+//   state
+// ) =>
+//   state.booking?.approveError ||
+//   null;
 
 // /* =====================================================
 //    DEFAULT EXPORT
 // ===================================================== */
+
+// export default bookingSlice.reducer;
+
+
+
+
+
+
+
+
 
 
 
 
 
 import {
-  createAsyncThunk,
-  createSlice,
+createAsyncThunk,
+createSlice,
 } from "@reduxjs/toolkit";
 
 /* =====================================================
-   API URL
+API URL
 ===================================================== */
 
 const API_URL =
-  import.meta.env.VITE_API_URL;
+import.meta.env.VITE_API_URL;
 
 /* =====================================================
-   HELPER
+HELPER
 ===================================================== */
 
 const getErrorMessage = async (response) => {
-  try {
-    const data = await response.json();
+try {
+const data = await response.json();
 
-    return (
-      data?.message ||
-      "Something went wrong."
-    );
-  } catch {
-    return "Something went wrong.";
-  }
+return (
+  data?.message ||
+  "Something went wrong."
+);
+
+} catch {
+return "Something went wrong.";
+}
 };
 
 /* =====================================================
-   CREATE BOOKING
-   POST /api/bookings
+CREATE BOOKING
+POST /api/bookings
+
+Customer creates a booking request.
+
+Backend result:
+status = pending
+
+No online payment.
+No automatic tax.
 ===================================================== */
 
 export const createBooking =
-  createAsyncThunk(
-    "booking/createBooking",
-    async (
-      bookingData,
-      { rejectWithValue }
-    ) => {
-      try {
-        const response =
-          await fetch(
-            `${API_URL}/bookings`,
-            {
-              method: "POST",
+createAsyncThunk(
+"booking/createBooking",
 
-              credentials:
-                "include",
+async (
+  bookingData,
+  { rejectWithValue }
+) => {
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/bookings`,
+        {
+          method: "POST",
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
+          credentials: "include",
 
-              body: JSON.stringify(
-                bookingData
-              ),
-            }
-          );
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
 
-        if (!response.ok) {
-          return rejectWithValue(
-            await getErrorMessage(
-              response
-            )
-          );
+          body: JSON.stringify(
+            bookingData
+          ),
         }
+      );
 
-        const data =
-          await response.json();
-
-        return data;
-      } catch (error) {
-        return rejectWithValue(
-          error.message ||
-            "Unable to create booking."
-        );
-      }
+    if (!response.ok) {
+      return rejectWithValue(
+        await getErrorMessage(
+          response
+        )
+      );
     }
-  );
+
+    const data =
+      await response.json();
+
+    return data;
+  } catch (error) {
+    return rejectWithValue(
+      error?.message ||
+        "Unable to create booking."
+    );
+  }
+}
+
+);
 
 /* =====================================================
-   GET MY BOOKINGS
-   GET /api/bookings/my
+GET MY BOOKINGS
+GET /api/bookings/my
 ===================================================== */
 
 export const getMyBookings =
-  createAsyncThunk(
-    "booking/getMyBookings",
-    async (
-      _,
-      { rejectWithValue }
-    ) => {
-      try {
-        const response =
-          await fetch(
-            `${API_URL}/bookings/my`,
-            {
-              method: "GET",
+createAsyncThunk(
+"booking/getMyBookings",
 
-              credentials:
-                "include",
+async (
+  _,
+  { rejectWithValue }
+) => {
+  try {
+    const response =
+      await fetch(
+        `${API_URL}/bookings/my`,
+        {
+          method: "GET",
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-            }
-          );
+          credentials: "include",
 
-        if (!response.ok) {
-          return rejectWithValue(
-            await getErrorMessage(
-              response
-            )
-          );
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
         }
+      );
 
-        const data =
-          await response.json();
-
-        return data;
-      } catch (error) {
-        return rejectWithValue(
-          error.message ||
-            "Unable to fetch bookings."
-        );
-      }
+    if (!response.ok) {
+      return rejectWithValue(
+        await getErrorMessage(
+          response
+        )
+      );
     }
-  );
+
+    const data =
+      await response.json();
+
+    return data;
+  } catch (error) {
+    return rejectWithValue(
+      error?.message ||
+        "Unable to fetch bookings."
+    );
+  }
+}
+
+);
 
 /* =====================================================
-   GET BOOKING BY ID
-   GET /api/bookings/:id
+GET BOOKING BY ID
+GET /api/bookings/:id
 ===================================================== */
 
 export const getBookingById =
-  createAsyncThunk(
-    "booking/getBookingById",
-    async (
-      bookingId,
-      { rejectWithValue }
-    ) => {
-      try {
-        if (!bookingId) {
-          return rejectWithValue(
-            "Booking ID is required."
-          );
-        }
+createAsyncThunk(
+"booking/getBookingById",
 
-        const response =
-          await fetch(
-            `${API_URL}/bookings/${bookingId}`,
-            {
-              method: "GET",
-
-              credentials:
-                "include",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-            }
-          );
-
-        if (!response.ok) {
-          return rejectWithValue(
-            await getErrorMessage(
-              response
-            )
-          );
-        }
-
-        const data =
-          await response.json();
-
-        return data;
-      } catch (error) {
-        return rejectWithValue(
-          error.message ||
-            "Unable to fetch booking."
-        );
-      }
+async (
+  bookingId,
+  { rejectWithValue }
+) => {
+  try {
+    if (!bookingId) {
+      return rejectWithValue(
+        "Booking ID is required."
+      );
     }
-  );
+
+    const response =
+      await fetch(
+        `${API_URL}/bookings/${bookingId}`,
+        {
+          method: "GET",
+
+          credentials: "include",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+        }
+      );
+
+    if (!response.ok) {
+      return rejectWithValue(
+        await getErrorMessage(
+          response
+        )
+      );
+    }
+
+    const data =
+      await response.json();
+
+    return data;
+  } catch (error) {
+    return rejectWithValue(
+      error?.message ||
+        "Unable to fetch booking."
+    );
+  }
+}
+
+);
 
 /* =====================================================
-   CANCEL BOOKING
-   PATCH /api/bookings/:id/cancel
+CANCEL BOOKING
+PATCH /api/bookings/:id/cancel
+
+Compatibility action.
+
+Stage 1:
+Customer cancellation UI should not
+be exposed yet.
+
+Backend route is retained for compatibility.
 ===================================================== */
 
 export const cancelBooking =
-  createAsyncThunk(
-    "booking/cancelBooking",
-    async (
-      payload,
-      { rejectWithValue }
-    ) => {
-      try {
-        const bookingId =
-          typeof payload === "string"
-            ? payload
-            : payload?.bookingId;
+createAsyncThunk(
+"booking/cancelBooking",
 
-        const reason =
-          typeof payload === "object"
-            ? payload?.reason
-            : "";
+async (
+  payload,
+  { rejectWithValue }
+) => {
+  try {
+    const bookingId =
+      typeof payload === "string"
+        ? payload
+        : payload?.bookingId;
 
-        if (!bookingId) {
-          return rejectWithValue(
-            "Booking ID is required."
-          );
-        }
+    const reason =
+      typeof payload === "object"
+        ? payload?.reason
+        : "";
 
-        const response =
-          await fetch(
-            `${API_URL}/bookings/${bookingId}/cancel`,
-            {
-              method: "PATCH",
-
-              credentials:
-                "include",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-
-              body: JSON.stringify({
-                reason:
-                  reason || "",
-              }),
-            }
-          );
-
-        if (!response.ok) {
-          return rejectWithValue(
-            await getErrorMessage(
-              response
-            )
-          );
-        }
-
-        const data =
-          await response.json();
-
-        return data;
-      } catch (error) {
-        return rejectWithValue(
-          error.message ||
-            "Unable to cancel booking."
-        );
-      }
+    if (!bookingId) {
+      return rejectWithValue(
+        "Booking ID is required."
+      );
     }
-  );
+
+    const response =
+      await fetch(
+        `${API_URL}/bookings/${bookingId}/cancel`,
+        {
+          method: "PATCH",
+
+          credentials: "include",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            reason:
+              reason || "",
+          }),
+        }
+      );
+
+    if (!response.ok) {
+      return rejectWithValue(
+        await getErrorMessage(
+          response
+        )
+      );
+    }
+
+    const data =
+      await response.json();
+
+    return data;
+  } catch (error) {
+    return rejectWithValue(
+      error?.message ||
+        "Unable to cancel booking."
+    );
+  }
+}
+
+);
 
 /* =====================================================
-   PAY BOOKING
-   PATCH /api/bookings/:id/pay
-
-   Backend:
-   - paymentStatus = paid
-   - paymentMethod = online
-   - status = confirmed
-   - paymentId generated
-===================================================== */
-
-export const payBooking =
-  createAsyncThunk(
-    "booking/payBooking",
-    async (
-      payload,
-      { rejectWithValue }
-    ) => {
-      try {
-        const bookingId =
-          typeof payload === "string"
-            ? payload
-            : payload?.bookingId;
-
-        const paymentMethod =
-          typeof payload === "object" &&
-          payload?.paymentMethod
-            ? payload.paymentMethod
-            : "online";
-
-        if (!bookingId) {
-          return rejectWithValue(
-            "Booking ID is required."
-          );
-        }
-
-        const response =
-          await fetch(
-            `${API_URL}/bookings/${bookingId}/pay`,
-            {
-              method: "PATCH",
-
-              credentials:
-                "include",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
-
-              body: JSON.stringify({
-                paymentMethod:
-                  paymentMethod,
-              }),
-            }
-          );
-
-        if (!response.ok) {
-          return rejectWithValue(
-            await getErrorMessage(
-              response
-            )
-          );
-        }
-
-        const data =
-          await response.json();
-
-        return data;
-      } catch (error) {
-        return rejectWithValue(
-          error.message ||
-            "Unable to process payment."
-        );
-      }
-    }
-  );
-
-/* =====================================================
-   INITIAL STATE
+INITIAL STATE
 ===================================================== */
 
 const initialState = {
-  bookings: [],
+/* ================= BOOKINGS ================= */
 
-  booking: null,
+bookings: [],
 
-  loading: false,
+booking: null,
 
-  bookingLoading: false,
+/* ================= LOADING ================= */
 
-  createLoading: false,
+loading: false,
 
-  cancelLoading: false,
+bookingLoading: false,
 
-  payLoading: false,
+createLoading: false,
 
-  error: null,
+cancelLoading: false,
 
-  bookingError: null,
+/* ================= ERRORS ================= */
 
-  createError: null,
+error: null,
 
-  cancelError: null,
+bookingError: null,
 
-  payError: null,
+createError: null,
+
+cancelError: null,
 };
 
 /* =====================================================
-   SLICE
+SLICE
 ===================================================== */
 
 const bookingSlice =
-  createSlice({
-    name: "booking",
+createSlice({
+name: "booking",
 
-    initialState,
+initialState,
 
-    reducers: {
-      /* -----------------------------------------------
-         CLEAR ALL ERRORS
-      ----------------------------------------------- */
+reducers: {
+  /* ===============================================
+     CLEAR ALL BOOKING ERRORS
+  =============================================== */
 
-      clearBookingErrors: (
-        state
-      ) => {
+  clearBookingErrors: (
+    state
+  ) => {
+    state.error = null;
+
+    state.bookingError = null;
+
+    state.createError = null;
+
+    state.cancelError = null;
+  },
+
+  /* ===============================================
+     CLEAR CREATE BOOKING ERROR
+  =============================================== */
+
+  clearCreateBookingError: (
+    state
+  ) => {
+    state.createError = null;
+  },
+
+  /* ===============================================
+     CLEAR SINGLE BOOKING ERROR
+  =============================================== */
+
+  clearBookingError: (
+    state
+  ) => {
+    state.bookingError = null;
+  },
+
+  /* ===============================================
+     CLEAR CANCEL BOOKING ERROR
+  =============================================== */
+
+  clearCancelBookingError: (
+    state
+  ) => {
+    state.cancelError = null;
+  },
+
+  /* ===============================================
+     CLEAR CURRENT BOOKING
+  =============================================== */
+
+  clearCurrentBooking: (
+    state
+  ) => {
+    state.booking = null;
+  },
+
+  /* ===============================================
+     RESET BOOKING STATE
+  =============================================== */
+
+  resetBookingState: (
+    state
+  ) => {
+    state.bookings = [];
+
+    state.booking = null;
+
+    state.loading = false;
+
+    state.bookingLoading = false;
+
+    state.createLoading = false;
+
+    state.cancelLoading = false;
+
+    state.error = null;
+
+    state.bookingError = null;
+
+    state.createError = null;
+
+    state.cancelError = null;
+  },
+},
+
+/* =================================================
+   EXTRA REDUCERS
+================================================= */
+
+extraReducers: (
+  builder
+) => {
+  /* ===============================================
+     CREATE BOOKING
+  =============================================== */
+
+  builder
+
+    .addCase(
+      createBooking.pending,
+      (state) => {
+        state.createLoading = true;
+
+        state.createError = null;
+
         state.error = null;
-        state.bookingError = null;
-        state.createError = null;
-        state.cancelError = null;
-        state.payError = null;
-      },
+      }
+    )
 
-      /* -----------------------------------------------
-         CLEAR CREATE ERROR
-      ----------------------------------------------- */
-
-      clearCreateBookingError: (
-        state
+    .addCase(
+      createBooking.fulfilled,
+      (
+        state,
+        action
       ) => {
-        state.createError = null;
-      },
-
-      /* -----------------------------------------------
-         CLEAR BOOKING ERROR
-      ----------------------------------------------- */
-
-      clearBookingError: (
-        state
-      ) => {
-        state.bookingError = null;
-      },
-
-      /* -----------------------------------------------
-         CLEAR CANCEL ERROR
-      ----------------------------------------------- */
-
-      clearCancelBookingError: (
-        state
-      ) => {
-        state.cancelError = null;
-      },
-
-      /* -----------------------------------------------
-         CLEAR PAYMENT ERROR
-      ----------------------------------------------- */
-
-      clearPayBookingError: (
-        state
-      ) => {
-        state.payError = null;
-      },
-
-      /* -----------------------------------------------
-         CLEAR CURRENT BOOKING
-      ----------------------------------------------- */
-
-      clearCurrentBooking: (
-        state
-      ) => {
-        state.booking = null;
-      },
-
-      /* -----------------------------------------------
-         RESET BOOKING STATE
-      ----------------------------------------------- */
-
-      resetBookingState: (
-        state
-      ) => {
-        state.bookings = [];
-        state.booking = null;
-
-        state.loading = false;
-        state.bookingLoading = false;
         state.createLoading = false;
-        state.cancelLoading = false;
-        state.payLoading = false;
+
+        state.createError = null;
+
+        const createdBooking =
+          action.payload
+            ?.booking;
+
+        if (
+          createdBooking
+        ) {
+          state.booking =
+            createdBooking;
+
+          /*
+            Prevent accidental duplicate
+            entry if backend/client somehow
+            returns the same booking.
+          */
+
+          const exists =
+            state.bookings.some(
+              (item) =>
+                item?._id ===
+                createdBooking?._id
+            );
+
+          if (!exists) {
+            state.bookings.unshift(
+              createdBooking
+            );
+          }
+        }
+      }
+    )
+
+    .addCase(
+      createBooking.rejected,
+      (
+        state,
+        action
+      ) => {
+        state.createLoading = false;
+
+        state.createError =
+          action.payload ||
+          action.error?.message ||
+          "Unable to create booking.";
+      }
+    );
+
+  /* ===============================================
+     GET MY BOOKINGS
+  =============================================== */
+
+  builder
+
+    .addCase(
+      getMyBookings.pending,
+      (state) => {
+        state.loading = true;
 
         state.error = null;
+      }
+    )
+
+    .addCase(
+      getMyBookings.fulfilled,
+      (
+        state,
+        action
+      ) => {
+        state.loading = false;
+
+        state.error = null;
+
+        state.bookings =
+          Array.isArray(
+            action.payload
+              ?.bookings
+          )
+            ? action.payload.bookings
+            : [];
+      }
+    )
+
+    .addCase(
+      getMyBookings.rejected,
+      (
+        state,
+        action
+      ) => {
+        state.loading = false;
+
+        state.error =
+          action.payload ||
+          action.error?.message ||
+          "Unable to fetch bookings.";
+      }
+    );
+
+  /* ===============================================
+     GET SINGLE BOOKING
+  =============================================== */
+
+  builder
+
+    .addCase(
+      getBookingById.pending,
+      (state) => {
+        state.bookingLoading = true;
+
         state.bookingError = null;
-        state.createError = null;
+      }
+    )
+
+    .addCase(
+      getBookingById.fulfilled,
+      (
+        state,
+        action
+      ) => {
+        state.bookingLoading = false;
+
+        state.bookingError = null;
+
+        state.booking =
+          action.payload
+            ?.booking || null;
+      }
+    )
+
+    .addCase(
+      getBookingById.rejected,
+      (
+        state,
+        action
+      ) => {
+        state.bookingLoading = false;
+
+        state.bookingError =
+          action.payload ||
+          action.error?.message ||
+          "Unable to fetch booking.";
+      }
+    );
+
+  /* ===============================================
+     CANCEL BOOKING
+  =============================================== */
+
+  builder
+
+    .addCase(
+      cancelBooking.pending,
+      (state) => {
+        state.cancelLoading = true;
+
         state.cancelError = null;
-        state.payError = null;
-      },
-    },
+      }
+    )
 
-    /* =================================================
-       EXTRA REDUCERS
-    ================================================= */
+    .addCase(
+      cancelBooking.fulfilled,
+      (
+        state,
+        action
+      ) => {
+        state.cancelLoading = false;
 
-    extraReducers: (
-      builder
-    ) => {
+        state.cancelError = null;
 
-      /* ===============================================
-         CREATE BOOKING
-      =============================================== */
+        const cancelledBooking =
+          action.payload
+            ?.booking;
 
-      builder
+        if (
+          cancelledBooking
+        ) {
+          state.booking =
+            cancelledBooking;
 
-        .addCase(
-          createBooking.pending,
-          (state) => {
-            state.createLoading =
-              true;
+          const index =
+            state.bookings.findIndex(
+              (item) =>
+                item?._id ===
+                cancelledBooking?._id
+            );
 
-            state.createError =
-              null;
-
-            state.error = null;
+          if (index !== -1) {
+            state.bookings[index] =
+              cancelledBooking;
           }
-        )
+        }
+      }
+    )
 
-        .addCase(
-          createBooking.fulfilled,
-          (
-            state,
-            action
-          ) => {
-            state.createLoading =
-              false;
+    .addCase(
+      cancelBooking.rejected,
+      (
+        state,
+        action
+      ) => {
+        state.cancelLoading = false;
 
-            state.createError =
-              null;
+        state.cancelError =
+          action.payload ||
+          action.error?.message ||
+          "Unable to cancel booking.";
+      }
+    );
+},
 
-            const createdBooking =
-              action.payload
-                ?.booking;
-
-            if (
-              createdBooking
-            ) {
-              state.booking =
-                createdBooking;
-
-              state.bookings.unshift(
-                createdBooking
-              );
-            }
-          }
-        )
-
-        .addCase(
-          createBooking.rejected,
-          (
-            state,
-            action
-          ) => {
-            state.createLoading =
-              false;
-
-            state.createError =
-              action.payload ||
-              action.error?.message ||
-              "Unable to create booking.";
-          }
-        );
-
-      /* ===============================================
-         GET MY BOOKINGS
-      =============================================== */
-
-      builder
-
-        .addCase(
-          getMyBookings.pending,
-          (state) => {
-            state.loading = true;
-
-            state.error = null;
-          }
-        )
-
-        .addCase(
-          getMyBookings.fulfilled,
-          (
-            state,
-            action
-          ) => {
-            state.loading = false;
-
-            state.error = null;
-
-            state.bookings =
-              action.payload
-                ?.bookings || [];
-          }
-        )
-
-        .addCase(
-          getMyBookings.rejected,
-          (
-            state,
-            action
-          ) => {
-            state.loading = false;
-
-            state.error =
-              action.payload ||
-              action.error?.message ||
-              "Unable to fetch bookings.";
-          }
-        );
-
-      /* ===============================================
-         GET SINGLE BOOKING
-      =============================================== */
-
-      builder
-
-        .addCase(
-          getBookingById.pending,
-          (state) => {
-            state.bookingLoading =
-              true;
-
-            state.bookingError =
-              null;
-          }
-        )
-
-        .addCase(
-          getBookingById.fulfilled,
-          (
-            state,
-            action
-          ) => {
-            state.bookingLoading =
-              false;
-
-            state.bookingError =
-              null;
-
-            state.booking =
-              action.payload
-                ?.booking || null;
-          }
-        )
-
-        .addCase(
-          getBookingById.rejected,
-          (
-            state,
-            action
-          ) => {
-            state.bookingLoading =
-              false;
-
-            state.bookingError =
-              action.payload ||
-              action.error?.message ||
-              "Unable to fetch booking.";
-          }
-        );
-
-      /* ===============================================
-         CANCEL BOOKING
-      =============================================== */
-
-      builder
-
-        .addCase(
-          cancelBooking.pending,
-          (state) => {
-            state.cancelLoading =
-              true;
-
-            state.cancelError =
-              null;
-          }
-        )
-
-        .addCase(
-          cancelBooking.fulfilled,
-          (
-            state,
-            action
-          ) => {
-            state.cancelLoading =
-              false;
-
-            state.cancelError =
-              null;
-
-            const cancelledBooking =
-              action.payload
-                ?.booking;
-
-            if (
-              cancelledBooking
-            ) {
-              state.booking =
-                cancelledBooking;
-
-              const index =
-                state.bookings.findIndex(
-                  (item) =>
-                    item._id ===
-                    cancelledBooking._id
-                );
-
-              if (index !== -1) {
-                state.bookings[
-                  index
-                ] =
-                  cancelledBooking;
-              }
-            }
-          }
-        )
-
-        .addCase(
-          cancelBooking.rejected,
-          (
-            state,
-            action
-          ) => {
-            state.cancelLoading =
-              false;
-
-            state.cancelError =
-              action.payload ||
-              action.error?.message ||
-              "Unable to cancel booking.";
-          }
-        );
-
-      /* ===============================================
-         PAY BOOKING
-      =============================================== */
-
-      builder
-
-        .addCase(
-          payBooking.pending,
-          (state) => {
-            state.payLoading =
-              true;
-
-            state.payError =
-              null;
-          }
-        )
-
-        .addCase(
-          payBooking.fulfilled,
-          (
-            state,
-            action
-          ) => {
-            state.payLoading =
-              false;
-
-            state.payError =
-              null;
-
-            const paidBooking =
-              action.payload
-                ?.booking;
-
-            if (
-              paidBooking
-            ) {
-              state.booking =
-                paidBooking;
-
-              const index =
-                state.bookings.findIndex(
-                  (item) =>
-                    item._id ===
-                    paidBooking._id
-                );
-
-              if (index !== -1) {
-                state.bookings[
-                  index
-                ] =
-                  paidBooking;
-              } else {
-                state.bookings.unshift(
-                  paidBooking
-                );
-              }
-            }
-          }
-        )
-
-        .addCase(
-          payBooking.rejected,
-          (
-            state,
-            action
-          ) => {
-            state.payLoading =
-              false;
-
-            state.payError =
-              action.payload ||
-              action.error?.message ||
-              "Unable to process payment.";
-          }
-        );
-    },
-  });
+});
 
 /* =====================================================
-   ACTIONS
+ACTIONS
 ===================================================== */
 
 export const {
-  clearBookingErrors,
-  clearCreateBookingError,
-  clearBookingError,
-  clearCancelBookingError,
-  clearPayBookingError,
-  clearCurrentBooking,
-  resetBookingState,
+clearBookingErrors,
+clearCreateBookingError,
+clearBookingError,
+clearCancelBookingError,
+clearCurrentBooking,
+resetBookingState,
 } =
-  bookingSlice.actions;
+bookingSlice.actions;
 
 /* =====================================================
-   SELECTORS
+SELECTORS
 ===================================================== */
 
 export const selectBookings = (
-  state
+state
 ) =>
-  state.booking?.bookings || [];
-
-export const selectBooking = (
-  state
-) =>
-  state.booking?.booking || null;
-
-export const selectBookingLoading = (
-  state
-) =>
-  state.booking?.bookingLoading ||
-  false;
-
-export const selectBookingsLoading = (
-  state
-) =>
-  state.booking?.loading ||
-  false;
-
-export const selectCreateBookingLoading = (
-  state
-) =>
-  state.booking?.createLoading ||
-  false;
-
-export const selectCancelBookingLoading = (
-  state
-) =>
-  state.booking?.cancelLoading ||
-  false;
-
-export const selectPayBookingLoading = (
-  state
-) =>
-  state.booking?.payLoading ||
-  false;
-
-export const selectBookingError = (
-  state
-) =>
-  state.booking?.error ||
-  null;
-
-export const selectSingleBookingError = (
-  state
-) =>
-  state.booking?.bookingError ||
-  null;
-
-export const selectCreateBookingError = (
-  state
-) =>
-  state.booking?.createError ||
-  null;
-
-export const selectCancelBookingError = (
-  state
-) =>
-  state.booking?.cancelError ||
-  null;
-
-export const selectPayBookingError = (
-  state
-) =>
-  state.booking?.payError ||
-  null;
+state.booking?.bookings || [];
 
 /* =====================================================
-   EXPORT REDUCER
+CURRENT BOOKING
+===================================================== */
+
+export const selectBooking = (
+state
+) =>
+state.booking?.booking || null;
+
+/* =====================================================
+LOADING
+===================================================== */
+
+export const selectBookingLoading = (
+state
+) =>
+state.booking?.bookingLoading ||
+false;
+
+export const selectBookingsLoading = (
+state
+) =>
+state.booking?.loading ||
+false;
+
+export const selectCreateBookingLoading = (
+state
+) =>
+state.booking?.createLoading ||
+false;
+
+export const selectCancelBookingLoading = (
+state
+) =>
+state.booking?.cancelLoading ||
+false;
+
+/* =====================================================
+ERRORS
+===================================================== */
+
+export const selectBookingError = (
+state
+) =>
+state.booking?.error ||
+null;
+
+export const selectSingleBookingError = (
+state
+) =>
+state.booking?.bookingError ||
+null;
+
+export const selectCreateBookingError = (
+state
+) =>
+state.booking?.createError ||
+null;
+
+export const selectCancelBookingError = (
+state
+) =>
+state.booking?.cancelError ||
+null;
+
+/* =====================================================
+DEFAULT EXPORT
 ===================================================== */
 
 export default bookingSlice.reducer;
