@@ -595,7 +595,7 @@ export default function PropertyDetails() {
                 {property.availability ===
                   "available" ||
                 !property.availability
-                  ? "Reserve Property"
+                  ? "book now"
                   : "Currently Unavailable"}
               </button>
 
