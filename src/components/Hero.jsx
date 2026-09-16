@@ -19,6 +19,10 @@ const [searched, setSearched] = useState(false);
 const [firstTitle, setFirstTitle] = useState("");
 const [secondTitle, setSecondTitle] = useState("");
 
+/* =====================================================
+SCROLL
+===================================================== */
+
 const { scrollY } = useScroll();
 
 const backgroundY = useTransform(
@@ -30,19 +34,13 @@ scrollY,
 const heroContentY = useTransform(
 scrollY,
 [0, 600],
-["0px", "-100px"]
+["0px", "-90px"]
 );
 
 const heroOpacity = useTransform(
 scrollY,
 [0, 500],
 [1, 0]
-);
-
-const searchY = useTransform(
-scrollY,
-[0, 500],
-["0px", "50px"]
 );
 
 /* =====================================================
@@ -133,7 +131,7 @@ return (
 <section className="relative overflow-hidden bg-[#071B16]">
 
   {/* =====================================================
-      HERO BACKGROUND
+      BACKGROUND
   ===================================================== */}
 
   <motion.div
@@ -165,7 +163,7 @@ return (
 
   <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/15" />
 
-  <div className="absolute inset-0 bg-gradient-to-t from-[#071B16]/90 via-transparent to-transparent" />
+  <div className="absolute inset-0 bg-gradient-to-t from-[#071B16]/95 via-transparent to-transparent" />
 
   {/* =====================================================
       FLOATING GLOW
@@ -206,7 +204,7 @@ return (
       y: heroContentY,
       opacity: heroOpacity,
     }}
-    className="relative z-10 mx-auto flex min-h-[690px] max-w-7xl items-center px-5 pb-10 pt-28 sm:min-h-[750px] sm:px-8 sm:pb-36 sm:pt-32 lg:min-h-[820px] lg:px-10 lg:pb-48"
+    className="relative z-10 mx-auto flex min-h-[570px] max-w-7xl items-center px-5 pb-10 pt-24 sm:min-h-[650px] sm:px-8 sm:pb-20 sm:pt-28 lg:min-h-[820px] lg:px-10 lg:pb-48 lg:pt-32"
   >
 
     <div className="w-full max-w-4xl">
@@ -266,7 +264,7 @@ return (
           duration: 0.8,
           delay: 0.35,
         }}
-        className="text-[39px] font-black leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl lg:text-[76px]"
+        className="text-[38px] font-black leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl lg:text-[76px]"
       >
 
         <span className="block min-h-[1.05em]">
@@ -397,41 +395,46 @@ return (
 
   {/* =====================================================
       SEARCH PANEL
-      MOBILE = COMPACT
-      DESKTOP = WIDE
+
+      MOBILE:
+      NORMAL FLOW / NO OVERLAP
+
+      DESKTOP:
+      FLOATING AT BOTTOM
   ===================================================== */}
 
   <motion.div
-    style={{
-      y: searchY,
-    }}
     initial={{
       opacity: 0,
-      y: 70,
+      y: 60,
     }}
     animate={{
       opacity: 1,
       y: 0,
     }}
     transition={{
-      duration: 1,
+      duration: 0.9,
       delay: 3.7,
       ease: [0.22, 1, 0.36, 1],
     }}
-    className="relative z-30 mx-auto -mt-2 w-[calc(100%-20px)] max-w-6xl pb-4 sm:absolute sm:bottom-5 sm:left-1/2 sm:mt-0 sm:w-[calc(100%-32px)] sm:-translate-x-1/2 sm:pb-0 lg:bottom-8"
+    className="relative z-30 mx-auto w-[calc(100%-20px)] max-w-6xl pb-5 lg:absolute lg:bottom-8 lg:left-1/2 lg:w-[calc(100%-32px)] lg:-translate-x-1/2 lg:pb-0"
   >
 
-    <div className="overflow-hidden rounded-[20px] border border-white/50 bg-white/95 p-1.5 shadow-[0_20px_55px_rgba(0,0,0,0.3)] backdrop-blur-xl sm:rounded-[26px] sm:p-2.5 lg:p-3">
+    {/* =================================================
+        WHITE SEARCH CARD
+    ================================================= */}
 
-      <div className="grid lg:grid-cols-5">
+    <div className="overflow-hidden rounded-[18px] border border-white/50 bg-white/95 p-1.5 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:rounded-[24px] sm:p-2.5 lg:p-3">
+
+      <div className="grid grid-cols-2 lg:grid-cols-5">
 
         {/* =================================================
             LOCATION
         ================================================= */}
 
-        <div className="rounded-xl px-3 py-2.5 transition-all duration-300 hover:bg-[#F5F8F6] sm:rounded-2xl sm:px-5 sm:py-4">
+        <div className="col-span-2 rounded-xl px-3 py-2.5 transition-all duration-300 hover:bg-[#F5F8F6] sm:px-5 sm:py-4 lg:col-span-1">
 
-          <label className="text-[9px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
+          <label className="text-[8px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
             WHERE TO?
           </label>
 
@@ -453,9 +456,9 @@ return (
             CHECK IN
         ================================================= */}
 
-        <div className="rounded-xl px-3 py-2.5 transition-all duration-300 hover:bg-[#F5F8F6] sm:rounded-2xl sm:px-5 sm:py-4">
+        <div className="rounded-xl px-3 py-2.5 transition-all duration-300 hover:bg-[#F5F8F6] sm:px-5 sm:py-4">
 
-          <label className="text-[9px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
+          <label className="text-[8px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
             CHECK-IN
           </label>
 
@@ -465,7 +468,7 @@ return (
             onChange={(e) =>
               setCheckIn(e.target.value)
             }
-            className="mt-1 w-full bg-transparent text-xs font-bold text-[#10254A] outline-none sm:text-sm"
+            className="mt-1 w-full min-w-0 bg-transparent text-[11px] font-bold text-[#10254A] outline-none sm:text-sm"
           />
 
         </div>
@@ -474,9 +477,9 @@ return (
             CHECK OUT
         ================================================= */}
 
-        <div className="rounded-xl px-3 py-2.5 transition-all duration-300 hover:bg-[#F5F8F6] sm:rounded-2xl sm:px-5 sm:py-4">
+        <div className="rounded-xl px-3 py-2.5 transition-all duration-300 hover:bg-[#F5F8F6] sm:px-5 sm:py-4">
 
-          <label className="text-[9px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
+          <label className="text-[8px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
             CHECK-OUT
           </label>
 
@@ -486,7 +489,7 @@ return (
             onChange={(e) =>
               setCheckOut(e.target.value)
             }
-            className="mt-1 w-full bg-transparent text-xs font-bold text-[#10254A] outline-none sm:text-sm"
+            className="mt-1 w-full min-w-0 bg-transparent text-[11px] font-bold text-[#10254A] outline-none sm:text-sm"
           />
 
         </div>
@@ -495,9 +498,9 @@ return (
             PROPERTY TYPE
         ================================================= */}
 
-        <div className="rounded-xl px-3 py-2.5 transition-all duration-300 hover:bg-[#F5F8F6] sm:rounded-2xl sm:px-5 sm:py-4">
+        <div className="rounded-xl px-3 py-2.5 transition-all duration-300 hover:bg-[#F5F8F6] sm:px-5 sm:py-4">
 
-          <label className="text-[9px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
+          <label className="text-[8px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
             PROPERTY TYPE
           </label>
 
@@ -508,7 +511,7 @@ return (
                 e.target.value
               )
             }
-            className="mt-1 w-full cursor-pointer bg-transparent text-xs font-bold text-[#10254A] outline-none sm:text-sm"
+            className="mt-1 w-full cursor-pointer bg-transparent text-[11px] font-bold text-[#10254A] outline-none sm:text-sm"
           >
 
             <option value="">
@@ -540,14 +543,14 @@ return (
         </div>
 
         {/* =================================================
-            TRAVELLERS + SEARCH
+            TRAVELLERS
         ================================================= */}
 
-        <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 sm:rounded-2xl sm:gap-3 sm:px-5 sm:py-4">
+        <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-4">
 
           <div className="min-w-0 flex-1">
 
-            <label className="text-[9px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
+            <label className="text-[8px] font-extrabold tracking-wider text-[#8A948F] sm:text-[10px]">
               TRAVELLERS
             </label>
 
@@ -597,7 +600,7 @@ return (
             whileTap={{
               scale: 0.96,
             }}
-            className="shrink-0 rounded-full bg-[#18C66A] px-4 py-2.5 text-xs font-extrabold text-[#073F32] shadow-md transition-all hover:bg-[#073F32] hover:text-white sm:px-5 sm:py-3.5 sm:text-sm"
+            className="shrink-0 rounded-full bg-[#18C66A] px-4 py-2.5 text-[11px] font-extrabold text-[#073F32] shadow-md transition-all hover:bg-[#073F32] hover:text-white sm:px-5 sm:py-3.5 sm:text-sm"
           >
             Search
           </motion.button>
@@ -624,27 +627,34 @@ return (
           y: 0,
           scale: 1,
         }}
-        className="mt-2 rounded-xl border border-white/40 bg-white/95 px-3 py-2 text-center text-xs font-bold text-[#073F32] shadow-xl backdrop-blur-xl sm:mt-3 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
+        className="mt-2 rounded-xl border border-white/40 bg-white/95 px-3 py-2 text-center text-[11px] font-bold text-[#073F32] shadow-xl backdrop-blur-xl sm:mt-3 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
       >
+
         Showing{" "}
+
         <span className="text-[#18C66A]">
           {propertyType}
         </span>{" "}
+
         properties in{" "}
+
         <span className="text-[#18C66A]">
           Nagpur
         </span>{" "}
+
         · {guests}{" "}
+
         {guests === 1
           ? "guest"
           : "guests"}
+
       </motion.div>
     )}
 
   </motion.div>
 
   {/* =====================================================
-      SCROLL INDICATOR
+      DESKTOP SCROLL INDICATOR
   ===================================================== */}
 
   <motion.div
@@ -675,7 +685,9 @@ return (
       }}
       className="flex h-9 w-6 items-start justify-center rounded-full border border-white/40 p-1.5"
     >
+
       <span className="h-1.5 w-1.5 rounded-full bg-white" />
+
     </motion.div>
 
   </motion.div>
