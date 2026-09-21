@@ -1,6 +1,9 @@
+
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+
+import logo from "../assets/logo.jpg";
 
 import {
   logoutUser,
@@ -32,15 +35,11 @@ export default function Navbar() {
      NORMAL USER AUTH STATE
   ===================================================== */
 
-  const userAuthenticated = useSelector(
-    selectIsAuthenticated
-  );
+  const userAuthenticated = useSelector(selectIsAuthenticated);
 
   const user = useSelector(selectUser);
 
-  const userLogoutLoading = useSelector(
-    selectLogoutLoading
-  );
+  const userLogoutLoading = useSelector(selectLogoutLoading);
 
   /* =====================================================
      ADMIN AUTH STATE
@@ -208,15 +207,13 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="flex items-center gap-2.5"
+            className="flex items-center"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#18C66A] text-base font-extrabold text-[#073F32]">
-              C
-            </div>
-
-            <span className="text-xl font-extrabold tracking-tight text-[#073F32]">
-              Coral
-            </span>
+            <img
+              src={logo}
+              alt="Coral"
+              className="h-10 w-auto object-contain"
+            />
           </button>
 
           {/* =================================================
@@ -564,3 +561,4 @@ export default function Navbar() {
     </header>
   );
 }
+

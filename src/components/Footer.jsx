@@ -1,3 +1,5 @@
+import logo from "../assets/logo.jpg";
+
 const footerColumns = [
   {
     title: "Explore",
@@ -29,20 +31,18 @@ export default function Footer() {
         {/* ================= TOP ================= */}
         <div className="grid gap-12 pb-14 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
 
-          {/* BRAND */}
+          {/* ================= BRAND ================= */}
           <div className="max-w-sm">
 
             <a
               href="/"
-              className="inline-flex items-center gap-2.5"
+              className="inline-flex items-center"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#18C66A] text-lg font-extrabold text-[#073F32]">
-                C
-              </div>
-
-              <span className="text-2xl font-extrabold tracking-tight">
-                Coral
-              </span>
+              <img
+                src={logo}
+                alt="Coral"
+                className="h-14 w-auto object-contain"
+              />
             </a>
 
             <p className="mt-5 text-sm leading-7 text-white/50">
@@ -51,7 +51,7 @@ export default function Footer() {
               Everything you need for a better journey.
             </p>
 
-            {/* Social */}
+            {/* ================= SOCIAL ================= */}
             <div className="mt-7 flex gap-2.5">
 
               {["Instagram", "Facebook", "LinkedIn", "X"].map(
@@ -76,7 +76,7 @@ export default function Footer() {
 
           </div>
 
-          {/* LINK COLUMNS */}
+          {/* ================= LINK COLUMNS ================= */}
           {footerColumns.map((column) => (
             <div key={column.title}>
 
@@ -145,7 +145,7 @@ export default function Footer() {
             </p>
 
             <p className="mt-2 text-sm font-bold text-white/80">
-              +91 1800 000 000
+              +91 8007133786
             </p>
           </div>
 
@@ -154,8 +154,8 @@ export default function Footer() {
               Email
             </p>
 
-            <p className="mt-2 text-sm font-bold text-white/80">
-              hello@coral.com
+            <p className="mt-2 break-all text-sm font-bold text-white/80">
+              coral.apartment79@gmail.com
             </p>
           </div>
 
@@ -179,6 +179,7 @@ export default function Footer() {
           </p>
 
           <div className="flex flex-wrap gap-5">
+
             <a
               href="#"
               className="transition hover:text-white"
@@ -199,6 +200,7 @@ export default function Footer() {
             >
               Cookies
             </a>
+
           </div>
 
         </div>
