@@ -1224,6 +1224,16 @@ export default function AdminDashboard() {
                                 <p className="mt-1 text-xs font-bold uppercase text-[#168B4B]">
                                   {bookingStatus}
                                 </p>
+                                <button
+  type="button"
+  onClick={(e) => {
+    e.stopPropagation();
+    navigate(`/admin/bookings/${booking._id}`);
+  }}
+  className="mt-2 text-[10px] font-extrabold text-[#18A85B] underline underline-offset-2 hover:text-[#073F32]"
+>
+  View Booking Details
+</button>
                               </div>
 
                             </div>
