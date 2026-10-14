@@ -1,15 +1,7 @@
-import { useEffect } from "react";
 
-import {
-  useDispatch,
-  useSelector,
-} from "react-redux";
-
-import {
-  useNavigate,
-  useParams,
-} from "react-router-dom";
-
+import { useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 import {
@@ -20,27 +12,44 @@ import {
   clearSelectedProperty,
 } from "../features/properties/propertySlice";
 
+const formatMoney = (value) =>
+  `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
+const formatLabel = (value) => {
+  if (!value) return "";
+  return String(value)
+    .replaceAll("-", " ")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const getChargePeriodLabel = (period) => {
+  const labels = {
+    perNight: "per night",
+    perStay: "per stay",
+    perMonth: "per month",
+    day: "per day",
+    month: "per month",
+    year: "per year",
+    included: "included",
+  };
+
+  return labels[period] || "";
+};
+
+const getImageUrl = (image) => {
+  if (typeof image === "string") return image;
+  return image?.url || "";
+};
+
 export default function PropertyDetails() {
   const { id } = useParams();
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const property = useSelector(
-    selectSelectedProperty
-  );
-
-  const loading = useSelector(
-    selectPropertyLoading
-  );
-
-  const error = useSelector(
-    selectSelectedPropertyError
-  );
-
-  /* =====================================================
-     FETCH PROPERTY
-  ===================================================== */
+  const property = useSelector(selectSelectedProperty);
+  const loading = useSelector(selectPropertyLoading);
+  const error = useSelector(selectSelectedPropertyError);
 
   useEffect(() => {
     if (!id) return;
@@ -52,32 +61,33 @@ export default function PropertyDetails() {
     };
   }, [dispatch, id]);
 
-  /* =====================================================
-     LOADING
-  ===================================================== */
+  const images = useMemo(() => {
+    if (!Array.isArray(property?.images)) return [];
+
+    return property.images
+      .map((image) => ({
+        url: getImageUrl(image),
+        isPrimary:
+          typeof image === "object" && Boolean(image?.isPrimary),
+      }))
+      .filter((image) => image.url);
+  }, [property?.images]);
 
   if (loading) {
     return (
       <main className="min-h-screen bg-[#F8F9F7]">
         <Navbar />
-
         <section className="px-4 pb-20 pt-32 sm:px-6 lg:px-10">
           <div className="mx-auto max-w-7xl">
-
             <div className="h-[420px] animate-pulse rounded-[32px] bg-gray-200" />
 
             <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-
               <div className="space-y-4">
                 <div className="h-8 w-2/3 animate-pulse rounded bg-gray-200" />
-
                 <div className="h-5 w-1/3 animate-pulse rounded bg-gray-200" />
-
                 <div className="h-24 w-full animate-pulse rounded bg-gray-200" />
               </div>
-
-              <div className="h-52 animate-pulse rounded-[28px] bg-gray-200" />
-
+              <div className="h-64 animate-pulse rounded-[28px] bg-gray-200" />
             </div>
           </div>
         </section>
@@ -85,19 +95,13 @@ export default function PropertyDetails() {
     );
   }
 
-  /* =====================================================
-     ERROR / NOT FOUND
-  ===================================================== */
-
   if (error || !property) {
     return (
       <main className="min-h-screen bg-[#F8F9F7]">
         <Navbar />
 
         <section className="flex min-h-screen items-center justify-center px-4 pt-20">
-
           <div className="w-full max-w-lg rounded-[32px] bg-white p-10 text-center shadow-sm">
-
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#E9F8F0] text-2xl">
               🏠
             </div>
@@ -107,104 +111,89 @@ export default function PropertyDetails() {
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-gray-500">
-              {error ||
-                "This property is no longer available."}
+              {error || "This property is no longer available."}
             </p>
 
             <button
               type="button"
-              onClick={() =>
-                navigate("/properties")
-              }
+              onClick={() => navigate("/properties")}
               className="mt-7 rounded-full bg-[#073F32] px-6 py-3 text-sm font-extrabold text-white transition hover:bg-[#18C66A] hover:text-[#073F32]"
             >
               Back to Properties
             </button>
-
           </div>
-
         </section>
       </main>
     );
   }
 
-  /* =====================================================
-     DATA
-  ===================================================== */
-
   const primaryImage =
-    property.images?.find(
-      (image) => image.isPrimary
-    )?.url ||
-    property.images?.[0]?.url ||
-    null;
+    images.find((image) => image.isPrimary)?.url ||
+    images[0]?.url ||
+    "";
 
-  const additionalImages =
-    property.images?.filter(
-      (image) =>
-        image.url !== primaryImage
-    ) || [];
+  const additionalImages = images
+    .filter((image) => image.url !== primaryImage)
+    .slice(0, 4);
 
-  const rentPeriod =
-    property.rentPeriod === "day"
-      ? "day"
-      : property.rentPeriod === "year"
-      ? "year"
-      : "month";
+  const rentPeriod = getChargePeriodLabel(
+    property.rentPeriod || "month"
+  );
 
-  const propertyType =
-    property.propertyType
-      ?.replaceAll("-", " ")
-      ?.replace(
-        /\b\w/g,
-        (char) =>
-          char.toUpperCase()
-      ) ||
-    "Property";
+  const propertyType = formatLabel(property.propertyType) || "Property";
 
-  /* =====================================================
-     RESERVE
-  ===================================================== */
+  // Support both the new fields and existing legacy records.
+  const minGuests = Math.max(
+    1,
+    Number(property.minGuests ?? 1)
+  );
+
+  const maxGuests = Math.max(
+    1,
+    Number(property.maxGuests ?? property.guests ?? 1)
+  );
+
+  const extraGuestPolicy = property.extraGuestPolicy || {};
+  const sleepingArrangements = Array.isArray(
+    property.sleepingArrangements
+  )
+    ? property.sleepingArrangements
+    : [];
+
+  const petPolicy = property.petPolicy || {};
+  const petTypes = Array.isArray(petPolicy.types)
+    ? petPolicy.types
+    : [];
+
+  const amenities = Array.isArray(property.amenities)
+    ? property.amenities
+    : [];
+
+  const rules = Array.isArray(property.rules)
+    ? property.rules
+    : [];
+
+  const isAvailable =
+    !property.availability ||
+    property.availability === "available";
 
   const handleReserve = () => {
-    navigate(
-      `/booking?property=${property._id}`
-    );
+    navigate(`/booking?property=${property._id}`);
   };
-
-  /* =====================================================
-     ENQUIRY
-  ===================================================== */
 
   const handleEnquiry = () => {
-    navigate(
-      `/enquiry?property=${property._id}`
-    );
+    navigate(`/enquiry?property=${property._id}`);
   };
-
-  /* =====================================================
-     PAGE
-  ===================================================== */
 
   return (
     <main className="min-h-screen bg-[#F8F9F7]">
-
       <Navbar />
 
-      {/* =================================================
-          HERO / IMAGE GALLERY
-      ================================================= */}
-
+      {/* IMAGE GALLERY */}
       <section className="px-4 pb-8 pt-28 sm:px-6 lg:px-10 lg:pt-32">
-
         <div className="mx-auto max-w-7xl">
-
           <div className="grid overflow-hidden rounded-[32px] bg-white shadow-sm lg:grid-cols-[1.6fr_1fr]">
-
-            {/* MAIN IMAGE */}
-
             <div className="relative h-[360px] bg-[#E9F8F0] sm:h-[460px] lg:h-[540px]">
-
               {primaryImage ? (
                 <img
                   src={primaryImage}
@@ -221,247 +210,331 @@ export default function PropertyDetails() {
                 {propertyType}
               </div>
 
-              {property.availability ===
-                "available" && (
+              {isAvailable && (
                 <div className="absolute right-5 top-5 rounded-full bg-[#18C66A] px-4 py-2 text-xs font-extrabold text-[#073F32] shadow-sm">
                   Available
                 </div>
               )}
-
             </div>
 
-            {/* ADDITIONAL IMAGES */}
-
             <div className="grid grid-cols-2 gap-2 bg-[#F3F7F5] p-2">
-
-              {additionalImages
-                .slice(0, 4)
-                .map(
-                  (image, index) => (
-                    <div
-                      key={`${image.publicId || image.url}-${index}`}
-                      className="overflow-hidden rounded-[22px] bg-[#E9F8F0]"
-                    >
-                      <img
-                        src={image.url}
-                        alt={`${property.title} ${
-                          index + 2
-                        }`}
-                        className="h-full min-h-[170px] w-full object-cover"
-                      />
-                    </div>
-                  )
-                )}
+              {additionalImages.map((image, index) => (
+                <div
+                  key={`${image.url}-${index}`}
+                  className="overflow-hidden rounded-[22px] bg-[#E9F8F0]"
+                >
+                  <img
+                    src={image.url}
+                    alt={`${property.title} ${index + 2}`}
+                    className="h-full min-h-[170px] w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
 
               {!additionalImages.length && (
                 <div className="col-span-2 flex min-h-[300px] items-center justify-center text-sm font-semibold text-gray-400">
                   No additional photos
                 </div>
               )}
-
             </div>
-
           </div>
-
         </div>
-
       </section>
 
-      {/* =================================================
-          PROPERTY CONTENT
-      ================================================= */}
-
+      {/* PROPERTY CONTENT */}
       <section className="px-4 pb-20 sm:px-6 lg:px-10">
-
         <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1fr_380px]">
-
-          {/* ================= LEFT ================= */}
-
+          {/* LEFT CONTENT */}
           <div>
-
-            {/* TITLE */}
-
+            {/* TITLE AND PRICE */}
             <div className="rounded-[28px] bg-white p-6 shadow-sm sm:p-8">
-
               <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
-
                 <div>
-
                   <h1 className="text-3xl font-black tracking-tight text-[#073F32] sm:text-4xl">
                     {property.title}
                   </h1>
 
                   <p className="mt-3 text-sm font-semibold text-gray-500">
-                    📍 {property.locality},{" "}
-                    {property.city}
+                    📍 {property.locality}
+                    {property.city ? `, ${property.city}` : ""}
                   </p>
-
                 </div>
 
                 <div className="shrink-0 rounded-2xl bg-[#E9F8F0] px-4 py-3">
-
                   <p className="text-xs font-bold text-gray-500">
                     Starting from
                   </p>
-
                   <p className="text-2xl font-black text-[#073F32]">
-                    ₹
-                    {Number(
-                      property.rent || 0
-                    ).toLocaleString(
-                      "en-IN"
-                    )}
+                    {formatMoney(property.rent)}
                   </p>
-
                   <p className="text-xs font-medium text-gray-400">
-                    per {rentPeriod}
+                    {rentPeriod}
                   </p>
-
                 </div>
-
               </div>
 
               {/* QUICK DETAILS */}
-
-              <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
-
-                {property.bhk && (
-                  <DetailBox
-                    label="BHK"
-                    value={property.bhk}
-                  />
+              <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {property.bhk != null && property.bhk !== "" && (
+                  <DetailBox label="BHK" value={property.bhk} />
                 )}
 
-                {property.area && (
+                {property.area != null && property.area !== "" && (
                   <DetailBox
                     label="Area"
-                    value={`${property.area} ${
-                      property.areaUnit || ""
-                    }`}
+                    value={`${property.area} ${property.areaUnit || "sqft"}`}
                   />
                 )}
 
-                {property.bedrooms > 0 && (
+                {Number(property.bedrooms) > 0 && (
                   <DetailBox
                     label="Bedrooms"
                     value={property.bedrooms}
                   />
                 )}
 
-                {property.bathrooms > 0 && (
+                {Number(property.bathrooms) > 0 && (
                   <DetailBox
                     label="Bathrooms"
                     value={property.bathrooms}
                   />
                 )}
 
-                {property.guests && (
-                  <DetailBox
-                    label="Guests"
-                    value={property.guests}
-                  />
-                )}
+                <DetailBox
+                  label="Guest Capacity"
+                  value={`${minGuests}–${maxGuests} guests`}
+                />
 
                 {property.furnishing && (
                   <DetailBox
                     label="Furnishing"
-                    value={property.furnishing.replace(
-                      "-",
-                      " "
-                    )}
+                    value={formatLabel(property.furnishing)}
                   />
                 )}
 
+                {property.floor != null && property.floor !== "" && (
+                  <DetailBox label="Floor" value={property.floor} />
+                )}
               </div>
-
             </div>
 
             {/* DESCRIPTION */}
-
             {property.description && (
-              <div className="mt-6 rounded-[28px] bg-white p-6 shadow-sm sm:p-8">
-
-                <h2 className="text-xl font-black text-[#073F32]">
-                  About this property
-                </h2>
-
-                <p className="mt-4 whitespace-pre-line text-sm leading-7 text-gray-600">
+              <ContentCard title="About this property">
+                <p className="whitespace-pre-line text-sm leading-7 text-gray-600">
                   {property.description}
                 </p>
-
-              </div>
+              </ContentCard>
             )}
+
+            {/* GUEST CAPACITY AND EXTRA GUEST POLICY */}
+            <ContentCard title="Guest Capacity & Extra Guests">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <InfoTile
+                  label="Minimum guests"
+                  value={`${minGuests} ${minGuests === 1 ? "guest" : "guests"}`}
+                />
+                <InfoTile
+                  label="Included guests"
+                  value={`${maxGuests} ${maxGuests === 1 ? "guest" : "guests"}`}
+                />
+              </div>
+
+              <div className="mt-5 rounded-2xl bg-[#F3F7F5] p-5">
+                <h3 className="font-extrabold text-[#073F32]">
+                  Extra guest charges
+                </h3>
+
+                {extraGuestPolicy.enabled ? (
+                  <div className="mt-3 space-y-3 text-sm text-gray-600">
+                    <InfoRow
+                      label="Extra guest limit"
+                      value={`${Number(extraGuestPolicy.maxExtraGuests || 0)} additional guests`}
+                    />
+                    <InfoRow
+                      label="Price per person"
+                      value={formatMoney(extraGuestPolicy.pricePerPerson)}
+                    />
+                    <InfoRow
+                      label="Charge period"
+                      value={getChargePeriodLabel(
+                        extraGuestPolicy.chargePeriod
+                      )}
+                    />
+
+                    <p className="pt-2 text-xs leading-5 text-gray-500">
+                      Extra charges depend on the number of guests and
+                      the final booking calculation.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">
+                    No separate extra guest charges are configured.
+                  </p>
+                )}
+              </div>
+            </ContentCard>
+
+            {/* SLEEPING ARRANGEMENTS */}
+            <ContentCard title="Sleeping Arrangements">
+              {sleepingArrangements.length > 0 ? (
+                <div className="space-y-4">
+                  {sleepingArrangements.map((item, index) => (
+                    <div
+                      key={`${item.type}-${index}`}
+                      className="rounded-2xl border border-gray-100 p-5"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="font-extrabold text-[#073F32]">
+                            {item.label || formatLabel(item.type)}
+                          </h3>
+                          <p className="mt-1 text-sm text-gray-500">
+                            {formatLabel(item.type)}
+                          </p>
+                        </div>
+
+                        <span className="rounded-full bg-[#E9F8F0] px-3 py-1 text-xs font-bold text-[#073F32]">
+                          Qty: {Number(item.quantity || 1)}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4">
+                        <span className="text-sm text-gray-500">
+                          {item.isPaid ? "Additional charge" : "Included"}
+                        </span>
+
+                        <span className="font-extrabold text-[#073F32]">
+                          {item.isPaid
+                            ? `${formatMoney(item.price)} ${getChargePeriodLabel(item.chargePeriod)}`
+                            : "Free"}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm leading-6 text-gray-500">
+                  No extra sleeping arrangements have been listed for
+                  this property.
+                </p>
+              )}
+            </ContentCard>
+
+            {/* PET POLICY */}
+            <ContentCard title="Pet Policy">
+              <div className="rounded-2xl bg-[#F3F7F5] p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-extrabold text-[#073F32]">
+                      Pets
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      {petPolicy.allowed
+                        ? "Pets are allowed"
+                        : "Pets are not allowed"}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${
+                      petPolicy.allowed
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {petPolicy.allowed ? "Allowed" : "Not allowed"}
+                  </span>
+                </div>
+
+                {petPolicy.allowed && (
+                  <>
+                    <div className="mt-5 border-t border-gray-200 pt-4">
+                      <InfoRow
+                        label="Maximum pets"
+                        value={Number(petPolicy.maxPets || 0)}
+                      />
+                    </div>
+
+                    {petTypes.length > 0 ? (
+                      <div className="mt-5 space-y-3">
+                        <h4 className="text-sm font-extrabold text-[#073F32]">
+                          Pet types and charges
+                        </h4>
+
+                        {petTypes.map((pet, index) => (
+                          <div
+                            key={`${pet.type}-${index}`}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4"
+                          >
+                            <div>
+                              <p className="font-bold text-[#073F32]">
+                                {pet.label || formatLabel(pet.type)}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-500">
+                                {formatLabel(pet.type)}
+                              </p>
+                            </div>
+
+                            <p className="text-sm font-extrabold text-[#073F32]">
+                              {Number(pet.charge || 0) > 0
+                                ? `${formatMoney(pet.charge)} ${getChargePeriodLabel(pet.chargePeriod)}`
+                                : "Free"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm text-gray-500">
+                        Pet charges and specific types have not been
+                        listed.
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+            </ContentCard>
 
             {/* AMENITIES */}
-
-            {property.amenities?.length > 0 && (
-              <div className="mt-6 rounded-[28px] bg-white p-6 shadow-sm sm:p-8">
-
-                <h2 className="text-xl font-black text-[#073F32]">
-                  Amenities
-                </h2>
-
-                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
-
-                  {property.amenities.map(
-                    (amenity, index) => (
-                      <div
-                        key={`${amenity}-${index}`}
-                        className="rounded-2xl bg-[#F3F7F5] px-4 py-3 text-sm font-semibold capitalize text-[#073F32]"
-                      >
-                        ✓ {amenity}
-                      </div>
-                    )
-                  )}
-
+            {amenities.length > 0 && (
+              <ContentCard title="Amenities">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {amenities.map((amenity, index) => (
+                    <div
+                      key={`${amenity}-${index}`}
+                      className="rounded-2xl bg-[#F3F7F5] px-4 py-3 text-sm font-semibold capitalize text-[#073F32]"
+                    >
+                      ✓ {typeof amenity === "string" ? amenity : amenity.name}
+                    </div>
+                  ))}
                 </div>
-
-              </div>
+              </ContentCard>
             )}
 
-            {/* RULES */}
-
-            {property.rules?.length > 0 && (
-              <div className="mt-6 rounded-[28px] bg-white p-6 shadow-sm sm:p-8">
-
-                <h2 className="text-xl font-black text-[#073F32]">
-                  Property rules
-                </h2>
-
-                <div className="mt-5 space-y-3">
-
-                  {property.rules.map(
-                    (rule, index) => (
-                      <div
-                        key={`${rule}-${index}`}
-                        className="flex gap-3 text-sm leading-6 text-gray-600"
-                      >
-                        <span className="font-bold text-[#18A85B]">
-                          •
-                        </span>
-
-                        <span>
-                          {rule}
-                        </span>
-                      </div>
-                    )
-                  )}
-
+            {/* PROPERTY RULES */}
+            {rules.length > 0 && (
+              <ContentCard title="Property Rules">
+                <div className="space-y-3">
+                  {rules.map((rule, index) => (
+                    <div
+                      key={`${rule}-${index}`}
+                      className="flex gap-3 text-sm leading-6 text-gray-600"
+                    >
+                      <span className="font-bold text-[#18A85B]">•</span>
+                      <span>
+                        {typeof rule === "string" ? rule : rule.name}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-
-              </div>
+              </ContentCard>
             )}
 
             {/* LOCATION */}
-
-            <div className="mt-6 rounded-[28px] bg-white p-6 shadow-sm sm:p-8">
-
-              <h2 className="text-xl font-black text-[#073F32]">
-                Location
-              </h2>
-
+            <ContentCard title="Location">
               {property.address && (
-                <p className="mt-3 text-sm leading-6 text-gray-600">
+                <p className="text-sm leading-6 text-gray-600">
                   {property.address}
                 </p>
               )}
@@ -489,117 +562,79 @@ export default function PropertyDetails() {
                   {property.city}
                 </p>
               )}
-
-            </div>
-
+            </ContentCard>
           </div>
 
-          {/* ================= RIGHT ================= */}
-
+          {/* RIGHT BOOKING PANEL */}
           <aside className="lg:sticky lg:top-28 lg:h-fit">
-
             <div className="rounded-[28px] bg-[#073F32] p-6 text-white shadow-xl sm:p-7">
-
               <p className="text-sm font-semibold text-white/60">
                 {propertyType}
               </p>
 
               <h2 className="mt-2 text-2xl font-black">
-
-                ₹
-                {Number(
-                  property.rent || 0
-                ).toLocaleString(
-                  "en-IN"
-                )}
-
+                {formatMoney(property.rent)}
                 <span className="text-sm font-semibold text-white/60">
-                  {" "}
-                  / {rentPeriod}
+                  {" "}/ {rentPeriod}
                 </span>
-
               </h2>
 
-              {/* SECURITY DEPOSIT */}
-
-              {property.securityDeposit >
-                0 && (
+              {Number(property.securityDeposit) > 0 && (
                 <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm">
-
-                  <span className="text-white/60">
-                    Security deposit
-                  </span>
-
+                  <span className="text-white/60">Security deposit</span>
                   <span className="font-bold">
-                    ₹
-                    {Number(
-                      property.securityDeposit
-                    ).toLocaleString(
-                      "en-IN"
-                    )}
+                    {formatMoney(property.securityDeposit)}
                   </span>
-
                 </div>
               )}
 
-              {/* MAINTENANCE */}
-
-              {property.maintenance >
-                0 && (
+              {Number(property.maintenance) > 0 && (
                 <div className="mt-3 flex items-center justify-between text-sm">
-
-                  <span className="text-white/60">
-                    Maintenance
-                  </span>
-
+                  <span className="text-white/60">Maintenance</span>
                   <span className="font-bold">
-                    ₹
-                    {Number(
-                      property.maintenance
-                    ).toLocaleString(
-                      "en-IN"
-                    )}
+                    {formatMoney(property.maintenance)}
                   </span>
-
                 </div>
               )}
 
-              {/* AVAILABILITY */}
+              <div className="mt-5 rounded-2xl bg-white/10 p-4">
+                <p className="text-xs font-bold text-white/50">
+                  GUEST CAPACITY
+                </p>
+                <p className="mt-1 text-sm font-extrabold">
+                  {minGuests}–{maxGuests} guests included
+                </p>
 
-              <div className="mt-6 rounded-2xl bg-white/10 p-4">
+                {extraGuestPolicy.enabled && (
+                  <p className="mt-2 text-xs leading-5 text-white/70">
+                    Extra guest charge:{" "}
+                    {formatMoney(extraGuestPolicy.pricePerPerson)}{" "}
+                    {getChargePeriodLabel(extraGuestPolicy.chargePeriod)}
+                  </p>
+                )}
+              </div>
 
+              <div className="mt-5 rounded-2xl bg-white/10 p-4">
                 <p className="text-xs font-bold text-white/50">
                   CURRENT STATUS
                 </p>
-
-                <p className="mt-1 text-sm font-extrabold text-[#18C66A]">
-                  ●{" "}
-                  {property.availability ||
-                    "available"}
+                <p
+                  className={`mt-1 text-sm font-extrabold ${
+                    isAvailable ? "text-[#18C66A]" : "text-red-300"
+                  }`}
+                >
+                  ● {formatLabel(property.availability || "available")}
                 </p>
-
               </div>
-
-              {/* RESERVE */}
 
               <button
                 type="button"
                 onClick={handleReserve}
-                disabled={
-                  property.availability &&
-                  property.availability !==
-                    "available"
-                }
+                disabled={!isAvailable}
                 className="mt-6 w-full rounded-full bg-[#18C66A] px-6 py-4 text-sm font-black text-[#073F32] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {property.availability ===
-                  "available" ||
-                !property.availability
-                  ? "book now"
-                  : "Currently Unavailable"}
+                {isAvailable ? "Book Now" : "Currently Unavailable"}
               </button>
-
-              {/* ENQUIRY */}
 
               <button
                 type="button"
@@ -610,41 +645,53 @@ export default function PropertyDetails() {
               </button>
 
               <p className="mt-5 text-center text-xs leading-5 text-white/50">
-                Your booking request will be
-                securely processed through Coral.
+                Final booking charges are calculated by Coral using the
+                property's configured policies.
               </p>
-
             </div>
-
           </aside>
-
         </div>
-
       </section>
-
     </main>
   );
 }
 
-/* =====================================================
-   DETAIL BOX
-===================================================== */
+function ContentCard({ title, children }) {
+  return (
+    <section className="mt-6 rounded-[28px] bg-white p-6 shadow-sm sm:p-8">
+      <h2 className="text-xl font-black text-[#073F32]">
+        {title}
+      </h2>
+      <div className="mt-5">{children}</div>
+    </section>
+  );
+}
 
-function DetailBox({
-  label,
-  value,
-}) {
+function DetailBox({ label, value }) {
   return (
     <div className="rounded-2xl bg-[#F3F7F5] p-4">
-
-      <p className="text-xs font-semibold text-gray-400">
-        {label}
-      </p>
-
+      <p className="text-xs font-semibold text-gray-400">{label}</p>
       <p className="mt-1 text-sm font-extrabold capitalize text-[#073F32]">
         {value}
       </p>
+    </div>
+  );
+}
 
+function InfoTile({ label, value }) {
+  return (
+    <div className="rounded-2xl bg-[#F3F7F5] p-4">
+      <p className="text-xs font-semibold text-gray-500">{label}</p>
+      <p className="mt-2 text-lg font-black text-[#073F32]">{value}</p>
+    </div>
+  );
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-bold text-[#073F32]">{value}</span>
     </div>
   );
 }
