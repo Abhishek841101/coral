@@ -1173,12 +1173,12 @@
 // }
 
 
+
+
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api"
-).replace(/\/+$/, "");
+import { useDispatch } from "react-redux";
+import { createProperty } from "../features/properties/propertySlice";
 
 const CHARGE_PERIODS = [
   ["perNight", "Per Night"],
@@ -1215,8 +1215,8 @@ const initialForm = {
   pincode: "",
   rent: "",
   rentPeriod: "month",
-  securityDeposit: "",
-  maintenance: "",
+  securityDeposit: "0",
+  maintenance: "0",
   maintenancePeriod: "included",
   area: "",
   areaUnit: "sqft",
@@ -1226,21 +1226,16 @@ const initialForm = {
   floor: "",
   totalFloors: "",
   furnishing: "unfurnished",
-
   minGuests: "1",
   maxGuests: "2",
-
   extraGuestEnabled: false,
-  maxExtraGuests: "0",
+  maxExtraGuests: "1",
   pricePerPerson: "0",
   extraGuestChargePeriod: "perNight",
-
   sleepingArrangements: [],
-
   petsAllowed: false,
-  maxPets: "0",
+  maxPets: "1",
   petTypes: [],
-
   availability: "available",
   availableFrom: "",
   amenities: "",
@@ -1264,29 +1259,144 @@ const newPetType = () => ({
 });
 
 function parseMoney(value) {
+  if (value === "" || value === null || value === undefined) {
+    return 0;
+  }
+
   const number = Number(value);
-  return Number.isFinite(number) && number >= 0 ? number : 0;
+  return Number.isFinite(number) ? number : NaN;
 }
 
 function parseInteger(value, fallback = 0) {
+  if (value === "" || value === null || value === undefined) {
+    return fallback;
+  }
+
   const number = Number(value);
+
   return Number.isInteger(number) && number >= 0
     ? number
-    : fallback;
+    : NaN;
 }
 
 function splitCommaSeparated(value) {
-  return value
+  return String(value || "")
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
+function normalizeDate(value) {
+  return value || "";
+}
+
+function Label({ children }) {
+  return (
+    <label className="text-xs font-extrabold uppercase tracking-wide text-gray-500">
+      {children}
+    </label>
+  );
+}
+
+function Input({
+  label,
+  name,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  min,
+  max,
+  step,
+  disabled = false,
+}) {
+  return (
+    <div className="min-w-0">
+      <Label>{label}</Label>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        value={value ?? ""}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
+        className="field-input disabled:cursor-not-allowed disabled:bg-gray-100"
+      />
+    </div>
+  );
+}
+
+function Select({
+  label,
+  name,
+  value,
+  onChange,
+  options,
+  disabled = false,
+}) {
+  return (
+    <div className="min-w-0">
+      <Label>{label}</Label>
+      <select
+        id={name}
+        name={name}
+        value={value ?? ""}
+        onChange={onChange}
+        disabled={disabled}
+        className="field-input disabled:cursor-not-allowed disabled:bg-gray-100"
+      >
+        {options.map(([optionValue, optionLabel]) => (
+          <option key={optionValue} value={optionValue}>
+            {optionLabel}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function Checkbox({ checked, onChange, label, disabled = false }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 text-sm font-semibold text-[#073F32]">
+      <input
+        type="checkbox"
+        checked={Boolean(checked)}
+        onChange={(event) => onChange(event.target.checked)}
+        disabled={disabled}
+        className="mt-1 h-4 w-4 accent-green-600"
+      />
+      <span>{label}</span>
+    </label>
+  );
+}
+
+function Section({ title, description, children }) {
+  return (
+    <section className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <h2 className="text-lg font-black text-[#073F32]">{title}</h2>
+      <p className="mt-1 text-sm text-gray-500">{description}</p>
+      <div className="mt-6">{children}</div>
+    </section>
+  );
+}
+
 export default function AdminAddProperty() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const previewUrlsRef = useRef([]);
 
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(() => ({
+    ...initialForm,
+    sleepingArrangements: [],
+    petTypes: [],
+  }));
+
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1295,9 +1405,11 @@ export default function AdminAddProperty() {
 
   useEffect(() => {
     return () => {
-      previewUrlsRef.current.forEach((url) =>
-        URL.revokeObjectURL(url)
-      );
+      previewUrlsRef.current.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+
+      previewUrlsRef.current = [];
     };
   }, []);
 
@@ -1322,11 +1434,15 @@ export default function AdminAddProperty() {
 
     if (!selected.length) return;
 
-    const invalid = selected.find(
-      (file) =>
-        !file.type.startsWith("image/") ||
-        file.size > 10 * 1024 * 1024
-    );
+    const invalid = selected.find((file) => {
+      const validType = [
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+      ].includes(file.type);
+
+      return !validType || file.size > 10 * 1024 * 1024;
+    });
 
     if (invalid) {
       setError(
@@ -1340,15 +1456,14 @@ export default function AdminAddProperty() {
       return;
     }
 
-    const newUrls = selected.map((file) =>
-      URL.createObjectURL(file)
-    );
+    const newUrls = selected.map((file) => URL.createObjectURL(file));
 
     previewUrlsRef.current.push(...newUrls);
-
     setImages((previous) => [...previous, ...selected]);
     setPreviews((previous) => [...previous, ...newUrls]);
+
     setError("");
+    setSuccess("");
   };
 
   const removeImage = (index) => {
@@ -1356,6 +1471,7 @@ export default function AdminAddProperty() {
 
     if (removedUrl) {
       URL.revokeObjectURL(removedUrl);
+
       previewUrlsRef.current = previewUrlsRef.current.filter(
         (url) => url !== removedUrl
       );
@@ -1373,13 +1489,13 @@ export default function AdminAddProperty() {
   const updateSleepingArrangement = (index, field, value) => {
     setForm((previous) => ({
       ...previous,
-      sleepingArrangements:
-        previous.sleepingArrangements.map((item, i) =>
-          i === index
-            ? { ...item, [field]: value }
-            : item
-        ),
+      sleepingArrangements: previous.sleepingArrangements.map(
+        (item, i) =>
+          i === index ? { ...item, [field]: value } : item
+      ),
     }));
+
+    setError("");
   };
 
   const addSleepingArrangement = () => {
@@ -1395,10 +1511,9 @@ export default function AdminAddProperty() {
   const removeSleepingArrangement = (index) => {
     setForm((previous) => ({
       ...previous,
-      sleepingArrangements:
-        previous.sleepingArrangements.filter(
-          (_, i) => i !== index
-        ),
+      sleepingArrangements: previous.sleepingArrangements.filter(
+        (_, i) => i !== index
+      ),
     }));
   };
 
@@ -1409,6 +1524,8 @@ export default function AdminAddProperty() {
         i === index ? { ...item, [field]: value } : item
       ),
     }));
+
+    setError("");
   };
 
   const addPetType = () => {
@@ -1421,9 +1538,7 @@ export default function AdminAddProperty() {
   const removePetType = (index) => {
     setForm((previous) => ({
       ...previous,
-      petTypes: previous.petTypes.filter(
-        (_, i) => i !== index
-      ),
+      petTypes: previous.petTypes.filter((_, i) => i !== index),
     }));
   };
 
@@ -1433,13 +1548,19 @@ export default function AdminAddProperty() {
     if (!form.city.trim()) return "City required hai.";
     if (!form.locality.trim()) return "Locality required hai.";
     if (!form.address.trim()) return "Address required hai.";
-    if (form.rent === "" || parseMoney(form.rent) <= 0) {
+
+    const rent = parseMoney(form.rent);
+
+    if (!Number.isFinite(rent) || rent <= 0) {
       return "Rent zero se zyada hona chahiye.";
     }
-    if (!images.length) return "Kam se kam ek property image upload karo.";
 
-    const minGuests = Number(form.minGuests);
-    const maxGuests = Number(form.maxGuests);
+    if (images.length === 0) {
+      return "Kam se kam ek property image upload karo.";
+    }
+
+    const minGuests = parseInteger(form.minGuests);
+    const maxGuests = parseInteger(form.maxGuests);
 
     if (
       !Number.isInteger(minGuests) ||
@@ -1454,24 +1575,73 @@ export default function AdminAddProperty() {
       return "Minimum guests, maximum guests se zyada nahi ho sakte.";
     }
 
-    if (
-      form.extraGuestEnabled &&
-      parseInteger(form.maxExtraGuests) < 1
-    ) {
-      return "Extra guest policy enable hai, isliye maximum extra guests kam se kam 1 rakho.";
-    }
+    if (form.extraGuestEnabled) {
+      const maxExtraGuests = parseInteger(form.maxExtraGuests);
+      const pricePerPerson = parseMoney(form.pricePerPerson);
 
-    if (form.petsAllowed && parseInteger(form.maxPets) < 1) {
-      return "Pets allow karne par maximum pets kam se kam 1 rakho.";
+      if (
+        !Number.isInteger(maxExtraGuests) ||
+        maxExtraGuests < 1
+      ) {
+        return "Maximum extra guests kam se kam 1 hone chahiye.";
+      }
+
+      if (
+        !Number.isFinite(pricePerPerson) ||
+        pricePerPerson < 0
+      ) {
+        return "Extra guest price valid nahi hai.";
+      }
     }
 
     for (const item of form.sleepingArrangements) {
-      if (parseInteger(item.quantity) < 1) {
+      const quantity = parseInteger(item.quantity);
+      const price = parseMoney(item.price);
+
+      if (!Number.isInteger(quantity) || quantity < 1) {
         return "Sleeping arrangement quantity kam se kam 1 honi chahiye.";
       }
 
-      if (parseMoney(item.price) < 0) {
+      if (!Number.isFinite(price) || price < 0) {
         return "Sleeping arrangement price valid nahi hai.";
+      }
+    }
+
+    if (form.petsAllowed) {
+      const maxPets = parseInteger(form.maxPets);
+
+      if (!Number.isInteger(maxPets) || maxPets < 1) {
+        return "Pets allow karne par maximum pets kam se kam 1 rakho.";
+      }
+
+      for (const pet of form.petTypes) {
+        const charge = parseMoney(pet.charge);
+
+        if (!Number.isFinite(charge) || charge < 0) {
+          return "Pet charge valid nahi hai.";
+        }
+      }
+    }
+
+    const numericFields = [
+      ["Security deposit", form.securityDeposit],
+      ["Maintenance", form.maintenance],
+      ["Area", form.area],
+      ["BHK", form.bhk],
+      ["Bedrooms", form.bedrooms],
+      ["Bathrooms", form.bathrooms],
+      ["Balconies", form.balconies],
+      ["Floor", form.floor],
+      ["Total floors", form.totalFloors],
+    ];
+
+    for (const [label, value] of numericFields) {
+      if (value === "") continue;
+
+      const number = Number(value);
+
+      if (!Number.isFinite(number) || number < 0) {
+        return `${label} ki value valid honi chahiye.`;
       }
     }
 
@@ -1480,20 +1650,46 @@ export default function AdminAddProperty() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    console.group("🏠 CORAL PROPERTY CREATE");
+    console.log("Submit triggered");
+    console.log("Form state:", form);
+    console.log(
+      "Selected images:",
+      images.map((file) => ({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      }))
+    );
+
+    if (loading) {
+      console.warn("Request already in progress; duplicate submit ignored.");
+      console.groupEnd();
+      return;
+    }
+
     setError("");
     setSuccess("");
 
     const validationError = validateForm();
 
     if (validationError) {
+      console.error("Frontend validation failed:", validationError);
       setError(validationError);
+      console.groupEnd();
       return;
     }
 
     const token = localStorage.getItem("coral_admin_token");
 
+    console.log("Admin token exists:", Boolean(token));
+    console.log("Admin token length:", token?.length || 0);
+
     if (!token) {
+      console.error("Missing coral_admin_token in localStorage.");
       setError("Admin session nahi mila. Dobara login karo.");
+      console.groupEnd();
       return;
     }
 
@@ -1519,10 +1715,7 @@ export default function AdminAddProperty() {
       ];
 
       textFields.forEach((field) => {
-        formData.append(
-          field,
-          String(form[field] ?? "").trim()
-        );
+        formData.append(field, String(form[field] ?? "").trim());
       });
 
       const numberFields = [
@@ -1544,22 +1737,31 @@ export default function AdminAddProperty() {
         if (value !== "" && value !== null && value !== undefined) {
           formData.append(field, String(Number(value)));
         } else if (
-          ["securityDeposit", "maintenance", "bedrooms", "bathrooms", "balconies"].includes(field)
+          [
+            "securityDeposit",
+            "maintenance",
+            "bedrooms",
+            "bathrooms",
+            "balconies",
+          ].includes(field)
         ) {
           formData.append(field, "0");
         }
       });
 
-      formData.append("minGuests", String(Number(form.minGuests)));
-      formData.append("maxGuests", String(Number(form.maxGuests)));
+      const minGuests = parseInteger(form.minGuests, 1);
+      const maxGuests = parseInteger(form.maxGuests, 2);
 
-      // Backward compatibility with older property records.
-      formData.append("guests", String(Number(form.maxGuests)));
+      formData.append("minGuests", String(minGuests));
+      formData.append("maxGuests", String(maxGuests));
+
+      // Backward compatibility for existing backend consumers.
+      formData.append("guests", String(maxGuests));
 
       const extraGuestPolicy = {
         enabled: Boolean(form.extraGuestEnabled),
         maxExtraGuests: form.extraGuestEnabled
-          ? parseInteger(form.maxExtraGuests)
+          ? parseInteger(form.maxExtraGuests, 1)
           : 0,
         pricePerPerson: form.extraGuestEnabled
           ? parseMoney(form.pricePerPerson)
@@ -1567,21 +1769,20 @@ export default function AdminAddProperty() {
         chargePeriod: form.extraGuestChargePeriod,
       };
 
-      const sleepingArrangements =
-        form.sleepingArrangements.map((item) => ({
+      const sleepingArrangements = form.sleepingArrangements.map(
+        (item) => ({
           type: item.type,
           label: item.label.trim() || item.type,
-          quantity: Math.max(1, parseInteger(item.quantity, 1)),
+          quantity: parseInteger(item.quantity, 1),
           isPaid: Boolean(item.isPaid),
           price: item.isPaid ? parseMoney(item.price) : 0,
           chargePeriod: item.chargePeriod,
-        }));
+        })
+      );
 
       const petPolicy = {
         allowed: Boolean(form.petsAllowed),
-        maxPets: form.petsAllowed
-          ? parseInteger(form.maxPets)
-          : 0,
+        maxPets: form.petsAllowed ? parseInteger(form.maxPets, 1) : 0,
         types: form.petsAllowed
           ? form.petTypes.map((item) => ({
               type: item.type,
@@ -1606,7 +1807,7 @@ export default function AdminAddProperty() {
 
       formData.append(
         "availableFrom",
-        form.availableFrom || ""
+        normalizeDate(form.availableFrom)
       );
 
       formData.append(
@@ -1619,52 +1820,56 @@ export default function AdminAddProperty() {
         JSON.stringify(splitCommaSeparated(form.rules))
       );
 
+      // Must match Express upload.array("images", 10).
       images.forEach((file) => {
         formData.append("images", file);
       });
 
-      const response = await fetch(`${API_URL}/properties`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-        body: formData,
-      });
+      console.group("📦 FORMDATA PAYLOAD");
 
-      let data = {};
-
-      try {
-        data = await response.json();
-      } catch {
-        data = {};
-      }
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          if (response.status === 401) {
-            localStorage.removeItem("coral_admin_token");
-          }
-
-          throw new Error(
-            data.message ||
-              "Admin authentication failed. Login aur admin permissions check karo."
-          );
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(key, {
+            name: value.name,
+            type: value.type,
+            size: value.size,
+          });
+        } else {
+          console.log(key, value);
         }
-
-        throw new Error(
-          data.message || "Property create nahi ho payi."
-        );
       }
+
+      console.groupEnd();
+
+      console.log("Structured extraGuestPolicy:", extraGuestPolicy);
+      console.log("Structured sleepingArrangements:", sleepingArrangements);
+      console.log("Structured petPolicy:", petPolicy);
+      console.log("Dispatching createProperty Redux thunk now...");
+
+      // Redux thunk handles the API request.
+      const result = await dispatch(createProperty(formData)).unwrap();
+
+      console.group("✅ PROPERTY CREATE SUCCESS");
+      console.log("Full thunk response:", result);
+      console.log("Returned property:", result?.property);
+      console.log("Returned property ID:", result?.property?._id);
+      console.log("Returned minGuests:", result?.property?.minGuests);
+      console.log("Returned maxGuests:", result?.property?.maxGuests);
+      console.log(
+        "Returned extraGuestPolicy:",
+        result?.property?.extraGuestPolicy
+      );
+      console.log(
+        "Returned sleepingArrangements:",
+        result?.property?.sleepingArrangements
+      );
+      console.log("Returned petPolicy:", result?.property?.petPolicy);
+      console.groupEnd();
 
       setSuccess(
-        data.message ||
-          "Property create ho gayi. Approval status backend decide karega."
+        result?.message ||
+          "Property create request successful. Backend response verify karo."
       );
-
-      setForm(initialForm);
-      setImages([]);
-      setPreviews([]);
 
       previews.forEach((url) => {
         URL.revokeObjectURL(url);
@@ -1673,14 +1878,38 @@ export default function AdminAddProperty() {
         );
       });
 
+      setForm({
+        ...initialForm,
+        sleepingArrangements: [],
+        petTypes: [],
+      });
+
+      setImages([]);
+      setPreviews([]);
+
       window.setTimeout(() => {
         navigate("/admin/properties");
       }, 1200);
     } catch (err) {
-      console.error("Create property error:", err);
-      setError(err.message || "Property create nahi ho payi.");
+      console.group("❌ PROPERTY CREATE FAILED");
+      console.error("Full rejected error:", err);
+      console.error("Error message:", err?.message);
+      console.error("Rejected payload:", err?.payload);
+      console.error("Error name:", err?.name);
+      console.groupEnd();
+
+      const message =
+        typeof err === "string"
+          ? err
+          : err?.message ||
+            err?.payload ||
+            "Property create nahi ho payi. Browser aur backend terminal logs check karo.";
+
+      setError(String(message));
     } finally {
       setLoading(false);
+      console.log("Property create loading state reset.");
+      console.groupEnd();
     }
   };
 
@@ -1696,6 +1925,7 @@ export default function AdminAddProperty() {
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#18C66A] font-black text-[#073F32]">
               C
             </span>
+
             <span className="text-left">
               <span className="block text-lg font-black text-[#073F32]">
                 Coral
@@ -1719,9 +1949,11 @@ export default function AdminAddProperty() {
           <p className="text-xs font-extrabold uppercase tracking-widest text-green-600">
             Property Management
           </p>
+
           <h1 className="mt-2 text-3xl font-black text-[#073F32]">
             Add Property
           </h1>
+
           <p className="mt-2 text-sm text-gray-500">
             Property details, guest capacity, extra charges, sleeping
             options aur pet policy configure karo.
@@ -1759,6 +1991,7 @@ export default function AdminAddProperty() {
                 onChange={handleChange}
                 placeholder="2 BHK Premium Flat"
                 required
+                disabled={loading}
               />
 
               <Select
@@ -1766,6 +1999,7 @@ export default function AdminAddProperty() {
                 name="propertyType"
                 value={form.propertyType}
                 onChange={handleChange}
+                disabled={loading}
                 options={[
                   ["room", "Room"],
                   ["pg", "PG"],
@@ -1786,16 +2020,52 @@ export default function AdminAddProperty() {
                 onChange={handleChange}
                 rows={5}
                 required
+                disabled={loading}
                 placeholder="Property ke baare mein details..."
                 className="field-input"
               />
             </div>
 
             <div className="mt-5 grid gap-5 sm:grid-cols-2 md:grid-cols-4">
-              <Input label="BHK" name="bhk" type="number" min="0" value={form.bhk} onChange={handleChange} />
-              <Input label="Bedrooms" name="bedrooms" type="number" min="0" value={form.bedrooms} onChange={handleChange} />
-              <Input label="Bathrooms" name="bathrooms" type="number" min="0" value={form.bathrooms} onChange={handleChange} />
-              <Input label="Balconies" name="balconies" type="number" min="0" value={form.balconies} onChange={handleChange} />
+              <Input
+                label="BHK"
+                name="bhk"
+                type="number"
+                min="0"
+                value={form.bhk}
+                onChange={handleChange}
+                disabled={loading}
+              />
+
+              <Input
+                label="Bedrooms"
+                name="bedrooms"
+                type="number"
+                min="0"
+                value={form.bedrooms}
+                onChange={handleChange}
+                disabled={loading}
+              />
+
+              <Input
+                label="Bathrooms"
+                name="bathrooms"
+                type="number"
+                min="0"
+                value={form.bathrooms}
+                onChange={handleChange}
+                disabled={loading}
+              />
+
+              <Input
+                label="Balconies"
+                name="balconies"
+                type="number"
+                min="0"
+                value={form.balconies}
+                onChange={handleChange}
+                disabled={loading}
+              />
             </div>
           </Section>
 
@@ -1808,19 +2078,22 @@ export default function AdminAddProperty() {
               className="block cursor-pointer rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center"
             >
               <span className="text-3xl">📷</span>
+
               <span className="mt-3 block font-bold text-[#073F32]">
                 Choose Property Images
               </span>
+
               <span className="mt-1 block text-xs text-gray-500">
                 JPG, PNG, WEBP
               </span>
+
               <input
                 id="property-images"
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
                 multiple
                 onChange={handleImageChange}
-                disabled={loading}
+                disabled={loading || images.length >= 10}
                 className="hidden"
               />
             </label>
@@ -1857,6 +2130,10 @@ export default function AdminAddProperty() {
                 ))}
               </div>
             )}
+
+            <p className="mt-3 text-xs text-gray-500">
+              Selected: {images.length}/10 images
+            </p>
           </Section>
 
           <Section
@@ -1864,11 +2141,49 @@ export default function AdminAddProperty() {
             description="Complete property address."
           >
             <div className="grid gap-5 md:grid-cols-2">
-              <Input label="City" name="city" value={form.city} onChange={handleChange} required />
-              <Input label="Locality" name="locality" value={form.locality} onChange={handleChange} required placeholder="Dharampeth" />
-              <Input label="Complete Address" name="address" value={form.address} onChange={handleChange} required />
-              <Input label="Landmark" name="landmark" value={form.landmark} onChange={handleChange} />
-              <Input label="Pincode" name="pincode" value={form.pincode} onChange={handleChange} />
+              <Input
+                label="City"
+                name="city"
+                value={form.city}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+
+              <Input
+                label="Locality"
+                name="locality"
+                value={form.locality}
+                onChange={handleChange}
+                required
+                placeholder="Dharampeth"
+                disabled={loading}
+              />
+
+              <Input
+                label="Complete Address"
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
+
+              <Input
+                label="Landmark"
+                name="landmark"
+                value={form.landmark}
+                onChange={handleChange}
+                disabled={loading}
+              />
+
+              <Input
+                label="Pincode"
+                name="pincode"
+                value={form.pincode}
+                onChange={handleChange}
+                disabled={loading}
+              />
             </div>
           </Section>
 
@@ -1877,13 +2192,24 @@ export default function AdminAddProperty() {
             description="Base rent aur regular maintenance. Extra charges alag configure honge."
           >
             <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
-              <Input label="Base Rent" name="rent" type="number" min="1" value={form.rent} onChange={handleChange} required />
+              <Input
+                label="Base Rent"
+                name="rent"
+                type="number"
+                min="1"
+                step="0.01"
+                value={form.rent}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
 
               <Select
                 label="Rent Period"
                 name="rentPeriod"
                 value={form.rentPeriod}
                 onChange={handleChange}
+                disabled={loading}
                 options={[
                   ["day", "Per Day"],
                   ["month", "Per Month"],
@@ -1891,15 +2217,34 @@ export default function AdminAddProperty() {
                 ]}
               />
 
-              <Input label="Security Deposit" name="securityDeposit" type="number" min="0" value={form.securityDeposit} onChange={handleChange} />
+              <Input
+                label="Security Deposit"
+                name="securityDeposit"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.securityDeposit}
+                onChange={handleChange}
+                disabled={loading}
+              />
 
-              <Input label="Maintenance" name="maintenance" type="number" min="0" value={form.maintenance} onChange={handleChange} />
+              <Input
+                label="Maintenance"
+                name="maintenance"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.maintenance}
+                onChange={handleChange}
+                disabled={loading}
+              />
 
               <Select
                 label="Maintenance Period"
                 name="maintenancePeriod"
                 value={form.maintenancePeriod}
                 onChange={handleChange}
+                disabled={loading}
                 options={[
                   ["included", "Included"],
                   ["monthly", "Monthly"],
@@ -1912,6 +2257,7 @@ export default function AdminAddProperty() {
                 name="furnishing"
                 value={form.furnishing}
                 onChange={handleChange}
+                disabled={loading}
                 options={[
                   ["fully-furnished", "Fully Furnished"],
                   ["semi-furnished", "Semi Furnished"],
@@ -1923,7 +2269,7 @@ export default function AdminAddProperty() {
 
           <Section
             title="5. Guest Capacity"
-            description="Maximum included guests BHK se automatically calculate nahi honge. Owner khud set karega."
+            description="Owner khud minimum aur maximum included guests set karega. BHK se automatically calculate nahi hoga."
           >
             <div className="grid gap-5 sm:grid-cols-2">
               <Input
@@ -1931,24 +2277,30 @@ export default function AdminAddProperty() {
                 name="minGuests"
                 type="number"
                 min="1"
+                step="1"
                 value={form.minGuests}
                 onChange={handleChange}
                 required
+                disabled={loading}
               />
+
               <Input
                 label="Maximum Included Guests"
                 name="maxGuests"
                 type="number"
                 min="1"
+                step="1"
                 value={form.maxGuests}
                 onChange={handleChange}
                 required
+                disabled={loading}
               />
             </div>
 
             <div className="mt-5 rounded-2xl border border-gray-200 p-5">
               <Checkbox
                 checked={form.extraGuestEnabled}
+                disabled={loading}
                 onChange={(value) =>
                   updateField("extraGuestEnabled", value)
                 }
@@ -1962,24 +2314,31 @@ export default function AdminAddProperty() {
                     name="maxExtraGuests"
                     type="number"
                     min="1"
+                    step="1"
                     value={form.maxExtraGuests}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                   />
+
                   <Input
                     label="Price Per Extra Person"
                     name="pricePerPerson"
                     type="number"
                     min="0"
+                    step="0.01"
                     value={form.pricePerPerson}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                   />
+
                   <Select
                     label="Charge Period"
                     name="extraGuestChargePeriod"
                     value={form.extraGuestChargePeriod}
                     onChange={handleChange}
+                    disabled={loading}
                     options={CHARGE_PERIODS}
                   />
                 </div>
@@ -2007,9 +2366,11 @@ export default function AdminAddProperty() {
                     <h3 className="font-bold text-[#073F32]">
                       Arrangement {index + 1}
                     </h3>
+
                     <button
                       type="button"
                       onClick={() => removeSleepingArrangement(index)}
+                      disabled={loading}
                       className="text-sm font-bold text-red-600"
                     >
                       Remove
@@ -2020,6 +2381,7 @@ export default function AdminAddProperty() {
                     <Select
                       label="Arrangement Type"
                       value={item.type}
+                      disabled={loading}
                       onChange={(event) =>
                         updateSleepingArrangement(
                           index,
@@ -2041,12 +2403,14 @@ export default function AdminAddProperty() {
                         )
                       }
                       placeholder="Extra mattress"
+                      disabled={loading}
                     />
 
                     <Input
                       label="Quantity"
                       type="number"
                       min="1"
+                      step="1"
                       value={item.quantity}
                       onChange={(event) =>
                         updateSleepingArrangement(
@@ -2055,12 +2419,14 @@ export default function AdminAddProperty() {
                           event.target.value
                         )
                       }
+                      disabled={loading}
                     />
                   </div>
 
                   <div className="mt-5">
                     <Checkbox
                       checked={item.isPaid}
+                      disabled={loading}
                       onChange={(value) =>
                         updateSleepingArrangement(
                           index,
@@ -2078,6 +2444,7 @@ export default function AdminAddProperty() {
                         label="Price"
                         type="number"
                         min="0"
+                        step="0.01"
                         value={item.price}
                         onChange={(event) =>
                           updateSleepingArrangement(
@@ -2086,6 +2453,7 @@ export default function AdminAddProperty() {
                             event.target.value
                           )
                         }
+                        disabled={loading}
                       />
 
                       <Select
@@ -2098,6 +2466,7 @@ export default function AdminAddProperty() {
                             event.target.value
                           )
                         }
+                        disabled={loading}
                         options={CHARGE_PERIODS}
                       />
                     </div>
@@ -2109,7 +2478,8 @@ export default function AdminAddProperty() {
             <button
               type="button"
               onClick={addSleepingArrangement}
-              className="mt-5 rounded-full border border-green-600 px-5 py-3 text-sm font-bold text-green-700"
+              disabled={loading}
+              className="mt-5 rounded-full border border-green-600 px-5 py-3 text-sm font-bold text-green-700 disabled:opacity-50"
             >
               + Add Sleeping Arrangement
             </button>
@@ -2121,6 +2491,7 @@ export default function AdminAddProperty() {
           >
             <Checkbox
               checked={form.petsAllowed}
+              disabled={loading}
               onChange={(value) => {
                 setForm((previous) => ({
                   ...previous,
@@ -2130,10 +2501,10 @@ export default function AdminAddProperty() {
                       ? "1"
                       : previous.maxPets
                     : "0",
-                  petTypes: value
-                    ? previous.petTypes
-                    : [],
+                  petTypes: value ? previous.petTypes : [],
                 }));
+
+                setError("");
               }}
               label="Pets are allowed at this property"
             />
@@ -2146,9 +2517,11 @@ export default function AdminAddProperty() {
                     name="maxPets"
                     type="number"
                     min="1"
+                    step="1"
                     value={form.maxPets}
                     onChange={handleChange}
                     required
+                    disabled={loading}
                   />
                 </div>
 
@@ -2162,9 +2535,11 @@ export default function AdminAddProperty() {
                         <h3 className="font-bold text-[#073F32]">
                           Pet Type {index + 1}
                         </h3>
+
                         <button
                           type="button"
                           onClick={() => removePetType(index)}
+                          disabled={loading}
                           className="text-sm font-bold text-red-600"
                         >
                           Remove
@@ -2175,6 +2550,7 @@ export default function AdminAddProperty() {
                         <Select
                           label="Pet Type"
                           value={pet.type}
+                          disabled={loading}
                           onChange={(event) =>
                             updatePetType(
                               index,
@@ -2196,12 +2572,14 @@ export default function AdminAddProperty() {
                             )
                           }
                           placeholder="Small dog"
+                          disabled={loading}
                         />
 
                         <Input
                           label="Pet Charge"
                           type="number"
                           min="0"
+                          step="0.01"
                           value={pet.charge}
                           onChange={(event) =>
                             updatePetType(
@@ -2210,6 +2588,7 @@ export default function AdminAddProperty() {
                               event.target.value
                             )
                           }
+                          disabled={loading}
                         />
 
                         <Select
@@ -2222,6 +2601,7 @@ export default function AdminAddProperty() {
                               event.target.value
                             )
                           }
+                          disabled={loading}
                           options={CHARGE_PERIODS}
                         />
                       </div>
@@ -2232,7 +2612,8 @@ export default function AdminAddProperty() {
                 <button
                   type="button"
                   onClick={addPetType}
-                  className="mt-5 rounded-full border border-green-600 px-5 py-3 text-sm font-bold text-green-700"
+                  disabled={loading}
+                  className="mt-5 rounded-full border border-green-600 px-5 py-3 text-sm font-bold text-green-700 disabled:opacity-50"
                 >
                   + Add Pet Type
                 </button>
@@ -2245,28 +2626,54 @@ export default function AdminAddProperty() {
             description="Area, floors aur availability."
           >
             <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
-              <Input label="Area" name="area" type="number" min="0" value={form.area} onChange={handleChange} />
+              <Input
+                label="Area"
+                name="area"
+                type="number"
+                min="0"
+                value={form.area}
+                onChange={handleChange}
+                disabled={loading}
+              />
 
               <Select
                 label="Area Unit"
                 name="areaUnit"
                 value={form.areaUnit}
                 onChange={handleChange}
+                disabled={loading}
                 options={[
                   ["sqft", "Square Feet"],
                   ["sqm", "Square Meter"],
                 ]}
               />
 
-              <Input label="Floor" name="floor" type="number" min="0" value={form.floor} onChange={handleChange} />
+              <Input
+                label="Floor"
+                name="floor"
+                type="number"
+                min="0"
+                value={form.floor}
+                onChange={handleChange}
+                disabled={loading}
+              />
 
-              <Input label="Total Floors" name="totalFloors" type="number" min="0" value={form.totalFloors} onChange={handleChange} />
+              <Input
+                label="Total Floors"
+                name="totalFloors"
+                type="number"
+                min="0"
+                value={form.totalFloors}
+                onChange={handleChange}
+                disabled={loading}
+              />
 
               <Select
                 label="Availability"
                 name="availability"
                 value={form.availability}
                 onChange={handleChange}
+                disabled={loading}
                 options={[
                   ["available", "Available"],
                   ["occupied", "Occupied"],
@@ -2280,6 +2687,7 @@ export default function AdminAddProperty() {
                 type="date"
                 value={form.availableFrom}
                 onChange={handleChange}
+                disabled={loading}
               />
             </div>
           </Section>
@@ -2295,6 +2703,7 @@ export default function AdminAddProperty() {
                 value={form.amenities}
                 onChange={handleChange}
                 rows={3}
+                disabled={loading}
                 placeholder="WiFi, Parking, Lift, Security, AC"
                 className="field-input"
               />
@@ -2307,6 +2716,7 @@ export default function AdminAddProperty() {
                 value={form.rules}
                 onChange={handleChange}
                 rows={3}
+                disabled={loading}
                 placeholder="No smoking, ID required"
                 className="field-input"
               />
@@ -2348,102 +2758,17 @@ export default function AdminAddProperty() {
           outline: none;
           background: white;
         }
+
         .field-input:focus {
           border-color: #18c66a;
           box-shadow: 0 0 0 2px rgba(24, 198, 106, 0.1);
         }
+
+        .field-input:disabled {
+          cursor: not-allowed;
+          background: #f3f4f6;
+        }
       `}</style>
     </main>
-  );
-}
-
-function Section({ title, description, children }) {
-  return (
-    <section className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
-      <h2 className="text-lg font-black text-[#073F32]">
-        {title}
-      </h2>
-      <p className="mt-1 text-sm text-gray-500">{description}</p>
-      <div className="mt-6">{children}</div>
-    </section>
-  );
-}
-
-function Label({ children }) {
-  return (
-    <label className="text-xs font-extrabold uppercase tracking-wide text-gray-500">
-      {children}
-    </label>
-  );
-}
-
-function Input({
-  label,
-  name,
-  type = "text",
-  value,
-  onChange,
-  placeholder,
-  required = false,
-  min,
-  max,
-}) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        value={value ?? ""}
-        onChange={onChange}
-        placeholder={placeholder}
-        required={required}
-        min={min}
-        max={max}
-        className="field-input"
-      />
-    </div>
-  );
-}
-
-function Select({
-  label,
-  name,
-  value,
-  onChange,
-  options,
-}) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <select
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        className="field-input"
-      >
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue}>
-            {optionLabel}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function Checkbox({ checked, onChange, label }) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3 text-sm font-semibold text-[#073F32]">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="mt-1 h-4 w-4 accent-green-600"
-      />
-      <span>{label}</span>
-    </label>
   );
 }

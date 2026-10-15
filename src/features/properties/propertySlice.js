@@ -784,680 +784,742 @@
 // export default propertySlice.reducer;
 
 
+  import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+  /* =====================================================
+    API CONFIGURATION
+  ===================================================== */
 
-/*
-|--------------------------------------------------------------------------
-| API CONFIGURATION
-|--------------------------------------------------------------------------
-| .env example:
-| VITE_API_URL=http://localhost:5000/api
-|
-| If the URL contains only the server origin, /api is added automatically.
-*/
+  const rawApiUrl = (
+    import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+  )
+    .trim()
+    .replace(/\/+$/, "");
 
-const rawApiUrl = (
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api"
-).trim().replace(/\/+$/, "");
+  const API_URL = /\/api$/i.test(rawApiUrl)
+    ? rawApiUrl
+    : `${rawApiUrl}/api`;
 
-const API_URL = /\/api$/i.test(rawApiUrl)
-  ? rawApiUrl
-  : `${rawApiUrl}/api`;
+  const PROPERTY_URL = `${API_URL}/properties`;
 
-const PROPERTY_URL = `${API_URL}/properties`;
+  /* =====================================================
+    AUTHENTICATION HELPERS
 
-/*
-|--------------------------------------------------------------------------
-| RESPONSE HELPERS
-|--------------------------------------------------------------------------
-*/
+    Admin routes:
+    POST /properties
+    PUT /properties/:id
+    DELETE /properties/:id
 
-const readResponse = async (response) => {
-  const text = await response.text();
+    Customer route:
+    GET /properties/my
+  ===================================================== */
 
-  if (!text) return {};
+  const getStoredToken = (keys) => {
+    if (typeof window === "undefined") return null;
 
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { message: text };
-  }
-};
+    for (const key of keys) {
+      try {
+        const token = window.localStorage.getItem(key);
+        if (token?.trim()) return token.trim();
+      } catch {
+        // Continue to the next key.
+      }
+    }
 
-const getErrorMessage = (data, fallback) =>
-  data?.message || data?.error || fallback;
-
-const handleResponse = async (response, fallback) => {
-  const data = await readResponse(response);
-
-  if (!response.ok || data?.success === false) {
-    throw new Error(getErrorMessage(data, fallback));
-  }
-
-  return data;
-};
-
-/*
-|--------------------------------------------------------------------------
-| REQUEST CONFIG
-|--------------------------------------------------------------------------
-| FormData: browser automatically sets multipart boundary.
-| JSON: content type is application/json.
-| credentials: include supports cookie-based authentication.
-*/
-
-const getRequestConfig = (data, method = "POST") => {
-  const config = {
-    method,
-    credentials: "include",
+    return null;
   };
 
-  if (typeof FormData !== "undefined" && data instanceof FormData) {
-    config.body = data;
-  } else {
-    config.headers = {
-      "Content-Type": "application/json",
-    };
-    config.body = JSON.stringify(data ?? {});
-  }
+  const getAdminToken = () =>
+    getStoredToken(["coral_admin_token"]);
 
-  return config;
-};
+  const getUserToken = () =>
+    getStoredToken([
+      "coral_user_token",
+      "coral_token",
+      "accessToken",
+      "token",
+    ]);
 
-const fetchError = (error, fallback) =>
-  error?.message || fallback;
+  const getAuthHeaders = (token) =>
+    token ? { Authorization: `Bearer ${token}` } : {};
 
-/*
-|--------------------------------------------------------------------------
-| GET PUBLIC PROPERTIES
-|--------------------------------------------------------------------------
-| GET /api/properties
-*/
+  /* =====================================================
+    RESPONSE HELPERS
+  ===================================================== */
 
-export const getProperties = createAsyncThunk(
-  "properties/getProperties",
-  async (params = {}, { rejectWithValue }) => {
+  const readResponse = async (response) => {
+    const text = await response.text();
+
+    if (!text) return {};
+
     try {
-      const query = new URLSearchParams();
+      return JSON.parse(text);
+    } catch {
+      return { message: text };
+    }
+  };
 
-      Object.entries(params || {}).forEach(([key, value]) => {
-        if (
-          value !== undefined &&
-          value !== null &&
-          value !== ""
-        ) {
+  const getErrorMessage = (data, fallback) =>
+    data?.message || data?.error || fallback;
+
+  const handleResponse = async (response, fallback) => {
+    const data = await readResponse(response);
+
+    if (!response.ok || data?.success === false) {
+      throw new Error(getErrorMessage(data, fallback));
+    }
+
+    return data;
+  };
+
+  const fetchError = (error, fallback) =>
+    error?.message || fallback;
+
+  /* =====================================================
+    REQUEST CONFIGURATION
+
+    FormData:
+    Do not manually set Content-Type.
+    Browser creates multipart boundary automatically.
+
+    JSON:
+    Set application/json.
+  ===================================================== */
+
+  const getRequestConfig = (
+    data,
+    method = "POST",
+    token = null
+  ) => {
+    const config = {
+      method,
+      credentials: "include",
+      headers: {
+        ...getAuthHeaders(token),
+      },
+    };
+
+    if (typeof FormData !== "undefined" && data instanceof FormData) {
+      config.body = data;
+    } else {
+      config.headers["Content-Type"] = "application/json";
+      config.body = JSON.stringify(data ?? {});
+    }
+
+    return config;
+  };
+
+  /* =====================================================
+    GET PUBLIC PROPERTIES
+
+    GET /api/properties
+  ===================================================== */
+
+  export const getProperties = createAsyncThunk(
+    "properties/getProperties",
+    async (params = {}, { rejectWithValue }) => {
+      try {
+        const query = new URLSearchParams();
+
+        Object.entries(params || {}).forEach(([key, value]) => {
+          if (
+            value === undefined ||
+            value === null ||
+            value === ""
+          ) {
+            return;
+          }
+
           if (Array.isArray(value)) {
-            value.forEach((item) => query.append(key, String(item)));
+            value.forEach((item) =>
+              query.append(key, String(item))
+            );
           } else {
             query.append(key, String(value));
           }
-        }
-      });
+        });
 
-      const queryString = query.toString();
-      const url = queryString
-        ? `${PROPERTY_URL}?${queryString}`
-        : PROPERTY_URL;
+        const queryString = query.toString();
 
-      const response = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
+        const url = queryString
+          ? `${PROPERTY_URL}?${queryString}`
+          : PROPERTY_URL;
 
-      return await handleResponse(
-        response,
-        "Unable to fetch properties."
-      );
-    } catch (error) {
-      return rejectWithValue(
-        fetchError(error, "Unable to connect to server.")
-      );
-    }
-  }
-);
-
-/*
-|--------------------------------------------------------------------------
-| GET SINGLE PROPERTY
-|--------------------------------------------------------------------------
-| GET /api/properties/:id
-*/
-
-export const getPropertyById = createAsyncThunk(
-  "properties/getPropertyById",
-  async (id, { rejectWithValue }) => {
-    try {
-      if (!id) {
-        return rejectWithValue("Property ID is required.");
-      }
-
-      const response = await fetch(
-        `${PROPERTY_URL}/${encodeURIComponent(id)}`,
-        {
+        const response = await fetch(url, {
           method: "GET",
           credentials: "include",
+        });
+
+        return await handleResponse(
+          response,
+          "Unable to fetch properties."
+        );
+      } catch (error) {
+        return rejectWithValue(
+          fetchError(error, "Unable to connect to server.")
+        );
+      }
+    }
+  );
+
+  /* =====================================================
+    GET SINGLE PUBLIC PROPERTY
+
+    GET /api/properties/:id
+
+    Backend returns:
+    { success: true, property: {...} }
+  ===================================================== */
+
+  export const getPropertyById = createAsyncThunk(
+    "properties/getPropertyById",
+    async (id, { rejectWithValue }) => {
+      try {
+        if (!id) {
+          return rejectWithValue("Property ID is required.");
         }
-      );
 
-      return await handleResponse(
-        response,
-        "Unable to fetch property."
-      );
-    } catch (error) {
-      return rejectWithValue(
-        fetchError(error, "Unable to connect to server.")
-      );
-    }
-  }
-);
+        const response = await fetch(
+          `${PROPERTY_URL}/${encodeURIComponent(id)}`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
 
-/*
-|--------------------------------------------------------------------------
-| GET OWNER PROPERTIES
-|--------------------------------------------------------------------------
-| GET /api/properties/my
-| Requires authenticated owner session.
-*/
-
-export const getMyProperties = createAsyncThunk(
-  "properties/getMyProperties",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${PROPERTY_URL}/my`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      return await handleResponse(
-        response,
-        "Unable to fetch your properties."
-      );
-    } catch (error) {
-      return rejectWithValue(
-        fetchError(error, "Unable to connect to server.")
-      );
-    }
-  }
-);
-
-/*
-|--------------------------------------------------------------------------
-| CREATE PROPERTY
-|--------------------------------------------------------------------------
-| POST /api/properties
-|
-| Supports:
-| - FormData for images + property fields
-| - JSON object for property fields
-|
-| New property fields supported through the payload:
-| minGuests, maxGuests, extraGuestPolicy,
-| sleepingArrangements, petPolicy
-*/
-
-export const createProperty = createAsyncThunk(
-  "properties/createProperty",
-  async (propertyData, { rejectWithValue }) => {
-    try {
-      if (!propertyData) {
-        return rejectWithValue("Property data is required.");
+        return await handleResponse(
+          response,
+          "Unable to fetch property."
+        );
+      } catch (error) {
+        return rejectWithValue(
+          fetchError(error, "Unable to connect to server.")
+        );
       }
-
-      const response = await fetch(
-        PROPERTY_URL,
-        getRequestConfig(propertyData, "POST")
-      );
-
-      return await handleResponse(
-        response,
-        "Unable to create property."
-      );
-    } catch (error) {
-      return rejectWithValue(
-        fetchError(error, "Unable to connect to server.")
-      );
     }
-  }
-);
+  );
 
-/*
-|--------------------------------------------------------------------------
-| UPDATE PROPERTY
-|--------------------------------------------------------------------------
-| PUT /api/properties/:id
-|
-| Supports FormData and JSON.
-| Send only the fields that need updating.
-*/
+  /* =====================================================
+    GET MY PROPERTIES
 
-export const updateProperty = createAsyncThunk(
-  "properties/updateProperty",
-  async ({ id, propertyData } = {}, { rejectWithValue }) => {
-    try {
-      if (!id) {
-        return rejectWithValue("Property ID is required.");
-      }
+    GET /api/properties/my
 
-      if (!propertyData) {
-        return rejectWithValue("Property data is required.");
-      }
+    Uses customer authentication.
+    Does not assume the admin token is a customer token.
+  ===================================================== */
 
-      const response = await fetch(
-        `${PROPERTY_URL}/${encodeURIComponent(id)}`,
-        getRequestConfig(propertyData, "PUT")
-      );
+  export const getMyProperties = createAsyncThunk(
+    "properties/getMyProperties",
+    async (_, { rejectWithValue }) => {
+      try {
+        const token = getUserToken();
 
-      return await handleResponse(
-        response,
-        "Unable to update property."
-      );
-    } catch (error) {
-      return rejectWithValue(
-        fetchError(error, "Unable to connect to server.")
-      );
-    }
-  }
-);
-
-/*
-|--------------------------------------------------------------------------
-| DELETE PROPERTY
-|--------------------------------------------------------------------------
-| DELETE /api/properties/:id
-| Backend performs a soft delete.
-*/
-
-export const deleteProperty = createAsyncThunk(
-  "properties/deleteProperty",
-  async (id, { rejectWithValue }) => {
-    try {
-      if (!id) {
-        return rejectWithValue("Property ID is required.");
-      }
-
-      const response = await fetch(
-        `${PROPERTY_URL}/${encodeURIComponent(id)}`,
-        {
-          method: "DELETE",
+        const response = await fetch(`${PROPERTY_URL}/my`, {
+          method: "GET",
           credentials: "include",
-        }
-      );
+          headers: getAuthHeaders(token),
+        });
 
-      const data = await handleResponse(
-        response,
-        "Unable to delete property."
-      );
-
-      return {
-        ...data,
-        id,
-      };
-    } catch (error) {
-      return rejectWithValue(
-        fetchError(error, "Unable to connect to server.")
-      );
+        return await handleResponse(
+          response,
+          "Unable to fetch your properties."
+        );
+      } catch (error) {
+        return rejectWithValue(
+          fetchError(error, "Unable to connect to server.")
+        );
+      }
     }
-  }
-);
+  );
 
-/*
-|--------------------------------------------------------------------------
-| RESPONSE NORMALIZERS
-|--------------------------------------------------------------------------
-*/
+  /* =====================================================
+    CREATE PROPERTY
 
-const getPropertyList = (payload) =>
-  Array.isArray(payload?.properties) ? payload.properties : [];
+    POST /api/properties
 
-const getPropertyObject = (payload) =>
-  payload?.property || null;
+    Admin Bearer Token required.
 
-const getPropertyId = (property) =>
-  property?._id || property?.id || null;
+    Supports:
+    - FormData with images
+    - JSON payload
+    - minGuests / maxGuests / guests
+    - extraGuestPolicy
+    - sleepingArrangements
+    - petPolicy
+  ===================================================== */
 
-/*
-|--------------------------------------------------------------------------
-| INITIAL STATE
-|--------------------------------------------------------------------------
-*/
+  export const createProperty = createAsyncThunk(
+    "properties/createProperty",
+    async (propertyData, { rejectWithValue }) => {
+      try {
+        if (!propertyData) {
+          return rejectWithValue("Property data is required.");
+        }
 
-const initialState = {
-  properties: [],
-  myProperties: [],
-  property: null,
+        const token = getAdminToken();
 
-  total: 0,
-  page: 1,
-  pages: 0,
+        if (!token) {
+          return rejectWithValue(
+            "Admin token missing. Please log in again."
+          );
+        }
 
-  loading: false,
-  propertyLoading: false,
-  myPropertiesLoading: false,
+        const response = await fetch(
+          PROPERTY_URL,
+          getRequestConfig(propertyData, "POST", token)
+        );
 
-  createLoading: false,
-  updateLoading: false,
-  deleteLoading: false,
+        return await handleResponse(
+          response,
+          "Unable to create property."
+        );
+      } catch (error) {
+        return rejectWithValue(
+          fetchError(error, "Unable to connect to server.")
+        );
+      }
+    }
+  );
 
-  error: null,
-  propertyError: null,
-  myPropertiesError: null,
+  /* =====================================================
+    UPDATE PROPERTY
 
-  createError: null,
-  updateError: null,
-  deleteError: null,
-};
+    PUT /api/properties/:id
 
-/*
-|--------------------------------------------------------------------------
-| SLICE
-|--------------------------------------------------------------------------
-*/
+    Admin Bearer Token required.
 
-const propertySlice = createSlice({
-  name: "properties",
-  initialState,
+    Pass:
+    {
+      id: propertyId,
+      propertyData: FormData OR plain object
+    }
+  ===================================================== */
 
-  reducers: {
-    clearPropertyError: (state) => {
-      state.error = null;
-    },
+  export const updateProperty = createAsyncThunk(
+    "properties/updateProperty",
+    async ({ id, propertyData } = {}, { rejectWithValue }) => {
+      try {
+        if (!id) {
+          return rejectWithValue("Property ID is required.");
+        }
 
-    clearPropertyDetails: (state) => {
-      state.property = null;
-      state.propertyError = null;
-    },
+        if (!propertyData) {
+          return rejectWithValue("Property data is required.");
+        }
 
-    // Backward compatibility
-    clearSelectedProperty: (state) => {
-      state.property = null;
-      state.propertyError = null;
-    },
+        const token = getAdminToken();
 
-    clearCreatePropertyError: (state) => {
-      state.createError = null;
-    },
+        if (!token) {
+          return rejectWithValue(
+            "Admin token missing. Please log in again."
+          );
+        }
 
-    clearUpdatePropertyError: (state) => {
-      state.updateError = null;
-    },
+        const response = await fetch(
+          `${PROPERTY_URL}/${encodeURIComponent(id)}`,
+          getRequestConfig(propertyData, "PUT", token)
+        );
 
-    clearDeletePropertyError: (state) => {
-      state.deleteError = null;
-    },
+        return await handleResponse(
+          response,
+          "Unable to update property."
+        );
+      } catch (error) {
+        return rejectWithValue(
+          fetchError(error, "Unable to connect to server.")
+        );
+      }
+    }
+  );
 
-    clearMyPropertiesError: (state) => {
-      state.myPropertiesError = null;
-    },
+  /* =====================================================
+    DELETE PROPERTY
 
-    clearAllPropertyErrors: (state) => {
-      state.error = null;
-      state.propertyError = null;
-      state.myPropertiesError = null;
-      state.createError = null;
-      state.updateError = null;
-      state.deleteError = null;
-    },
-  },
+    DELETE /api/properties/:id
 
-  extraReducers: (builder) => {
-    /*
-    |--------------------------------------------------------------------------
-    | GET PUBLIC PROPERTIES
-    |--------------------------------------------------------------------------
-    */
+    Admin Bearer Token required.
+    Backend performs a soft delete.
+  ===================================================== */
 
-    builder
-      .addCase(getProperties.pending, (state) => {
-        state.loading = true;
+  export const deleteProperty = createAsyncThunk(
+    "properties/deleteProperty",
+    async (id, { rejectWithValue }) => {
+      try {
+        if (!id) {
+          return rejectWithValue("Property ID is required.");
+        }
+
+        const token = getAdminToken();
+
+        if (!token) {
+          return rejectWithValue(
+            "Admin token missing. Please log in again."
+          );
+        }
+
+        const response = await fetch(
+          `${PROPERTY_URL}/${encodeURIComponent(id)}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+            headers: getAuthHeaders(token),
+          }
+        );
+
+        const data = await handleResponse(
+          response,
+          "Unable to delete property."
+        );
+
+        return {
+          ...data,
+          id,
+        };
+      } catch (error) {
+        return rejectWithValue(
+          fetchError(error, "Unable to connect to server.")
+        );
+      }
+    }
+  );
+
+  /* =====================================================
+    NORMALIZERS
+  ===================================================== */
+
+  const getPropertyList = (payload) =>
+    Array.isArray(payload?.properties)
+      ? payload.properties
+      : [];
+
+  const getPropertyObject = (payload) =>
+    payload?.property || null;
+
+  const getPropertyId = (property) =>
+    property?._id || property?.id || null;
+
+  /* =====================================================
+    INITIAL STATE
+  ===================================================== */
+
+  const initialState = {
+    properties: [],
+    myProperties: [],
+    property: null,
+
+    total: 0,
+    page: 1,
+    pages: 0,
+
+    loading: false,
+    propertyLoading: false,
+    myPropertiesLoading: false,
+
+    createLoading: false,
+    updateLoading: false,
+    deleteLoading: false,
+
+    error: null,
+    propertyError: null,
+    myPropertiesError: null,
+
+    createError: null,
+    updateError: null,
+    deleteError: null,
+  };
+
+  /* =====================================================
+    SLICE
+  ===================================================== */
+
+  const propertySlice = createSlice({
+    name: "properties",
+    initialState,
+
+    reducers: {
+      clearPropertyError: (state) => {
         state.error = null;
-      })
-      .addCase(getProperties.fulfilled, (state, action) => {
-        state.loading = false;
-        state.properties = getPropertyList(action.payload);
-        state.total = Number(action.payload?.total ?? 0);
-        state.page = Number(action.payload?.page ?? 1);
-        state.pages = Number(action.payload?.pages ?? 0);
-      })
-      .addCase(getProperties.rejected, (state, action) => {
-        state.loading = false;
-        state.error =
-          action.payload || "Unable to fetch properties.";
-      });
+      },
 
-    /*
-    |--------------------------------------------------------------------------
-    | GET SINGLE PROPERTY
-    |--------------------------------------------------------------------------
-    */
-
-    builder
-      .addCase(getPropertyById.pending, (state) => {
-        state.propertyLoading = true;
+      clearPropertyDetails: (state) => {
+        state.property = null;
         state.propertyError = null;
+      },
+
+      // Backward compatibility
+      clearSelectedProperty: (state) => {
         state.property = null;
-      })
-      .addCase(getPropertyById.fulfilled, (state, action) => {
-        state.propertyLoading = false;
-        state.property = getPropertyObject(action.payload);
-      })
-      .addCase(getPropertyById.rejected, (state, action) => {
-        state.propertyLoading = false;
-        state.propertyError =
-          action.payload || "Unable to fetch property.";
-        state.property = null;
-      });
+        state.propertyError = null;
+      },
 
-    /*
-    |--------------------------------------------------------------------------
-    | GET OWNER PROPERTIES
-    |--------------------------------------------------------------------------
-    */
-
-    builder
-      .addCase(getMyProperties.pending, (state) => {
-        state.myPropertiesLoading = true;
-        state.myPropertiesError = null;
-      })
-      .addCase(getMyProperties.fulfilled, (state, action) => {
-        state.myPropertiesLoading = false;
-        state.myProperties = getPropertyList(action.payload);
-      })
-      .addCase(getMyProperties.rejected, (state, action) => {
-        state.myPropertiesLoading = false;
-        state.myPropertiesError =
-          action.payload || "Unable to fetch your properties.";
-      });
-
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE PROPERTY
-    |--------------------------------------------------------------------------
-    */
-
-    builder
-      .addCase(createProperty.pending, (state) => {
-        state.createLoading = true;
+      clearCreatePropertyError: (state) => {
         state.createError = null;
-      })
-      .addCase(createProperty.fulfilled, (state, action) => {
-        state.createLoading = false;
+      },
 
-        const property = getPropertyObject(action.payload);
-
-        if (property) {
-          const id = getPropertyId(property);
-
-          state.myProperties = [
-            property,
-            ...state.myProperties.filter(
-              (item) => getPropertyId(item) !== id
-            ),
-          ];
-        }
-      })
-      .addCase(createProperty.rejected, (state, action) => {
-        state.createLoading = false;
-        state.createError =
-          action.payload || "Unable to create property.";
-      });
-
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE PROPERTY
-    |--------------------------------------------------------------------------
-    */
-
-    builder
-      .addCase(updateProperty.pending, (state) => {
-        state.updateLoading = true;
+      clearUpdatePropertyError: (state) => {
         state.updateError = null;
-      })
-      .addCase(updateProperty.fulfilled, (state, action) => {
-        state.updateLoading = false;
+      },
 
-        const updatedProperty = getPropertyObject(action.payload);
-
-        if (!updatedProperty) return;
-
-        const updatedId = getPropertyId(updatedProperty);
-
-        state.property = updatedProperty;
-
-        const myIndex = state.myProperties.findIndex(
-          (item) => getPropertyId(item) === updatedId
-        );
-
-        if (myIndex !== -1) {
-          state.myProperties[myIndex] = updatedProperty;
-        }
-
-        const publicIndex = state.properties.findIndex(
-          (item) => getPropertyId(item) === updatedId
-        );
-
-        if (publicIndex !== -1) {
-          state.properties[publicIndex] = updatedProperty;
-        }
-      })
-      .addCase(updateProperty.rejected, (state, action) => {
-        state.updateLoading = false;
-        state.updateError =
-          action.payload || "Unable to update property.";
-      });
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE PROPERTY
-    |--------------------------------------------------------------------------
-    */
-
-    builder
-      .addCase(deleteProperty.pending, (state) => {
-        state.deleteLoading = true;
+      clearDeletePropertyError: (state) => {
         state.deleteError = null;
-      })
-      .addCase(deleteProperty.fulfilled, (state, action) => {
-        state.deleteLoading = false;
+      },
 
-        const deletedId = action.payload?.id;
+      clearMyPropertiesError: (state) => {
+        state.myPropertiesError = null;
+      },
 
-        if (!deletedId) return;
+      clearAllPropertyErrors: (state) => {
+        state.error = null;
+        state.propertyError = null;
+        state.myPropertiesError = null;
+        state.createError = null;
+        state.updateError = null;
+        state.deleteError = null;
+      },
+    },
 
-        state.myProperties = state.myProperties.filter(
-          (item) => getPropertyId(item) !== deletedId
-        );
+    extraReducers: (builder) => {
+      /* -----------------------------------------------
+        GET PUBLIC PROPERTIES
+      ----------------------------------------------- */
 
-        state.properties = state.properties.filter(
-          (item) => getPropertyId(item) !== deletedId
-        );
+      builder
+        .addCase(getProperties.pending, (state) => {
+          state.loading = true;
+          state.error = null;
+        })
+        .addCase(getProperties.fulfilled, (state, action) => {
+          state.loading = false;
+          state.properties = getPropertyList(action.payload);
+          state.total = Number(action.payload?.total ?? 0);
+          state.page = Number(action.payload?.page ?? 1);
+          state.pages = Number(action.payload?.pages ?? 0);
+        })
+        .addCase(getProperties.rejected, (state, action) => {
+          state.loading = false;
+          state.error =
+            action.payload || "Unable to fetch properties.";
+        });
 
-        if (getPropertyId(state.property) === deletedId) {
+      /* -----------------------------------------------
+        GET SINGLE PROPERTY
+      ----------------------------------------------- */
+
+      builder
+        .addCase(getPropertyById.pending, (state) => {
+          state.propertyLoading = true;
+          state.propertyError = null;
           state.property = null;
-        }
-      })
-      .addCase(deleteProperty.rejected, (state, action) => {
-        state.deleteLoading = false;
-        state.deleteError =
-          action.payload || "Unable to delete property.";
-      });
-  },
-});
+        })
+        .addCase(getPropertyById.fulfilled, (state, action) => {
+          state.propertyLoading = false;
+          state.property = getPropertyObject(action.payload);
+        })
+        .addCase(getPropertyById.rejected, (state, action) => {
+          state.propertyLoading = false;
+          state.propertyError =
+            action.payload || "Unable to fetch property.";
+          state.property = null;
+        });
 
-/*
-|--------------------------------------------------------------------------
-| ACTIONS
-|--------------------------------------------------------------------------
-*/
+      /* -----------------------------------------------
+        GET MY PROPERTIES
+      ----------------------------------------------- */
 
-export const {
-  clearPropertyError,
-  clearPropertyDetails,
-  clearSelectedProperty,
-  clearCreatePropertyError,
-  clearUpdatePropertyError,
-  clearDeletePropertyError,
-  clearMyPropertiesError,
-  clearAllPropertyErrors,
-} = propertySlice.actions;
+      builder
+        .addCase(getMyProperties.pending, (state) => {
+          state.myPropertiesLoading = true;
+          state.myPropertiesError = null;
+        })
+        .addCase(getMyProperties.fulfilled, (state, action) => {
+          state.myPropertiesLoading = false;
+          state.myProperties = getPropertyList(action.payload);
+        })
+        .addCase(getMyProperties.rejected, (state, action) => {
+          state.myPropertiesLoading = false;
+          state.myPropertiesError =
+            action.payload || "Unable to fetch your properties.";
+        });
 
-/*
-|--------------------------------------------------------------------------
-| SELECTORS
-|--------------------------------------------------------------------------
-*/
+      /* -----------------------------------------------
+        CREATE PROPERTY
+      ----------------------------------------------- */
 
-export const selectProperties = (state) =>
-  state.properties.properties;
+      builder
+        .addCase(createProperty.pending, (state) => {
+          state.createLoading = true;
+          state.createError = null;
+        })
+        .addCase(createProperty.fulfilled, (state, action) => {
+          state.createLoading = false;
 
-export const selectProperty = (state) =>
-  state.properties.property;
+          const property = getPropertyObject(action.payload);
 
-// Backward compatibility
-export const selectSelectedProperty = (state) =>
-  state.properties.property;
+          if (property) {
+            const id = getPropertyId(property);
 
-export const selectMyProperties = (state) =>
-  state.properties.myProperties;
+            state.myProperties = [
+              property,
+              ...state.myProperties.filter(
+                (item) => getPropertyId(item) !== id
+              ),
+            ];
+          }
+        })
+        .addCase(createProperty.rejected, (state, action) => {
+          state.createLoading = false;
+          state.createError =
+            action.payload || "Unable to create property.";
+        });
 
-export const selectPropertiesLoading = (state) =>
-  state.properties.loading;
+      /* -----------------------------------------------
+        UPDATE PROPERTY
+      ----------------------------------------------- */
 
-export const selectPropertyLoading = (state) =>
-  state.properties.propertyLoading;
+      builder
+        .addCase(updateProperty.pending, (state) => {
+          state.updateLoading = true;
+          state.updateError = null;
+        })
+        .addCase(updateProperty.fulfilled, (state, action) => {
+          state.updateLoading = false;
 
-export const selectMyPropertiesLoading = (state) =>
-  state.properties.myPropertiesLoading;
+          const updatedProperty = getPropertyObject(action.payload);
 
-export const selectCreatePropertyLoading = (state) =>
-  state.properties.createLoading;
+          if (!updatedProperty) return;
 
-export const selectUpdatePropertyLoading = (state) =>
-  state.properties.updateLoading;
+          const updatedId = getPropertyId(updatedProperty);
 
-export const selectDeletePropertyLoading = (state) =>
-  state.properties.deleteLoading;
+          state.property = updatedProperty;
 
-export const selectPropertiesError = (state) =>
-  state.properties.error;
+          const myIndex = state.myProperties.findIndex(
+            (item) => getPropertyId(item) === updatedId
+          );
 
-export const selectPropertyError = (state) =>
-  state.properties.propertyError;
+          if (myIndex !== -1) {
+            state.myProperties[myIndex] = updatedProperty;
+          }
 
-// Backward compatibility
-export const selectSelectedPropertyError = (state) =>
-  state.properties.propertyError;
+          const publicIndex = state.properties.findIndex(
+            (item) => getPropertyId(item) === updatedId
+          );
 
-export const selectMyPropertiesError = (state) =>
-  state.properties.myPropertiesError;
+          if (publicIndex !== -1) {
+            state.properties[publicIndex] = updatedProperty;
+          }
+        })
+        .addCase(updateProperty.rejected, (state, action) => {
+          state.updateLoading = false;
+          state.updateError =
+            action.payload || "Unable to update property.";
+        });
 
-export const selectCreatePropertyError = (state) =>
-  state.properties.createError;
+      /* -----------------------------------------------
+        DELETE PROPERTY
+      ----------------------------------------------- */
 
-export const selectUpdatePropertyError = (state) =>
-  state.properties.updateError;
+      builder
+        .addCase(deleteProperty.pending, (state) => {
+          state.deleteLoading = true;
+          state.deleteError = null;
+        })
+        .addCase(deleteProperty.fulfilled, (state, action) => {
+          state.deleteLoading = false;
 
-export const selectDeletePropertyError = (state) =>
-  state.properties.deleteError;
+          const deletedId = action.payload?.id;
 
-export default propertySlice.reducer;
+          if (!deletedId) return;
+
+          state.myProperties = state.myProperties.filter(
+            (item) => getPropertyId(item) !== deletedId
+          );
+
+          state.properties = state.properties.filter(
+            (item) => getPropertyId(item) !== deletedId
+          );
+
+          if (getPropertyId(state.property) === deletedId) {
+            state.property = null;
+          }
+        })
+        .addCase(deleteProperty.rejected, (state, action) => {
+          state.deleteLoading = false;
+          state.deleteError =
+            action.payload || "Unable to delete property.";
+        });
+    },
+  });
+
+  /* =====================================================
+    ACTIONS
+  ===================================================== */
+
+  export const {
+    clearPropertyError,
+    clearPropertyDetails,
+    clearSelectedProperty,
+    clearCreatePropertyError,
+    clearUpdatePropertyError,
+    clearDeletePropertyError,
+    clearMyPropertiesError,
+    clearAllPropertyErrors,
+  } = propertySlice.actions;
+
+  /* =====================================================
+    SELECTORS
+  ===================================================== */
+
+  export const selectProperties = (state) =>
+    state.properties.properties;
+
+  export const selectProperty = (state) =>
+    state.properties.property;
+
+  // Backward compatibility
+  export const selectSelectedProperty = (state) =>
+    state.properties.property;
+
+  export const selectMyProperties = (state) =>
+    state.properties.myProperties;
+
+  export const selectPropertiesLoading = (state) =>
+    state.properties.loading;
+
+  export const selectPropertyLoading = (state) =>
+    state.properties.propertyLoading;
+
+  export const selectMyPropertiesLoading = (state) =>
+    state.properties.myPropertiesLoading;
+
+  export const selectCreatePropertyLoading = (state) =>
+    state.properties.createLoading;
+
+  export const selectUpdatePropertyLoading = (state) =>
+    state.properties.updateLoading;
+
+  export const selectDeletePropertyLoading = (state) =>
+    state.properties.deleteLoading;
+
+  export const selectPropertiesError = (state) =>
+    state.properties.error;
+
+  export const selectPropertyError = (state) =>
+    state.properties.propertyError;
+
+  // Backward compatibility
+  export const selectSelectedPropertyError = (state) =>
+    state.properties.propertyError;
+
+  export const selectMyPropertiesError = (state) =>
+    state.properties.myPropertiesError;
+
+  export const selectCreatePropertyError = (state) =>
+    state.properties.createError;
+
+  export const selectUpdatePropertyError = (state) =>
+    state.properties.updateError;
+
+  export const selectDeletePropertyError = (state) =>
+    state.properties.deleteError;
+
+  export default propertySlice.reducer;
