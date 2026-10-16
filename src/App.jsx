@@ -17,7 +17,7 @@ import Login from "./pages/login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
-
+import MyBookings from "./pages/MyBookings";
 /* =====================================================
 PROPERTY BOOKING
 ===================================================== */
@@ -102,7 +102,7 @@ return (
       path="/"
       element={<Home />}
     />
-
+<Route path="/my-bookings" element={<MyBookings />} />
 
     {/* =================================================
         PUBLIC PROPERTIES

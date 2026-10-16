@@ -2217,7 +2217,7 @@ export default function AdminAddProperty() {
                 ]}
               />
 
-              <Input
+              {/* <Input
                 label="Security Deposit"
                 name="securityDeposit"
                 type="number"
@@ -2226,9 +2226,9 @@ export default function AdminAddProperty() {
                 value={form.securityDeposit}
                 onChange={handleChange}
                 disabled={loading}
-              />
+              /> */}
 
-              <Input
+              {/* <Input
                 label="Maintenance"
                 name="maintenance"
                 type="number"
@@ -2237,8 +2237,8 @@ export default function AdminAddProperty() {
                 value={form.maintenance}
                 onChange={handleChange}
                 disabled={loading}
-              />
-
+              /> */}
+{/* 
               <Select
                 label="Maintenance Period"
                 name="maintenancePeriod"
@@ -2250,7 +2250,7 @@ export default function AdminAddProperty() {
                   ["monthly", "Monthly"],
                   ["yearly", "Yearly"],
                 ]}
-              />
+              /> */}
 
               <Select
                 label="Furnishing"
