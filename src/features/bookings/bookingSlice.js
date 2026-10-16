@@ -555,47 +555,49 @@ export const {
    SELECTORS
 ===================================================== */
 
+const EMPTY_BOOKINGS = [];
+
 export const selectBookings = (state) =>
-  state.booking?.bookings || [];
+  state.bookings?.bookings ?? EMPTY_BOOKINGS;
 
 export const selectBooking = (state) =>
-  state.booking?.booking || null;
+  state.bookings?.booking ?? null;
 
 /* Loading selectors */
 
 export const selectBookingsLoading = (state) =>
-  state.booking?.loading || false;
+  state.bookings?.loading ?? false;
 
 export const selectBookingLoading = (state) =>
-  state.booking?.bookingLoading || false;
+  state.bookings?.bookingLoading ?? false;
 
 export const selectCreateBookingLoading = (state) =>
-  state.booking?.createLoading || false;
+  state.bookings?.createLoading ?? false;
 
 export const selectCancelBookingLoading = (state) =>
-  state.booking?.cancelLoading || false;
+  state.bookings?.cancelLoading ?? false;
 
 /* Error selectors */
 
 export const selectBookingError = (state) =>
-  state.booking?.error || null;
+  state.bookings?.error ?? null;
 
 export const selectSingleBookingError = (state) =>
-  state.booking?.bookingError || null;
+  state.bookings?.bookingError ?? null;
 
 export const selectCreateBookingError = (state) =>
-  state.booking?.createError || null;
+  state.bookings?.createError ?? null;
 
 export const selectCancelBookingError = (state) =>
-  state.booking?.cancelError || null;
+  state.bookings?.cancelError ?? null;
 
 /* Success selectors */
 
 export const selectCreateBookingSuccess = (state) =>
-  state.booking?.createSuccess || null;
+  state.bookings?.createSuccess ?? null;
 
 export const selectCancelBookingSuccess = (state) =>
-  state.booking?.cancelSuccess || null;
+  state.bookings?.cancelSuccess ?? null;
 
 /* =====================================================
    DEFAULT EXPORT
