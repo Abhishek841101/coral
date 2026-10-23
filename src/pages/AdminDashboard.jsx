@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-
+import logo from "../assets/logo.jpg";
 import {
   getAdminMe,
   selectAdmin,
@@ -464,11 +464,13 @@ export default function AdminDashboard() {
             }
             className="flex items-center gap-3"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#18C66A] text-base font-black text-[#073F32]">
-              C
-            </div>
+            <img
+  src={logo}
+  alt="Coral Logo"
+  className="h-15 w-38 rounded-full object-contain"
+/>
 
-            <div className="text-left">
+            {/* <div className="text-left">
               <p className="text-lg font-black leading-none text-[#073F32]">
                 Coral
               </p>
@@ -476,7 +478,7 @@ export default function AdminDashboard() {
               <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.15em] text-gray-400">
                 Admin Panel
               </p>
-            </div>
+            </div> */}
           </button>
 
           <div className="flex items-center gap-3">

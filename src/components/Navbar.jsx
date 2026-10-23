@@ -1,8 +1,7 @@
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpg";
 
 import {
@@ -22,8 +21,11 @@ const navItems = [
     label: "Properties",
     href: "#properties",
   },
+  {
+    label: "About ",
+    href: "/about",
+  },
 ];
-
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -223,16 +225,19 @@ export default function Navbar() {
           <div className="hidden items-center gap-7 lg:flex">
 
             {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="relative py-2 text-sm font-bold text-[#18C66A] transition hover:text-[#18A85B]"
-              >
-                {item.label}
+  <Link
+    key={item.label}
+    to={item.href}
+    onClick={closeMenu}
+    className="relative py-2 text-sm font-bold text-[#18C66A] transition hover:text-[#18A85B]"
+  >
+    {item.label}
 
-                <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#18C66A]" />
-              </a>
-            ))}
+    {item.label === "Properties" && (
+      <span className="absolute bottom-0 left-1/2 h-0.5 w-4 -translate-x-1/2 rounded-full bg-[#18C66A]" />
+    )}
+  </Link>
+))}
 
           </div>
 
@@ -425,16 +430,16 @@ export default function Navbar() {
 
             <div className="flex flex-col gap-1">
 
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className="rounded-2xl px-4 py-3.5 text-sm font-bold text-[#10254A] transition hover:bg-[#F8F9F7] hover:text-[#073F32]"
-                >
-                  {item.label}
-                </a>
-              ))}
+             {navItems.map((item) => (
+  <Link
+    key={item.label}
+    to={item.href}
+    onClick={closeMenu}
+    className="rounded-2xl px-4 py-3.5 text-sm font-bold text-[#10254A] transition hover:bg-[#F8F9F7] hover:text-[#073F32]"
+  >
+    {item.label}
+  </Link>
+))}
 
             </div>
 

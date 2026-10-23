@@ -45,7 +45,7 @@ import VisaApplication from "./pages/VisaApplication";
 import VisaConfirmation from "./pages/VisaConfirmation";
 import VisaPayment from "./pages/VisaPayment";
 import VisaSuccess from "./pages/VisaSuccess";
-
+import About from "./pages/About";
 /* =====================================================
 ADMIN PAGES
 ===================================================== */
@@ -103,7 +103,7 @@ return (
       element={<Home />}
     />
 <Route path="/my-bookings" element={<MyBookings />} />
-
+<Route path="/about" element={<About />} />
     {/* =================================================
         PUBLIC PROPERTIES
     ================================================= */}

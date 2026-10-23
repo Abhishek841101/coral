@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import logo from "../assets/logo.jpg";
 const API_URL = import.meta.env.VITE_API_URL;
 const ADMIN_TOKEN_KEY = "coral_admin_token";
 
@@ -182,19 +182,11 @@ export default function AdminProperties() {
             onClick={() => navigate("/admin")}
             className="flex items-center gap-3"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#18C66A] font-black text-[#073F32]">
-              C
-            </div>
-
-            <div className="text-left">
-              <p className="text-lg font-black leading-none text-[#073F32]">
-                Coral
-              </p>
-
-              <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.15em] text-gray-400">
-                Admin Panel
-              </p>
-            </div>
+            <img
+  src={logo}
+  alt="Coral Logo"
+  className="h-15 w-38 rounded-full object-contain"
+/>
           </button>
 
           <button

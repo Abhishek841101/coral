@@ -1,24 +1,37 @@
 import logo from "../assets/logo.jpg";
+import { Link } from "react-router-dom";
 
 const footerColumns = [
   {
     title: "Explore",
-    links: ["Stays", "Tours", "Visa", "Properties", "Destinations"],
+    links: [
+      { label: "Stays", href: "/#properties" },
+      { label: "Tours", href: "/tours" },
+      { label: "Visa", href: "/visa" },
+      { label: "Properties", href: "/#properties" },
+      { label: "Destinations", href: "/destinations" },
+    ],
   },
   {
     title: "Company",
-    links: ["About Coral", "Careers", "Partner with us", "Contact us"],
+    links: [
+      { label: "About Coral", href: "/about" },
+      { label: "Careers", href: "/careers" },
+      { label: "Partner with us", href: "/about#partnership" },
+      { label: "Contact us", href: "/about#contact" },
+    ],
   },
   {
     title: "Support",
     links: [
-      "Help Center",
-      "Booking Guide",
-      "Cancellation Policy",
-      "Terms & Conditions",
+      { label: "Help Center", href: "/help" },
+      { label: "Booking Guide", href: "/booking-guide" },
+      { label: "Cancellation Policy", href: "/cancellation-policy" },
+      { label: "Terms & Conditions", href: "/terms" },
     ],
   },
 ];
+
 
 export default function Footer() {
   return (
@@ -84,18 +97,20 @@ export default function Footer() {
                 {column.title}
               </h3>
 
-              <ul className="mt-5 space-y-3.5">
-                {column.links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm text-white/45 transition hover:text-[#18C66A]"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              
+<ul className="mt-5 space-y-3.5">
+  {column.links.map((link) => (
+    <li key={link.label}>
+      <Link
+        to={link.href}
+        className="text-sm text-white/45 transition hover:text-[#18C66A]"
+      >
+        {link.label}
+      </Link>
+    </li>
+  ))}
+</ul>
+
 
             </div>
           ))}
