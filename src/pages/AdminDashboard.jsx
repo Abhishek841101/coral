@@ -7,25 +7,24 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpg";
 import {
   getAdminMe,
-  selectAdmin,
-  selectAdminAuthenticated,
-  selectAdminMeLoading,
-} from "../features/admin/adminSlice";
-
-import {
+  getRegisteredClients,
   getPropertyStats,
   getBookingStats,
   getEnquiryStats,
-
+  selectAdmin,
+  selectAdminAuthenticated,
+  selectAdminMeLoading,
   selectPropertyStats,
   selectBookingStats,
   selectEnquiryStats,
-
   selectPropertyStatsLoading,
   selectBookingStatsLoading,
   selectEnquiryStatsLoading,
+  selectRegisteredClients,
+  selectRegisteredClientsTotal,
+  selectRegisteredClientsLoading,
+  selectRegisteredClientsError,
 } from "../features/admin/adminSlice";
-
 const API_URL = import.meta.env.VITE_API_URL;
 const ADMIN_TOKEN_KEY = "coral_admin_token";
 
@@ -73,6 +72,23 @@ export default function AdminDashboard() {
     selectEnquiryStats
   );
 
+const clients = useSelector(selectRegisteredClients);
+const clientsTotal = useSelector(selectRegisteredClientsTotal);
+const clientsLoading = useSelector(selectRegisteredClientsLoading);
+const clientsError = useSelector(selectRegisteredClientsError);
+
+const [clientSearch, setClientSearch] = useState("");
+
+const filteredClients = clients.filter((client) => {
+  const search = clientSearch.trim().toLowerCase();
+
+  return (
+    (client.name || "").toLowerCase().includes(search) ||
+    (client.email || "").toLowerCase().includes(search) ||
+    (client.phone || "").toLowerCase().includes(search)
+  );
+});
+
   const propertyLoading = useSelector(
     selectPropertyStatsLoading
   );
@@ -119,13 +135,24 @@ export default function AdminDashboard() {
   ===================================================== */
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      dispatch(getAdminMe());
-    }
-  }, [
-    dispatch,
-    isAuthenticated,
-  ]);
+  if (
+    adminLoading ||
+    !isAuthenticated ||
+    admin?.role !== "admin"
+  ) {
+    return;
+  }
+
+  dispatch(getPropertyStats());
+  dispatch(getBookingStats());
+  dispatch(getEnquiryStats());
+  dispatch(getRegisteredClients());
+}, [
+  dispatch,
+  adminLoading,
+  isAuthenticated,
+  admin?.role,
+]);
 
   /* =====================================================
      AUTH REDIRECT
@@ -1347,6 +1374,164 @@ export default function AdminDashboard() {
           </div>
 
         </div>
+
+
+{/* REGISTERED CLIENTS */}
+<div className="mt-10">
+  <div className="grid grid-cols-1 gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+
+    {/* LEFT: TOTAL CLIENTS CARD */}
+    <div className="rounded-[24px] border border-[#BCEFD3] bg-white p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E9F8F0] text-2xl">
+          👥
+        </div>
+
+        <span className="rounded-full bg-[#E9F8F0] px-3 py-1 text-xs font-bold text-[#168B4B]">
+          Registered
+        </span>
+      </div>
+
+      <p className="mt-6 text-sm font-bold text-gray-500">
+        Total Registered Clients
+      </p>
+
+      <h2 className="mt-2 text-4xl font-black text-[#073F32]">
+        {clientsTotal}
+      </h2>
+
+      <p className="mt-2 text-xs text-gray-400">
+        All registered customer accounts
+      </p>
+
+      <button
+        type="button"
+        onClick={() => dispatch(getRegisteredClients())}
+        disabled={clientsLoading}
+        className="mt-6 w-full rounded-xl bg-[#073F32] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#18A85B] disabled:opacity-50"
+      >
+        {clientsLoading ? "Loading..." : "Refresh Clients"}
+      </button>
+    </div>
+
+    {/* RIGHT: SCROLLABLE CLIENT LIST */}
+    <div className="min-w-0 overflow-hidden rounded-[24px] border border-[#E5E7EB] bg-white shadow-sm">
+
+      <div className="border-b border-[#E5E7EB] p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-black text-[#073F32]">
+              Registered Clients
+            </h2>
+            <p className="mt-1 text-xs text-gray-500">
+              Browse and search registered users
+            </p>
+          </div>
+
+          <input
+            type="search"
+            value={clientSearch}
+            onChange={(e) => setClientSearch(e.target.value)}
+            placeholder="Search name, email or phone..."
+            className="w-full rounded-xl border border-[#E5E7EB] bg-white px-4 py-3 text-sm outline-none focus:border-[#18A85B] sm:max-w-xs"
+          />
+        </div>
+      </div>
+
+      {clientsError && (
+        <div className="m-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {clientsError}
+        </div>
+      )}
+
+      <div className="max-h-[460px] overflow-y-auto overflow-x-auto">
+        <table className="w-full min-w-[600px] text-left">
+          <thead className="sticky top-0 z-10 bg-[#F5F7F6]">
+            <tr>
+              <th className="px-5 py-4 text-xs font-black uppercase text-gray-500">
+                Client
+              </th>
+              <th className="px-5 py-4 text-xs font-black uppercase text-gray-500">
+                Email
+              </th>
+              <th className="px-5 py-4 text-xs font-black uppercase text-gray-500">
+                Phone
+              </th>
+              <th className="px-5 py-4 text-xs font-black uppercase text-gray-500">
+                Registered
+              </th>
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-[#E5E7EB]">
+            {clientsLoading && clients.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-5 py-10 text-center text-sm text-gray-500">
+                  Loading registered clients...
+                </td>
+              </tr>
+            ) : filteredClients.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-5 py-10 text-center text-sm text-gray-500">
+                  {clientSearch
+                    ? "No matching clients found."
+                    : "No registered clients yet."}
+                </td>
+              </tr>
+            ) : (
+              filteredClients.map((client) => (
+                <tr key={client._id} className="transition hover:bg-[#F8FFFB]">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      {client.avatar ? (
+                        <img
+                          src={client.avatar}
+                          alt=""
+                          className="h-9 w-9 shrink-0 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E9F8F0] font-black text-[#073F32]">
+                          {(client.name || "C").charAt(0).toUpperCase()}
+                        </div>
+                      )}
+
+                      <span className="text-sm font-bold text-[#073F32]">
+                        {client.name || "Unnamed Client"}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="px-5 py-4 text-sm text-gray-600">
+                    {client.email || "-"}
+                  </td>
+
+                  <td className="px-5 py-4 text-sm text-gray-600">
+                    {client.phone || "-"}
+                  </td>
+
+                  <td className="whitespace-nowrap px-5 py-4 text-sm text-gray-600">
+                    {client.createdAt
+                      ? new Date(client.createdAt).toLocaleDateString("en-IN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "-"}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="border-t border-[#E5E7EB] bg-[#FAFCFB] px-5 py-3 text-xs text-gray-500">
+        Showing {filteredClients.length} of {clientsTotal} clients
+      </div>
+    </div>
+  </div>
+</div>
+
 
         {/* =================================================
             QUICK ACTIONS

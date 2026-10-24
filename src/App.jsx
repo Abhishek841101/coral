@@ -49,11 +49,11 @@ import About from "./pages/About";
 /* =====================================================
 ADMIN PAGES
 ===================================================== */
-
+import AdminPropertyReview from "./pages/AdminPropertyReview";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminAddProperty from "./pages/AdminAddProperty";
 import AdminProperties from "./pages/AdminProperties";
-
+import AdminEditProperty from "./pages/AdminEditProperty";
 import AdminPendingBooking from "./pages/AdminPendingBooking";
 import AdminConfirmedBooking from "./pages/AdminConfirmedBooking";
 import AdminBookingDetails from "./pages/AdminBookingDetails";
@@ -92,7 +92,10 @@ return (
       path="/dashboard"
       element={<Dashboard />}
     />
-
+<Route
+  path="/admin/properties/:id/review"
+  element={<AdminPropertyReview />}
+/>
 
     {/* =================================================
         HOME
@@ -107,7 +110,10 @@ return (
     {/* =================================================
         PUBLIC PROPERTIES
     ================================================= */}
-
+<Route
+  path="/admin/properties/:id/edit"
+  element={<AdminEditProperty />}
+/>
     <Route
       path="/properties"
       element={<Properties />}

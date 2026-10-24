@@ -273,7 +273,7 @@ export default function AdminProperties() {
         {/* LOADING */}
 
         {loading ? (
-          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
             {Array.from({
               length: 4,
             }).map((_, index) => (
@@ -297,44 +297,22 @@ export default function AdminProperties() {
             </p>
           </div>
         ) : (
-          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
             {properties.map(
               (property) => (
                 <PropertyCard
-                  key={property._id}
-                  property={property}
-                  actionLoading={
-                    actionLoading
-                  }
-                  onApprove={() =>
-                    handleAction(
-                      property._id,
-                      "approve"
-                    )
-                  }
-                  onReject={() =>
-                    handleReject(
-                      property._id
-                    )
-                  }
-                  onActivate={() =>
-                    handleAction(
-                      property._id,
-                      "activate"
-                    )
-                  }
-                  onDeactivate={() =>
-                    handleAction(
-                      property._id,
-                      "deactivate"
-                    )
-                  }
-                  onDelete={() =>
-                    handleDelete(
-                      property._id
-                    )
-                  }
-                />
+  key={property._id}
+  property={property}
+  actionLoading={actionLoading}
+  onReview={() =>
+    navigate(`/admin/properties/${property._id}/review`)
+  }
+  onApprove={() => handleAction(property._id, "approve")}
+  onReject={() => handleReject(property._id)}
+  onActivate={() => handleAction(property._id, "activate")}
+  onDeactivate={() => handleAction(property._id, "deactivate")}
+  onDelete={() => handleDelete(property._id)}
+/>
               )
             )}
           </div>
@@ -352,6 +330,7 @@ function PropertyCard({
   property,
   actionLoading,
   onApprove,
+  onReview,
   onReject,
   onActivate,
   onDeactivate,
@@ -381,8 +360,7 @@ function PropertyCard({
     <article className="overflow-hidden rounded-[28px] border border-[#E5E7EB] bg-white shadow-sm">
       {/* IMAGE */}
 
-      <div className="relative h-60 bg-[#E9F8F0]">
-        {image ? (
+<div className="relative h-44 sm:h-48 bg-[#E9F8F0]">        {image ? (
           <img
             src={image}
             alt={property.title}
@@ -405,10 +383,10 @@ function PropertyCard({
 
       {/* DETAILS */}
 
-      <div className="p-6">
+      <div className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="text-xl font-black text-[#073F32]">
+            <h2 className="text-lg font-black text-[#073F32]">
               {property.title}
             </h2>
 
@@ -476,7 +454,7 @@ function PropertyCard({
 
         {/* OWNER */}
 
-        <div className="mt-5 rounded-2xl bg-[#F8F9F7] p-4">
+       <div className="mt-4 rounded-2xl bg-[#F8F9F7] p-3">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-gray-400">
             Property Owner
           </p>
@@ -528,7 +506,12 @@ function PropertyCard({
               >
                 ✓ Approve
               </ActionButton>
-
+<ActionButton
+  variant="secondary"
+  onClick={onReview}
+>
+  View / Review
+</ActionButton>
               <ActionButton
                 variant="reject"
                 loading={

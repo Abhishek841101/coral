@@ -493,6 +493,37 @@ export const adminLogin =
    GET /api/admin/me
 ===================================================== */
 
+/* =====================================================
+   GET REGISTERED CLIENTS
+   GET /api/admin/clients
+===================================================== */
+
+export const getRegisteredClients = createAsyncThunk(
+  "admin/getRegisteredClients",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/admin/clients`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(
+          data?.message || "Unable to fetch registered clients."
+        );
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error?.message || "Unable to connect to server."
+      );
+    }
+  }
+);
+
 export const getAdminMe =
   createAsyncThunk(
     "admin/getAdminMe",
@@ -2057,6 +2088,10 @@ const initialState = {
   pendingBookingsLoading: false,
 
   bookingStatsLoading: false,
+  clients: [],
+clientsTotal: 0,
+clientsLoading: false,
+clientsError: null,
 
   /* ================= ENQUIRIES ================= */
 
@@ -2189,6 +2224,37 @@ const adminSlice = createSlice({
           state.admin = null;
 
           state.isAuthenticated = false;
+        }
+      );
+
+    /* =================================================
+       REGISTERED CLIENTS
+    ================================================= */
+
+    builder
+      .addCase(
+        getRegisteredClients.pending,
+        (state) => {
+          state.clientsLoading = true;
+          state.clientsError = null;
+        }
+      )
+      .addCase(
+        getRegisteredClients.fulfilled,
+        (state, action) => {
+          state.clientsLoading = false;
+          state.clients = action.payload?.clients || [];
+          state.clientsTotal =
+            action.payload?.total ?? state.clients.length;
+        }
+      )
+      .addCase(
+        getRegisteredClients.rejected,
+        (state, action) => {
+          state.clientsLoading = false;
+          state.clientsError =
+            action.payload ||
+            "Unable to fetch registered clients.";
         }
       );
 
@@ -3114,6 +3180,18 @@ export const selectAdminEnquiriesLoading = (
 export const selectEnquiryStatsLoading = (
   state
 ) => state.admin.enquiryStatsLoading;
+
+export const selectRegisteredClients = (state) =>
+  state.admin.clients;
+
+export const selectRegisteredClientsTotal = (state) =>
+  state.admin.clientsTotal;
+
+export const selectRegisteredClientsLoading = (state) =>
+  state.admin.clientsLoading;
+
+export const selectRegisteredClientsError = (state) =>
+  state.admin.clientsError;
 
 /* =====================================================
    DEFAULT EXPORT
