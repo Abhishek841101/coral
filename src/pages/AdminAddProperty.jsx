@@ -432,22 +432,12 @@ export default function AdminAddProperty() {
       }
     }
 
-    if (form.petsAllowed) {
+   if (form.petsAllowed) {
   const maxPets = parseInteger(form.maxPets);
   const petPrice = parseMoney(form.petPrice);
 
   if (!Number.isInteger(maxPets) || maxPets < 1) {
     return "Maximum pets kam se kam 1 hona chahiye.";
-  }
-
-  if (form.petTypes.length === 0) {
-    return "Kam se kam ek pet type select karo.";
-  }
-
-  const selectedTypes = form.petTypes.map((pet) => pet.type);
-
-  if (new Set(selectedTypes).size !== selectedTypes.length) {
-    return "Ek pet type ko sirf ek baar select karo.";
   }
 
   if (!Number.isFinite(petPrice) || petPrice < 0) {
