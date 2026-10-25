@@ -1,4 +1,4 @@
-import logo from "../assets/logo.jpg";
+import logo from "../assets/Footer Logo.jpg";
 import { Link } from "react-router-dom";
 
 const footerColumns = [

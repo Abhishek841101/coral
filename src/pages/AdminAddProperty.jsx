@@ -6,7 +6,7 @@ import { useDispatch } from "react-redux";
 import { createProperty } from "../features/properties/propertySlice";
 import logo from "../assets/logo.jpg";
 const CHARGE_PERIODS = [
-  ["perNight", "Per Night"],
+  ["perNight", "Per Day"],
   ["perStay", "Per Stay"],
   ["perMonth", "Per Month"],
 ];
@@ -819,7 +819,7 @@ export default function AdminAddProperty() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <Section
             title="1. Basic Information"
-            description="Property ka main description aur type."
+            
           >
             <div className="grid gap-5 md:grid-cols-2">
               <Input
@@ -1107,7 +1107,7 @@ export default function AdminAddProperty() {
 
           <Section
             title="5. Guest Capacity"
-            description="Owner khud minimum aur maximum included guests set karega. BHK se automatically calculate nahi hoga."
+            
           >
             <div className="grid gap-5 sm:grid-cols-2">
               {/* <Input
@@ -1186,11 +1186,11 @@ export default function AdminAddProperty() {
 
           <Section
             title="6. Extra Sleeping Arrangements"
-            description="Beds, mattresses aur other sleeping options ki quantity aur price alag set karo."
+            
           >
             {form.sleepingArrangements.length === 0 && (
               <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-500">
-                Abhi koi extra sleeping arrangement add nahi kiya hai.
+                
               </p>
             )}
 
@@ -1385,7 +1385,7 @@ export default function AdminAddProperty() {
         <strong>Common pet price:</strong>{" "}
         ₹{Number(form.petPrice || 0).toLocaleString("en-IN")}{" "}
         {form.petChargePeriod === "perNight"
-          ? "per pet per night"
+          ? "per pet per day"
           : form.petChargePeriod === "perMonth"
             ? "per pet per month"
             : "per pet per stay"}

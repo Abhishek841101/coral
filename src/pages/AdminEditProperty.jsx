@@ -1795,7 +1795,7 @@ import { useDispatch } from "react-redux";
 import { updateProperty } from "../features/properties/propertySlice";
 import logo from "../assets/logo.jpg";
 const CHARGE_PERIODS = [
-  ["perNight", "Per Night"],
+  ["perNight", "Per Day"],
   ["perStay", "Per Stay"],
   ["perMonth", "Per Month"],
 ];
@@ -1837,7 +1837,7 @@ const initialForm = {
   extraGuestEnabled: false,
   maxExtraGuests: "1",
   pricePerPerson: "0",
-  extraGuestChargePeriod: "perNight",
+  extraGuestChargePeriod: "perDay",
   sleepingArrangements: [],
   petsAllowed: false,
   maxPets: "1",
@@ -1856,7 +1856,7 @@ const newSleepingArrangement = () => ({
   quantity: "1",
   isPaid: false,
   price: "0",
-  chargePeriod: "perNight",
+  chargePeriod: "perDay",
 });
 
 const newPetType = () => ({
@@ -2079,14 +2079,14 @@ export default function AdminEditProperty() {
           extraGuestEnabled: Boolean(extra.enabled ?? property.extraGuestEnabled),
           maxExtraGuests: toText(extra.maxExtraGuests ?? property.maxExtraGuests ?? 1),
           pricePerPerson: toText(extra.pricePerPerson ?? property.pricePerPerson ?? 0),
-          extraGuestChargePeriod: extra.chargePeriod || property.extraGuestChargePeriod || "perNight",
+          extraGuestChargePeriod: extra.chargePeriod || property.extraGuestChargePeriod || "perDay",
           sleepingArrangements: arrangements.map((item) => ({
             type: item.type || "mattress",
             label: item.label || "",
             quantity: toText(item.quantity ?? 1),
             isPaid: Boolean(item.isPaid),
             price: toText(item.price ?? 0),
-            chargePeriod: item.chargePeriod || "perNight",
+            chargePeriod: item.chargePeriod || "perDay",
           })),
           petsAllowed: Boolean(petPolicy.allowed ?? property.petsAllowed),
           maxPets: toText(petPolicy.maxPets ?? property.maxPets ?? 1),

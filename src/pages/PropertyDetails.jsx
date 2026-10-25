@@ -25,7 +25,7 @@ const formatLabel = (value) => {
 
 const getChargePeriodLabel = (period) => {
   const labels = {
-    perNight: "per night",
+    perNight: "per day",
     perStay: "per stay",
     perMonth: "per month",
     day: "per day",

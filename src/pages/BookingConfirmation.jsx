@@ -477,7 +477,7 @@ const propertyImage = getImageUrl(
                     />
                     <DetailCard
                       label="Duration"
-                      value={`${nights} ${nights === 1 ? "night" : "nights"}`}
+                      value={`${nights} ${nights === 1 ? "night" : "day"}`}
                     />
                   </div>
                 </section>
@@ -684,7 +684,7 @@ const propertyImage = getImageUrl(
                       value={formatCurrency(pricePerNight)}
                     />
 
-                    <SummaryRow label="Nights" value={nights} />
+                    <SummaryRow label="Days" value={nights} />
 
                     <div className="border-t border-gray-200 pt-4">
                       <SummaryRow

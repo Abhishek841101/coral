@@ -73,7 +73,7 @@ const getPeriodLabel = (period) => {
     case "perMonth":
       return "per month";
     default:
-      return "per night";
+      return "per day";
   }
 };
 
@@ -1342,7 +1342,7 @@ const selectedPets = useMemo(() => {
                     ? "Update pet selection"
                     : numberValue(selectedPetQuantity) === 0
                       ? "Remove pet type"
-                      : "+ Add pet"}
+                      : "Add pet"}
               </button>
             </>
           );
@@ -1582,7 +1582,7 @@ const selectedPets = useMemo(() => {
                 />
 
                 <SummaryRow
-                  label="Nights"
+                  label="Days"
                   value={nights}
                 />
 
