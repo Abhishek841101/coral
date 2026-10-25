@@ -184,10 +184,11 @@ const getPetPrice = (petPolicy, petType) => {
     : null;
 
   const rawPrice =
-    petPolicy?.price ??
-    petPolicy?.charge ??
-    typeConfig?.charge ??
-    0;
+  Number(petPolicy?.charge) > 0
+    ? petPolicy.charge
+    : Number(petPolicy?.price) > 0
+      ? petPolicy.price
+      : typeConfig?.charge ?? 0;
 
   const price = Number(rawPrice);
 
