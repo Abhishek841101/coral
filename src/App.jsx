@@ -58,6 +58,11 @@ import AdminPendingBooking from "./pages/AdminPendingBooking";
 import AdminConfirmedBooking from "./pages/AdminConfirmedBooking";
 import AdminBookingDetails from "./pages/AdminBookingDetails";
 
+
+import BookingGuide from "./pages/BookingGuide";
+import HelpCenter from "./pages/HelpCenter";
+import CancellationPolicy from "./pages/CancellationPolicy";
+import Terms from "./pages/Terms";
 export default function App() {
 return (
 <BrowserRouter>
@@ -133,7 +138,16 @@ return (
     {/* =================================================
         PROPERTY BOOKING
     ================================================= */}
-
+<Route
+  path="/booking-guide"
+  element={<BookingGuide />}
+/>
+<Route path="/help" element={<HelpCenter />} />
+<Route
+  path="/cancellation-policy"
+  element={<CancellationPolicy />}
+/>
+<Route path="/terms" element={<Terms />} />
     <Route
       path="/booking"
       element={<Booking />}
