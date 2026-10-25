@@ -4,6 +4,17 @@ import { useNavigate } from "react-router-dom";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AdminPendingBooking() {
+   const getImageUrl = (image) => {
+    if (typeof image === "string") return image;
+
+    if (image && typeof image === "object") {
+      return image.url || image.secure_url || image.src || "";
+    }
+
+    return "";
+  };
+
+  
 const navigate = useNavigate();
 
 const [bookings, setBookings] = useState([]);
@@ -429,14 +440,10 @@ return (
                       {property?.images?.length >
                       0 ? (
                         <img
-                          src={
-                            property.images[0]
-                          }
-                          alt={getPropertyName(
-                            booking
-                          )}
-                          className="h-full w-full object-cover"
-                        />
+  src={getImageUrl(property.images[0])}
+  alt={getPropertyName(booking)}
+  className="h-full w-full object-cover"
+/>
                       ) : (
                         <div className="flex h-full items-center justify-center text-xs text-gray-400">
                           No Image
