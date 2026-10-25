@@ -307,6 +307,9 @@ export default function AdminProperties() {
   onReview={() =>
     navigate(`/admin/properties/${property._id}/review`)
   }
+  onEdit={() =>
+  navigate(`/admin/properties/${property._id}/edit`)
+}
   onApprove={() => handleAction(property._id, "approve")}
   onReject={() => handleReject(property._id)}
   onActivate={() => handleAction(property._id, "activate")}
@@ -331,6 +334,7 @@ function PropertyCard({
   actionLoading,
   onApprove,
   onReview,
+  onEdit,
   onReject,
   onActivate,
   onDeactivate,
@@ -496,6 +500,12 @@ function PropertyCard({
         <div className="mt-5 flex flex-wrap gap-2">
           {isPending && (
             <>
+            <ActionButton
+  variant="secondary"
+  onClick={onEdit}
+>
+  ✏️ Edit Property
+</ActionButton>
               <ActionButton
                 variant="approve"
                 loading={
@@ -524,39 +534,43 @@ function PropertyCard({
               </ActionButton>
             </>
           )}
+{isApproved && property.status === "active" && (
+  <>
+    <ActionButton
+      variant="secondary"
+      onClick={onEdit}
+    >
+      ✏️ Edit Property
+    </ActionButton>
 
-          {isApproved &&
-            property.status ===
-              "active" && (
-              <ActionButton
-                variant="secondary"
-                loading={
-                  actionLoading ===
-                  `deactivate-${property._id}`
-                }
-                onClick={
-                  onDeactivate
-                }
-              >
-                Deactivate
-              </ActionButton>
-            )}
+    <ActionButton
+      variant="secondary"
+      loading={actionLoading === `deactivate-${property._id}`}
+      onClick={onDeactivate}
+    >
+      Deactivate
+    </ActionButton>
+  </>
+)}
 
-          {isApproved &&
-            property.status ===
-              "inactive" && (
-              <ActionButton
-                variant="approve"
-                loading={
-                  actionLoading ===
-                  `activate-${property._id}`
-                }
-                onClick={onActivate}
-              >
-                Activate
-              </ActionButton>
-            )}
+{isApproved && property.status === "inactive" && (
+  <>
+    <ActionButton
+      variant="secondary"
+      onClick={onEdit}
+    >
+      ✏️ Edit Property
+    </ActionButton>
 
+    <ActionButton
+      variant="approve"
+      loading={actionLoading === `activate-${property._id}`}
+      onClick={onActivate}
+    >
+      Activate
+    </ActionButton>
+  </>
+)}
           {isRejected && (
             <ActionButton
               variant="approve"

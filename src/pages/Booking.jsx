@@ -7,6 +7,25 @@ import { useDispatch, useSelector } from "react-redux";
 import { getPropertyById } from "../features/properties/propertySlice";
 import { createBooking } from "../features/bookings/bookingSlice";
 
+
+const getPropertyImageUrl = (image) => {
+  if (!image) return "";
+
+  if (typeof image === "string") return image;
+
+  if (typeof image === "object") {
+    return (
+      image.url ||
+      image.secure_url ||
+      image.imageUrl ||
+      image.src ||
+      image.path ||
+      ""
+    );
+  }
+
+  return "";
+};
 const PET_TYPES = [
   { value: "dog", label: "Dog" },
   { value: "cat", label: "Cat" },
@@ -157,29 +176,39 @@ const getPetConfig = (petPolicy, type) => {
   return {};
 };
 
-const getPetPrice = (petPolicy, type) => {
-  const config = getPetConfig(petPolicy, type);
+const getPetPrice = (petPolicy, petType) => {
+  const typeConfig = Array.isArray(petPolicy?.types)
+    ? petPolicy.types.find(
+        (item) => item.type === petType
+      )
+    : null;
 
-  return numberValue(
-    config?.pricePerPet ??
-      config?.price ??
-      config?.amount ??
-      petPolicy?.pricePerPet ??
-      petPolicy?.price
-  );
+  const rawPrice =
+    petPolicy?.price ??
+    petPolicy?.charge ??
+    typeConfig?.charge ??
+    0;
+
+  const price = Number(rawPrice);
+
+  return Number.isFinite(price) && price >= 0
+    ? price
+    : 0;
 };
 
-const getPetChargePeriod = (petPolicy, type) => {
-  const config = getPetConfig(petPolicy, type);
+const getPetChargePeriod = (petPolicy, petType) => {
+  const typeConfig = Array.isArray(petPolicy?.types)
+    ? petPolicy.types.find(
+        (item) => item.type === petType
+      )
+    : null;
 
-  return getChargePeriod(
-    config?.chargePeriod ??
-      config?.pricePeriod ??
-      petPolicy?.chargePeriod ??
-      "perStay"
+  return (
+    petPolicy?.chargePeriod ||
+    typeConfig?.chargePeriod ||
+    "perStay"
   );
 };
-
 const getTodayString = () => {
   const date = new Date();
   const year = date.getFullYear();
@@ -255,10 +284,15 @@ const Booking = () => {
     specialRequest: "",
   });
 
-  // Selected quantities are stored by arrangement type.
-  const [sleepingSelections, setSleepingSelections] = useState({});
-  const [petSelections, setPetSelections] = useState({});
-  const [formError, setFormError] = useState("");
+ 
+// Selected quantities are stored by arrangement type.
+const [sleepingSelections, setSleepingSelections] = useState({});
+const [petSelections, setPetSelections] = useState({});
+const [selectedPetType, setSelectedPetType] = useState("");
+const [selectedPetQuantity, setSelectedPetQuantity] = useState("1");
+const [otherPetName, setOtherPetName] = useState("");
+const [formError, setFormError] = useState("");
+const [petCustomNames, setPetCustomNames] = useState({});
 
   const today = useMemo(() => getTodayString(), []);
 
@@ -398,22 +432,30 @@ const Booking = () => {
       .filter(Boolean);
   }, [sleepingOptions, sleepingSelections]);
 
-  const selectedPets = useMemo(() => {
-    return petOptions
-      .map((item) => {
-        const count = Math.floor(
-          numberValue(petSelections[item.value])
-        );
+ 
+const selectedPets = useMemo(() => {
+  return petOptions
+    .map((item) => {
+      const count = Math.floor(
+        numberValue(petSelections[item.value])
+      );
 
-        if (count <= 0) return null;
+      if (count <= 0) return null;
 
-        return {
-          type: item.value,
-          count,
-        };
-      })
-      .filter(Boolean);
-  }, [petOptions, petSelections]);
+      return {
+        type: item.value,
+        count,
+        ...(item.value === "other"
+          ? {
+              customName: String(
+                petCustomNames.other || ""
+              ).trim(),
+            }
+          : {}),
+      };
+    })
+    .filter(Boolean);
+}, [petOptions, petSelections, petCustomNames]);
 
   const selectedPetCount = selectedPets.reduce(
     (total, pet) => total + pet.count,
@@ -803,75 +845,70 @@ const Booking = () => {
         >
           <div className="lg:col-span-2 space-y-6">
             {/* Property details */}
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Property
-              </h2>
+          {/* Property details */}
+<section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+  <h2 className="text-xl font-semibold text-gray-900">
+    Property
+  </h2>
 
-              <div className="mt-5 flex flex-col sm:flex-row gap-5">
-                <div className="h-36 w-full flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:w-48">
-                  {property?.images?.[0] ? (
-                    <img
-                      src={property.images[0]}
-                      alt={property.title || "Property"}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-gray-500">
-                      No image
-                    </div>
-                  )}
-                </div>
+  <div className="mt-5 flex flex-col gap-5 sm:flex-row">
+    {/* Property Image */}
+    <div className="h-36 w-full flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:w-48">
+      {getPropertyImageUrl(property?.images?.[0]) ? (
+        <img
+          src={getPropertyImageUrl(property.images[0])}
+          alt={property?.title || "Property"}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center text-sm text-gray-500">
+          No image available
+        </div>
+      )}
+    </div>
 
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {property?.title || "Property"}
-                  </h3>
+    {/* Property Details */}
+    <div className="min-w-0 flex-1">
+      <h3 className="text-lg font-bold text-gray-900">
+        {property?.title || "Property"}
+      </h3>
 
-                  <p className="mt-1 text-gray-600">
-                    {property?.locality}
-                    {property?.locality && property?.city ? ", " : ""}
-                    {property?.city}
-                  </p>
+      <p className="mt-2 text-sm text-gray-600">
+        {[
+          property?.address,
+          property?.city,
+          property?.state,
+          property?.pincode,
+        ]
+          .filter(Boolean)
+          .join(", ") || "Address not available"}
+      </p>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {property?.propertyType && (
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                        {property.propertyType}
-                      </span>
-                    )}
+      <p className="mt-3 text-lg font-semibold text-indigo-600">
+        {formatCurrency(pricePerNight)}
+        <span className="text-sm font-normal text-gray-500">
+          {" "} / night
+        </span>
+      </p>
 
-                    {property?.bhk && (
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                        {property.bhk} BHK
-                      </span>
-                    )}
+      <div className="mt-3 flex flex-wrap gap-2 text-sm text-gray-600">
+        <span className="rounded-lg bg-gray-100 px-3 py-2">
+          Min guests: {minGuests}
+        </span>
 
-                    <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm text-indigo-700">
-                      Minimum {minGuests} guests
-                    </span>
+        <span className="rounded-lg bg-gray-100 px-3 py-2">
+          Max guests: {maxGuests}
+        </span>
+      </div>
 
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      Base capacity: {maxGuests}
-                    </span>
-
-                    {maxExtraGuests > 0 && (
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                        +{maxExtraGuests} extra guest(s)
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-4 text-lg font-bold text-gray-900">
-                    {formatCurrency(pricePerNight)}
-                    <span className="ml-1 text-sm font-normal text-gray-500">
-                      / {property?.rentPeriod || "night"}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </section>
-
+      {property?.description && (
+        <p className="mt-3 text-sm leading-6 text-gray-600">
+          {property.description}
+        </p>
+      )}
+    </div>
+  </div>
+</section>
             {/* Dates and guests */}
             <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="text-xl font-semibold text-gray-900">
@@ -1087,103 +1124,314 @@ const Booking = () => {
             </section>
 
             {/* Pets */}
-            <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Pets
-              </h2>
+         
 
-              {!petsAllowed ? (
-                <p className="mt-4 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-                  Pets are not allowed at this property.
-                </p>
-              ) : maxPets === 0 ? (
-                <p className="mt-4 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-                  No pets can be added to this booking.
-                </p>
-              ) : (
-                <>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Maximum {maxPets} pet(s) allowed in total.
+
+
+<section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+  <div className="flex items-center gap-3">
+    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-2xl">
+      🐾
+    </div>
+    <div>
+      <h2 className="text-lg font-bold text-gray-900">Bringing pets?</h2>
+      <p className="text-sm text-gray-500">
+        Add the pets you plan to bring
+      </p>
+    </div>
+  </div>
+
+  {!petsAllowed ? (
+    <p className="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
+      Pets are not allowed at this property.
+    </p>
+  ) : maxPets <= 0 ? (
+    <p className="mt-5 rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
+      No pets can be added to this booking.
+    </p>
+  ) : (
+    <>
+      <div className="mt-5 flex items-center justify-between rounded-xl bg-indigo-50 p-4">
+        <div>
+          <p className="text-sm font-semibold text-indigo-950">
+            Pet allowance
+          </p>
+          <p className="mt-1 text-xs text-indigo-700">
+            Maximum pets across all types
+          </p>
+        </div>
+        <span className="rounded-lg bg-white px-3 py-2 text-sm font-bold text-indigo-700">
+          {selectedPetCount} / {maxPets}
+        </span>
+      </div>
+
+      <div className="mt-5 space-y-4 rounded-xl border border-gray-200 p-4">
+        <div>
+          <label
+            htmlFor="pet-type"
+            className="mb-2 block text-sm font-semibold text-gray-700"
+          >
+            Pet type
+          </label>
+
+          <select
+            id="pet-type"
+            value={selectedPetType}
+            onChange={(event) => {
+              setSelectedPetType(event.target.value);
+              setSelectedPetQuantity("1");
+              setOtherPetName("");
+              setFormError("");
+            }}
+            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          >
+            <option value="">Choose a pet type</option>
+            {petOptions.map((pet) => (
+              <option key={pet.value} value={pet.value}>
+                {pet.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedPetType === "other" && (
+          <div>
+            <label
+              htmlFor="other-pet-name"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Specify your pet type
+            </label>
+
+            <input
+              id="other-pet-name"
+              type="text"
+              value={otherPetName}
+              onChange={(event) => {
+                setOtherPetName(event.target.value);
+                setFormError("");
+              }}
+              placeholder="e.g. Parrot, Hamster, Turtle"
+              maxLength={100}
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+            />
+          </div>
+        )}
+
+        {selectedPetType && (() => {
+          const alreadySelected = numberValue(
+            petSelections[selectedPetType]
+          );
+
+          const otherPets = selectedPetCount - alreadySelected;
+          const available = Math.max(0, maxPets - otherPets);
+
+          const price = getPetPrice(petPolicy, selectedPetType);
+          const period = getPetChargePeriod(petPolicy, selectedPetType);
+
+          const isCustomNameMissing =
+            selectedPetType === "other" && !otherPetName.trim();
+
+          const isQuantityUnchanged =
+            numberValue(selectedPetQuantity) === alreadySelected;
+
+          return (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="pet-count"
+                    className="mb-2 block text-sm font-semibold text-gray-700"
+                  >
+                    Number of pets
+                  </label>
+
+                  <select
+                    id="pet-count"
+                    value={selectedPetQuantity}
+                    onChange={(event) =>
+                      setSelectedPetQuantity(event.target.value)
+                    }
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  >
+                    {Array.from(
+                      { length: available + 1 },
+                      (_, index) => (
+                        <option key={index} value={index}>
+                          {index === 0
+                            ? "Remove this type"
+                            : `${index} ${index === 1 ? "pet" : "pets"}`}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <div className="rounded-xl bg-gray-50 p-3">
+                  <p className="text-xs font-medium text-gray-500">
+                    Price per pet
                   </p>
+                  <p className="mt-1 font-bold text-gray-900">
+                    {formatCurrency(price)}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {getPeriodLabel(period)}
+                  </p>
+                </div>
+              </div>
 
-                  <div className="mt-5 space-y-4">
-                    {petOptions.map((pet) => {
-                      const count = numberValue(
-                        petSelections[pet.value]
+              <button
+                type="button"
+                disabled={
+                  isQuantityUnchanged || isCustomNameMissing
+                }
+                onClick={() => {
+                  const quantity = Math.floor(
+                    numberValue(selectedPetQuantity)
+                  );
+
+                  if (selectedPetType === "other") {
+                    const customName = otherPetName.trim();
+
+                    if (!customName) {
+                      setFormError(
+                        "Please enter your custom pet name."
                       );
+                      return;
+                    }
 
-                      const price = getPetPrice(petPolicy, pet.value);
-                      const period = getPetChargePeriod(
-                        petPolicy,
-                        pet.value
+                    if (customName.length > 100) {
+                      setFormError(
+                        "Pet name must be 100 characters or less."
                       );
+                      return;
+                    }
 
-                      const charge = calculateCharge(
-                        price,
-                        count,
-                        period,
-                        nights
-                      );
+                    if (quantity > 0) {
+                      setPetCustomNames((previous) => ({
+                        ...previous,
+                        other: customName,
+                      }));
+                    }
+                  }
 
-                      return (
-                        <div
-                          key={pet.value}
-                          className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 sm:flex-row sm:items-center sm:justify-between"
-                        >
-                          <div>
-                            <p className="font-semibold text-gray-900">
-                              {pet.label}
-                            </p>
+                  handlePetCountChange(
+                    selectedPetType,
+                    quantity
+                  );
 
-                            <p className="mt-1 text-sm text-gray-500">
-                              {formatCurrency(price)} {getPeriodLabel(period)}
-                            </p>
+                  if (quantity === 0 && selectedPetType === "other") {
+                    setPetCustomNames((previous) => {
+                      const next = { ...previous };
+                      delete next.other;
+                      return next;
+                    });
+                  }
 
-                            {count > 0 && (
-                              <p className="mt-1 text-sm font-medium text-indigo-700">
-                                Estimated charge: {formatCurrency(charge)}
-                              </p>
-                            )}
-                          </div>
+                  setSelectedPetType("");
+                  setSelectedPetQuantity("1");
+                  setOtherPetName("");
+                  setFormError("");
+                }}
+                className="w-full rounded-xl bg-indigo-600 px-4 py-3 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+              >
+                {isQuantityUnchanged
+                  ? "Already up to date"
+                  : alreadySelected > 0
+                    ? "Update pet selection"
+                    : numberValue(selectedPetQuantity) === 0
+                      ? "Remove pet type"
+                      : "+ Add pet"}
+              </button>
+            </>
+          );
+        })()}
+      </div>
 
-                          <div className="w-full sm:w-36">
-                            <label
-                              htmlFor={`pet-${pet.value}`}
-                              className="mb-1 block text-xs font-medium text-gray-600"
-                            >
-                              Number of pets
-                            </label>
+      {selectedPets.length > 0 && (
+        <div className="mt-5">
+          <h3 className="mb-3 text-sm font-bold text-gray-900">
+            Your selected pets
+          </h3>
 
-                            <select
-                              id={`pet-${pet.value}`}
-                              value={count}
-                              onChange={(event) =>
-                                handlePetCountChange(
-                                  pet.value,
-                                  event.target.value
-                                )
-                              }
-                              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
-                            >
-                              {Array.from(
-                                { length: maxPets + 1 },
-                                (_, petCount) => (
-                                  <option key={petCount} value={petCount}>
-                                    {petCount === 0
-                                      ? "No pets"
-                                      : petCount}
-                                  </option>
-                                )
-                              )}
-                            </select>
-                          </div>
-                        </div>
-                      );
-                    })}
+          <div className="space-y-3">
+            {selectedPets.map((pet) => {
+              const option = petOptions.find(
+                (item) => item.value === pet.type
+              );
+
+              const price = getPetPrice(petPolicy, pet.type);
+              const period = getPetChargePeriod(
+                petPolicy,
+                pet.type
+              );
+
+              const charge = calculateCharge(
+                price,
+                pet.count,
+                period,
+                nights
+              );
+
+              return (
+                <div
+                  key={pet.type}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 p-4"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900">
+                      {pet.type === "other" && pet.customName
+                        ? pet.customName
+                        : option?.label || pet.type}{" "}
+                      × {pet.count}
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      {formatCurrency(price)} {getPeriodLabel(period)}
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold text-indigo-700">
+                      {getChargePeriod(period) !== "perNight" ||
+                      nights > 0
+                        ? `Estimated charge: ${formatCurrency(charge)}`
+                        : "Select booking dates to calculate charge"}
+                    </p>
                   </div>
-                </>
-              )}
-            </section>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handlePetCountChange(pet.type, 0);
+
+                      if (pet.type === "other") {
+                        setPetCustomNames((previous) => {
+                          const next = { ...previous };
+                          delete next.other;
+                          return next;
+                        });
+                      }
+
+                      setFormError("");
+                    }}
+                    className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+                  >
+                    Remove
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <p className="mt-4 text-xs leading-5 text-gray-500">
+        You can add multiple pet types. The combined quantity cannot
+        exceed the property's pet limit.
+      </p>
+    </>
+  )}
+</section>
+
 
             {/* Customer details */}
             <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">

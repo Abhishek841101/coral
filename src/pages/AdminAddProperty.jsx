@@ -59,8 +59,10 @@ const initialForm = {
   extraGuestChargePeriod: "perNight",
   sleepingArrangements: [],
   petsAllowed: false,
-  maxPets: "1",
-  petTypes: [],
+maxPets: "", // Owner khud quantity enter karega
+petTypes: [],
+petPrice: "0",
+petChargePeriod: "perStay",
   availability: "available",
   availableFrom: "",
   amenities: "",
@@ -79,8 +81,6 @@ const newSleepingArrangement = () => ({
 const newPetType = () => ({
   type: "dog",
   label: "",
-  charge: "0",
-  chargePeriod: "perStay",
 });
 
 function parseMoney(value) {
@@ -433,21 +433,35 @@ export default function AdminAddProperty() {
     }
 
     if (form.petsAllowed) {
-      const maxPets = parseInteger(form.maxPets);
+  const maxPets = parseInteger(form.maxPets);
+  const petPrice = parseMoney(form.petPrice);
 
-      if (!Number.isInteger(maxPets) || maxPets < 1) {
-        return "Pets allow karne par maximum pets kam se kam 1 rakho.";
-      }
+  if (!Number.isInteger(maxPets) || maxPets < 1) {
+    return "Maximum pets kam se kam 1 hona chahiye.";
+  }
 
-      for (const pet of form.petTypes) {
-        const charge = parseMoney(pet.charge);
+  if (form.petTypes.length === 0) {
+    return "Kam se kam ek pet type select karo.";
+  }
 
-        if (!Number.isFinite(charge) || charge < 0) {
-          return "Pet charge valid nahi hai.";
-        }
-      }
-    }
+  const selectedTypes = form.petTypes.map((pet) => pet.type);
 
+  if (new Set(selectedTypes).size !== selectedTypes.length) {
+    return "Ek pet type ko sirf ek baar select karo.";
+  }
+
+  if (!Number.isFinite(petPrice) || petPrice < 0) {
+    return "Pet price valid hona chahiye.";
+  }
+
+  if (
+    !CHARGE_PERIODS.some(
+      ([period]) => period === form.petChargePeriod
+    )
+  ) {
+    return "Pet charge period select karo.";
+  }
+}
     const numericFields = [
       ["Security deposit", form.securityDeposit],
       ["Maintenance", form.maintenance],
@@ -605,18 +619,22 @@ export default function AdminAddProperty() {
         })
       );
 
-      const petPolicy = {
-        allowed: Boolean(form.petsAllowed),
-        maxPets: form.petsAllowed ? parseInteger(form.maxPets, 1) : 0,
-        types: form.petsAllowed
-          ? form.petTypes.map((item) => ({
-              type: item.type,
-              label: item.label.trim() || item.type,
-              charge: parseMoney(item.charge),
-              chargePeriod: item.chargePeriod,
-            }))
-          : [],
-      };
+     const petPolicy = {
+  allowed: Boolean(form.petsAllowed),
+  maxPets: form.petsAllowed ? parseInteger(form.maxPets, 1) : 0,
+  price: form.petsAllowed ? parseMoney(form.petPrice) : 0,
+  chargePeriod: form.petChargePeriod,
+
+  types: form.petsAllowed
+    ? form.petTypes.map((item) => ({
+        type: item.type,
+        label: item.label.trim() || item.type,
+        // Same price and period for every allowed pet type.
+        charge: parseMoney(form.petPrice),
+        chargePeriod: form.petChargePeriod,
+      }))
+    : [],
+};
 
       formData.append(
         "extraGuestPolicy",
@@ -1315,141 +1333,89 @@ export default function AdminAddProperty() {
             </button>
           </Section>
 
-          <Section
-            title="7. Pet Policy"
-            description="Pets allow karna hai ya nahi, maximum count aur pet-wise charges configure karo."
-          >
-            <Checkbox
-              checked={form.petsAllowed}
-              disabled={loading}
-              onChange={(value) => {
-                setForm((previous) => ({
-                  ...previous,
-                  petsAllowed: value,
-                  maxPets: value
-                    ? previous.maxPets === "0"
-                      ? "1"
-                      : previous.maxPets
-                    : "0",
-                  petTypes: value ? previous.petTypes : [],
-                }));
 
-                setError("");
-              }}
-              label="Pets are allowed at this property"
-            />
+<Section title="7. Pet Policy">
+  <Checkbox
+    checked={form.petsAllowed}
+    disabled={loading}
+    onChange={(value) => {
+      setForm((previous) => ({
+        ...previous,
+        petsAllowed: value,
+        maxPets: value
+          ? previous.maxPets === "0" || !previous.maxPets
+            ? "1"
+            : previous.maxPets
+          : "0",
+      }));
 
-            {form.petsAllowed && (
-              <>
-                <div className="mt-5 max-w-sm">
-                  <Input
-                    label="Maximum Pets"
-                    name="maxPets"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={form.maxPets}
-                    onChange={handleChange}
-                    required
-                    disabled={loading}
-                  />
-                </div>
+      setError("");
+    }}
+    label="Pets are allowed at this property"
+  />
 
-                <div className="mt-6 space-y-4">
-                  {form.petTypes.map((pet, index) => (
-                    <div
-                      key={index}
-                      className="rounded-2xl border border-gray-200 p-5"
-                    >
-                      <div className="mb-4 flex items-center justify-between">
-                        <h3 className="font-bold text-[#073F32]">
-                          Pet Type {index + 1}
-                        </h3>
+  {form.petsAllowed && (
+    <div className="mt-5 space-y-5">
+      <div className="grid gap-5 sm:grid-cols-3">
+        <Input
+          label="Maximum Pets"
+          name="maxPets"
+          type="number"
+          min="1"
+          step="1"
+          value={form.maxPets}
+          onChange={handleChange}
+          required
+          disabled={loading}
+        />
 
-                        <button
-                          type="button"
-                          onClick={() => removePetType(index)}
-                          disabled={loading}
-                          className="text-sm font-bold text-red-600"
-                        >
-                          Remove
-                        </button>
-                      </div>
+        <Input
+          label="Price Per Pet (₹)"
+          name="petPrice"
+          type="number"
+          min="0"
+          step="0.01"
+          value={form.petPrice}
+          onChange={handleChange}
+          required
+          disabled={loading}
+        />
 
-                      <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3">
-                        <Select
-                          label="Pet Type"
-                          value={pet.type}
-                          disabled={loading}
-                          onChange={(event) =>
-                            updatePetType(
-                              index,
-                              "type",
-                              event.target.value
-                            )
-                          }
-                          options={PET_TYPES}
-                        />
+        <Select
+          label="Charge Period"
+          name="petChargePeriod"
+          value={form.petChargePeriod}
+          onChange={handleChange}
+          disabled={loading}
+          options={CHARGE_PERIODS}
+        />
+      </div>
 
-                        <Input
-                          label="Custom Label (Optional)"
-                          value={pet.label}
-                          onChange={(event) =>
-                            updatePetType(
-                              index,
-                              "label",
-                              event.target.value
-                            )
-                          }
-                          placeholder="Small dog"
-                          disabled={loading}
-                        />
+      <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-[#073F32]">
+        <strong>Common pet price:</strong>{" "}
+        ₹{Number(form.petPrice || 0).toLocaleString("en-IN")}{" "}
+        {form.petChargePeriod === "perNight"
+          ? "per pet per night"
+          : form.petChargePeriod === "perMonth"
+            ? "per pet per month"
+            : "per pet per stay"}
+      </div>
 
-                        <Input
-                          label="Pet Charge"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={pet.charge}
-                          onChange={(event) =>
-                            updatePetType(
-                              index,
-                              "charge",
-                              event.target.value
-                            )
-                          }
-                          disabled={loading}
-                        />
-
-                        <Select
-                          label="Charge Period"
-                          value={pet.chargePeriod}
-                          onChange={(event) =>
-                            updatePetType(
-                              index,
-                              "chargePeriod",
-                              event.target.value
-                            )
-                          }
-                          disabled={loading}
-                          options={CHARGE_PERIODS}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addPetType}
-                  disabled={loading}
-                  className="mt-5 rounded-full border border-green-600 px-5 py-3 text-sm font-bold text-green-700 disabled:opacity-50"
-                >
-                  + Add Pet Type
-                </button>
-              </>
-            )}
-          </Section>
+      <div className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4">
+        <span className="text-xl">🐾</span>
+        <div>
+          <p className="text-sm font-semibold text-[#073F32]">
+            Pet types selected during booking
+          </p>
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            Guests will select their pet type and quantity on the
+            booking page. No pet types need to be configured here.
+          </p>
+        </div>
+      </div>
+    </div>
+  )}
+</Section>
 
           <Section
             title="8. Property Details & Availability"
@@ -1522,36 +1488,318 @@ export default function AdminAddProperty() {
             </div>
           </Section>
 
-          <Section
-            title="9. Amenities & Rules"
-            description="Items ko commas se separate karo."
-          >
+    
+<Section
+  title="9. Amenities & Rules"
+  description="Property ki facilities select karo aur important rules mention karo."
+>
+  {/*
+    Quick-select amenities ko existing comma-separated
+    form.amenities string mein save kiya jayega.
+  */}
+  {(() => {
+    const amenityOptions = [
+      { label: "WiFi", icon: "📶" },
+      { label: "Parking", icon: "🚗" },
+      { label: "Lift", icon: "🛗" },
+      { label: "Security", icon: "🛡️" },
+      { label: "AC", icon: "❄️" },
+      { label: "Kitchen", icon: "🍳" },
+      { label: "Power Backup", icon: "🔋" },
+      { label: "Washing Machine", icon: "🧺" },
+      { label: "TV", icon: "📺" },
+      { label: "Gym", icon: "🏋️" },
+      { label: "Swimming Pool", icon: "🏊" },
+      { label: "Balcony", icon: "🌿" },
+    ];
+
+    const selectedAmenities = String(form.amenities || "")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    const toggleAmenity = (amenity) => {
+      const exists = selectedAmenities.some(
+        (item) => item.toLowerCase() === amenity.toLowerCase()
+      );
+
+      const next = exists
+        ? selectedAmenities.filter(
+            (item) => item.toLowerCase() !== amenity.toLowerCase()
+          )
+        : [...selectedAmenities, amenity];
+
+      setForm((previous) => ({
+        ...previous,
+        amenities: next.join(", "),
+      }));
+      setError("");
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* AMENITIES */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+          <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <Label>Amenities</Label>
-              <textarea
-                name="amenities"
-                value={form.amenities}
-                onChange={handleChange}
-                rows={3}
-                disabled={loading}
-                placeholder="WiFi, Parking, Lift, Security, AC"
-                className="field-input"
-              />
+              <h3 className="font-bold text-[#073F32]">
+                Property Amenities
+              </h3>
+              
             </div>
 
-            <div className="mt-5">
-              <Label>Property Rules</Label>
-              <textarea
-                name="rules"
-                value={form.rules}
-                onChange={handleChange}
-                rows={3}
-                disabled={loading}
-                placeholder="No smoking, ID required"
-                className="field-input"
-              />
+            <span className="shrink-0 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-[#0B6B50]">
+              {selectedAmenities.length} selected
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {amenityOptions.map((amenity) => {
+              const selected = selectedAmenities.some(
+                (item) =>
+                  item.toLowerCase() === amenity.label.toLowerCase()
+              );
+
+              return (
+                <button
+                  key={amenity.label}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => toggleAmenity(amenity.label)}
+                  className={`relative flex min-h-[76px] items-center gap-2 rounded-xl border p-3 text-left transition ${
+                    selected
+                      ? "border-[#0B6B50] bg-green-50 text-[#073F32]"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-green-300 hover:bg-gray-50"
+                  } disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  <span className="text-xl">{amenity.icon}</span>
+
+                  <span className="min-w-0 flex-1 text-xs font-semibold">
+                    {amenity.label}
+                  </span>
+
+                  {selected && (
+                    <span className="absolute right-2 top-2 text-xs font-bold text-[#0B6B50]">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-5">
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Add Other Amenities
+            </label>
+
+            <textarea
+              name="amenities"
+              value={form.amenities}
+              onChange={handleChange}
+              rows={2}
+              disabled={loading}
+              placeholder="e.g. Garden, CCTV, Geyser, Refrigerator"
+              className="field-input"
+            />
+
+           
+          </div>
+        </div>
+
+       
+{/* PROPERTY RULES */}
+<div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
+  <div className="mb-5 flex items-start gap-3">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-xl">
+      📋
+    </div>
+
+    <div>
+      <h3 className="font-bold text-[#073F32]">
+        Property Rules
+      </h3>
+      
+    </div>
+  </div>
+
+  {(() => {
+    const basicRules = [
+      "No smoking inside the property",
+      "Valid ID required at check-in",
+      "No loud music or parties",
+      "Keep the property clean",
+      "Follow check-in and check-out timings",
+      "No illegal activities",
+      "Visitors allowed only with permission",
+      "Damage to property must be paid for",
+      "Respect neighbours and quiet hours",
+      "Switch off lights and AC when leaving",
+    ];
+
+    // Existing comma-separated/newline rules ko read karo.
+    const currentRules = String(form.rules || "")
+      .split(/[\n,]+/)
+      .map((rule) => rule.trim())
+      .filter(Boolean);
+
+    const selectedBasicRules = basicRules.filter((rule) =>
+      currentRules.some(
+        (item) => item.toLowerCase() === rule.toLowerCase()
+      )
+    );
+
+    const customRules = currentRules.filter(
+      (item) =>
+        !basicRules.some(
+          (rule) => rule.toLowerCase() === item.toLowerCase()
+        )
+    );
+
+    const updateRules = (nextSelected, nextCustom = customRules) => {
+      setForm((previous) => ({
+        ...previous,
+        rules: [...nextSelected, ...nextCustom]
+          .filter(Boolean)
+          .join(", "),
+      }));
+      setError("");
+    };
+
+    const allSelected = basicRules.every((rule) =>
+      selectedBasicRules.includes(rule)
+    );
+
+    return (
+      <div className="space-y-5">
+        {/* BASIC RULES */}
+        <div className="overflow-hidden rounded-xl border border-gray-200">
+          <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <div>
+              <h4 className="text-sm font-bold text-[#073F32]">
+                Basic Rules
+              </h4>
+              <p className="mt-1 text-xs text-gray-500">
+                {selectedBasicRules.length} of {basicRules.length} selected
+              </p>
             </div>
-          </Section>
+
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-[#0B6B50]">
+              <input
+                type="checkbox"
+                checked={allSelected}
+                disabled={loading}
+                onChange={(event) => {
+                  updateRules(
+                    event.target.checked ? basicRules : [],
+                    customRules
+                  );
+                }}
+                className="h-4 w-4 accent-green-700"
+              />
+              Select All
+            </label>
+          </div>
+
+          <div className="grid gap-0 sm:grid-cols-2">
+            {basicRules.map((rule, index) => {
+              const checked = selectedBasicRules.includes(rule);
+
+              return (
+                <label
+                  key={rule}
+                  className={`flex cursor-pointer items-start gap-3 border-b border-gray-100 p-3.5 transition hover:bg-green-50 sm:even:border-l sm:even:border-gray-100 ${
+                    index === basicRules.length - 1
+                      ? "border-b-0"
+                      : ""
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={loading}
+                    onChange={(event) => {
+                      const next = event.target.checked
+                        ? [...selectedBasicRules, rule]
+                        : selectedBasicRules.filter(
+                            (item) => item !== rule
+                          );
+
+                      updateRules(next);
+                    }}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-green-700"
+                  />
+
+                  <span className="text-sm leading-5 text-gray-700">
+                    {rule}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* CUSTOM RULES */}
+        <div className="rounded-xl border border-dashed border-gray-300 p-4">
+          <div className="mb-3 flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg">
+              ✏️
+            </div>
+
+            <div>
+              <h4 className="text-sm font-bold text-[#073F32]">
+                Other Custom Rules
+              </h4>
+              
+            </div>
+          </div>
+
+          <textarea
+            value={customRules.join("\n")}
+            onChange={(event) => {
+              const nextCustom = event.target.value
+                .split("\n")
+                .map((rule) => rule.trim())
+                .filter(Boolean);
+
+              updateRules(selectedBasicRules, nextCustom);
+            }}
+            rows={4}
+            disabled={loading}
+            placeholder={
+              "e.g."
+            }
+            className="field-input min-h-[110px] resize-y"
+          />
+
+         
+        </div>
+
+        {/* SELECTED RULES SUMMARY */}
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-green-50 px-4 py-3">
+          <div>
+            <p className="text-sm font-semibold text-[#073F32]">
+              Total Rules Selected
+            </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Basic rules + custom rules
+            </p>
+          </div>
+
+          <span className="rounded-full bg-white px-3 py-1.5 text-sm font-bold text-[#0B6B50]">
+            {selectedBasicRules.length + customRules.length}
+          </span>
+        </div>
+      </div>
+    );
+  })()}
+</div>
+
+      </div>
+    );
+  })()}
+</Section>
+
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button

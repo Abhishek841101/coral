@@ -756,10 +756,26 @@ export default function AdminEditProperty() {
       );
 
       // Must match Express upload.array("images", 10).
-      images.forEach((file) => {
-        formData.append("images", file);
-      });
+      // Retain only old images that were NOT removed.
+formData.append(
+  "existingImages",
+  JSON.stringify(
+    existingImages.map((item) =>
+      typeof item === "string"
+        ? { url: item }
+        : {
+            url: item.url,
+            publicId: item.publicId,
+            isPrimary: Boolean(item.isPrimary),
+          }
+    )
+  )
+);
 
+// Append all newly selected images.
+images.forEach((file) => {
+  formData.append("images", file);
+});
       console.group("📦 FORMDATA PAYLOAD");
 
       for (const [key, value] of formData.entries()) {
@@ -1051,16 +1067,43 @@ export default function AdminEditProperty() {
                 </p>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                   {existingImages.map((item, index) => {
-                    const src = typeof item === "string" ? item : item?.url;
-                    return src ? (
-                      <div key={item?._id || src || index} className="overflow-hidden rounded-xl border bg-white">
-                        <img src={src} alt={`Current property ${index + 1}`} className="h-36 w-full object-cover" />
-                        {item?.isPrimary && (
-                          <p className="px-2 py-1 text-center text-[10px] font-black text-green-700">PRIMARY</p>
-                        )}
-                      </div>
-                    ) : null;
-                  })}
+  const src = typeof item === "string" ? item : item?.url;
+
+  if (!src) return null;
+
+  return (
+    <div
+      key={item?._id || src || index}
+      className="relative overflow-hidden rounded-xl border bg-white"
+    >
+      <img
+        src={src}
+        alt={`Current property ${index + 1}`}
+        className="h-36 w-full object-cover"
+      />
+
+      {item?.isPrimary && (
+        <span className="absolute bottom-2 left-2 rounded-full bg-green-500 px-2 py-1 text-xs font-bold text-white">
+          PRIMARY
+        </span>
+      )}
+
+      <button
+        type="button"
+        onClick={() =>
+          setExistingImages((previous) =>
+            previous.filter((_, i) => i !== index)
+          )
+        }
+        disabled={loading}
+        className="absolute right-2 top-2 rounded-full bg-red-600 px-3 py-1 font-bold text-white"
+        aria-label={`Remove existing image ${index + 1}`}
+      >
+        ×
+      </button>
+    </div>
+  );
+})}
                 </div>
               </div>
             )}

@@ -423,78 +423,91 @@ export default function PropertyDetails() {
             </ContentCard>
 
             {/* PET POLICY */}
-            <ContentCard title="Pet Policy">
-              <div className="rounded-2xl bg-[#F3F7F5] p-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <h3 className="font-extrabold text-[#073F32]">
-                      Pets
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {petPolicy.allowed
-                        ? "Pets are allowed"
-                        : "Pets are not allowed"}
-                    </p>
-                  </div>
+           
+<ContentCard title="Pet Policy">
+  <div className="rounded-2xl border border-[#E1EBE6] bg-[#F7FAF8] p-5">
+    {/* Pet Status */}
+    <div className="flex items-center gap-4">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#E3F0E9] text-2xl">
+        🐾
+      </div>
 
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${
-                      petPolicy.allowed
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-200 text-gray-600"
-                    }`}
-                  >
-                    {petPolicy.allowed ? "Allowed" : "Not allowed"}
-                  </span>
-                </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-bold text-[#073F32]">
+          Pets
+        </h3>
 
-                {petPolicy.allowed && (
-                  <>
-                    <div className="mt-5 border-t border-gray-200 pt-4">
-                      <InfoRow
-                        label="Maximum pets"
-                        value={Number(petPolicy.maxPets || 0)}
-                      />
-                    </div>
+        <p className="mt-1 text-sm text-gray-500">
+          {petPolicy.allowed
+            ? "Pets are welcome"
+            : "Pets are not permitted"}
+        </p>
+      </div>
 
-                    {petTypes.length > 0 ? (
-                      <div className="mt-5 space-y-3">
-                        <h4 className="text-sm font-extrabold text-[#073F32]">
-                          Pet types and charges
-                        </h4>
+      <span
+        className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${
+          petPolicy.allowed
+            ? "bg-green-100 text-green-800"
+            : "bg-gray-200 text-gray-600"
+        }`}
+      >
+        {petPolicy.allowed ? "Allowed" : "Not allowed"}
+      </span>
+    </div>
 
-                        {petTypes.map((pet, index) => (
-                          <div
-                            key={`${pet.type}-${index}`}
-                            className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4"
-                          >
-                            <div>
-                              <p className="font-bold text-[#073F32]">
-                                {pet.label || formatLabel(pet.type)}
-                              </p>
-                              <p className="mt-1 text-xs text-gray-500">
-                                {formatLabel(pet.type)}
-                              </p>
-                            </div>
+    {petPolicy.allowed && (
+      <>
+        {/* Maximum Pets */}
+        <div className="mt-5 rounded-xl bg-white p-4">
+          <p className="text-sm text-gray-500">
+            Maximum pets allowed
+          </p>
 
-                            <p className="text-sm font-extrabold text-[#073F32]">
-                              {Number(pet.charge || 0) > 0
-                                ? `${formatMoney(pet.charge)} ${getChargePeriodLabel(pet.chargePeriod)}`
-                                : "Free"}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-4 text-sm text-gray-500">
-                        Pet charges and specific types have not been
-                        listed.
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            </ContentCard>
+          <p className="mt-1 text-xl font-extrabold text-[#073F32]">
+            {Number(petPolicy.maxPets || 0)} pets
+          </p>
+        </div>
+
+        {/* Pet Charges */}
+       
+{petPolicy.allowed && (
+  <div className="mt-4 rounded-xl bg-white p-4">
+    <p className="text-sm font-medium text-gray-500">
+      Pet Charges
+    </p>
+
+    <div className="mt-2 flex items-center justify-between gap-3">
+      <span className="text-2xl font-extrabold text-[#073F32]">
+        {formatMoney(
+          Number(
+            petTypes[0]?.charge ??
+            petPolicy.price ??
+            petPolicy.charge ??
+            0
+          )
+        )}
+      </span>
+
+      <span className="rounded-full bg-[#E3F0E9] px-3 py-1.5 text-xs font-bold text-[#073F32]">
+        {getChargePeriodLabel(
+          petTypes[0]?.chargePeriod ||
+          petPolicy.chargePeriod ||
+          "perNight"
+        )}
+      </span>
+    </div>
+
+    <p className="mt-3 text-xs text-gray-500">
+      Maximum {Number(petPolicy.maxPets || 0)} pets allowed
+    </p>
+  </div>
+)}
+
+
+      </>
+    )}
+  </div>
+</ContentCard>
 
             {/* AMENITIES */}
             {amenities.length > 0 && (
